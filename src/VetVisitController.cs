@@ -35,6 +35,7 @@ namespace PlutoVetVisit
                 Place(GameManager.Instance.SecondaryPlayer, ClinicLayout.Spawn + new Vector2(1.5f, 0f));
             Pixelator.Instance.TriggerPastFadeIn();
             yield return new WaitForSeconds(0.5f);
+            if (!PastConfig.SkipIntro) yield return StartCoroutine(Dialogue(player));
 
             if (PastConfig.DebugEndAfterSeconds > 0f)
             {
@@ -56,6 +57,45 @@ namespace PlutoVetVisit
             p.transform.position = new Vector3(w.x, w.y, w.y);
             p.specRigidbody.Reinitialize();
             p.sprite.UpdateZDepth();
+        }
+
+        private GameObject speaker;
+
+        /// <summary>Where the Vet's lines come from. Task 10 returns the spawned boss; until then a point behind the table.</summary>
+        protected virtual Transform SpeakerTransform()
+        {
+            if (speaker == null)
+            {
+                speaker = new GameObject("VetSpeaker");
+                Vector2 w = World(ClinicLayout.Vet);
+                speaker.transform.position = new Vector3(w.x, w.y, w.y);
+            }
+            return speaker.transform;
+        }
+
+        private IEnumerator Dialogue(PlayerController player)
+        {
+            bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
+            player.SetInputOverride("past");
+            if (coop) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
+            PastCameraUtility.LockConversation(World(ClinicLayout.CameraFocus));
+            yield return new WaitForSeconds(0.8f);
+            Transform who = SpeakerTransform();
+            yield return StartCoroutine(Say(who, PastConfig.Line1, 2.5f));
+            yield return StartCoroutine(Say(who, PastConfig.Line2, 3.5f));
+            yield return StartCoroutine(Say(player.transform, PastConfig.Line3, 1.5f));
+            PastCameraUtility.UnlockConversation();
+            player.ClearInputOverride("past");
+            if (coop) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+        }
+
+        private IEnumerator Say(Transform who, string text, float seconds)
+        {
+            if (string.IsNullOrEmpty(text)) yield break;
+            Vector3 pos = who.position + new Vector3(0f, 2.25f, 0f);
+            TextBoxManager.ShowTextBox(pos, who, seconds, text, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, false, false);
+            yield return new WaitForSeconds(seconds + 0.3f);
+            TextBoxManager.ClearTextBox(who);
         }
 
         public void OnBossDied()

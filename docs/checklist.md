@@ -18,3 +18,15 @@ Launch once, then set `[Debug] DebugEndAfterSeconds = 8` in `BepInEx/config/bogd
 6. Session hygiene: in the same session pick the Marine and run `load_level fs_soldier`. Expected: the Primerdyne lab, not the clinic.
 
 Send back: `./vet_check.sh` output, a screenshot of step 2, and whether steps 4-6 passed.
+
+## Milestone 2 — the clinic
+
+Same setup; `DebugEndAfterSeconds` may stay at 8 so the past still ends by itself.
+1. `vet_visit`: the room is dressed: six glass cabinets and a poster along the top, the steel exam table in the middle,
+   a cart with syringes, a sink, a scale, the carrier bottom-left, toys and a cone on the floor.
+2. Pluto cannot walk through the table, cabinets, sink, carrier or scratching post; he walks over toys, the tray, the cone and the scale.
+3. Bullets fired at the table fly over it; bullets at a cabinet stop.
+4. Two speech bubbles appear behind the table (the Vet's lines from the config), then a hiss from Pluto; the camera
+   returns and Pluto can move. `[Debug] SkipIntro = true` skips them.
+5. Props render above the floor and below Pluto when he walks in front of them (report anything drawn on top of Pluto).
+Send back: screenshot of the room, and any prop that looks wrong.
