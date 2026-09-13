@@ -3,6 +3,7 @@ using System.Collections;
 using BepInEx;
 using HarmonyLib;
 using UnityEngine;
+using Alexandria.ItemAPI;
 
 namespace PlutoVetVisit
 {
@@ -61,8 +62,10 @@ namespace PlutoVetVisit
             ok &= Step("objects", ClinicObjects.Init);
             ok &= Step("room", ClinicRoom.Load);
             ok &= Step("level", PastLevel.Register);
+            ok &= Step("boss", VetBoss.Init);
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
-            Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME, null));
+            Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME,
+                ResourceExtractor.GetTextureFromResource("PlutoVetVisit/Resources/past_win_pic.png", typeof(PastPlugin).Assembly)));
             Step("console", () => ETGModConsole.Commands.AddUnit("vet_visit", args =>
             {
                 Log("loading " + PastLevel.SCENE_NAME + " from the console");
