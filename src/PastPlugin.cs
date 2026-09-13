@@ -58,6 +58,7 @@ namespace PlutoVetVisit
         {
             bool ok = true;
             ok &= Step("harmony", () => harmony.PatchAll(typeof(PastPlugin).Assembly));
+            ok &= Step("objects", ClinicObjects.Init);
             ok &= Step("room", ClinicRoom.Load);
             ok &= Step("level", PastLevel.Register);
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
