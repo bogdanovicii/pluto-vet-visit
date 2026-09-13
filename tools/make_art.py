@@ -12,6 +12,8 @@ PROJECT = os.path.dirname(HERE)
 import icon  # noqa: E402
 import clinic_objects  # noqa: E402
 import clinic_room  # noqa: E402
+import vet_poses  # noqa: E402
+import cards  # noqa: E402
 
 
 def main():
@@ -21,6 +23,10 @@ def main():
     print('preview   ', clinic_objects.preview(PROJECT))
     for p in clinic_room.write(PROJECT):
         print('room      ', p)
+    print('vet       ', len(vet_poses.write(PROJECT)), 'frames')
+    print('preview   ', vet_poses.preview(PROJECT))
+    for p in cards.write(PROJECT):
+        print('card      ', p)
     print('done')
 
 

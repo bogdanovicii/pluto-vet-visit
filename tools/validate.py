@@ -73,6 +73,30 @@ def check_objects():
     ok('%d object sprites' % len(clinic_objects.OBJECTS))
 
 
+def check_boss():
+    import vet_poses
+    root = os.path.join(RES, 'Boss', 'vet')
+    for clip, frames in vet_poses.CLIPS.items():
+        d = os.path.join(root, clip)
+        files = sorted(f for f in os.listdir(d)) if os.path.isdir(d) else []
+        if len(files) != len(frames):
+            err('%s: %d files != %d frames' % (clip, len(files), len(frames)))
+        if not all(re.match(r'^vet_%s_\d{3}\.png$' % clip, f) for f in files):
+            err('%s: bad frame names %s' % (clip, files))
+        if any(Image.open(os.path.join(d, f)).size != vet_poses.CANVAS for f in files):
+            err('%s: frame size != %s' % (clip, vet_poses.CANVAS))
+    names = list(vet_poses.CLIPS)
+    for a in names:
+        for b in names:
+            if a != b and b.startswith(a):
+                err('clip folder %s is a prefix of %s (Alexandria matches by StartsWith)' % (a, b))
+    if Image.open(os.path.join(RES, 'Boss', 'vet_bosscard.png')).size != (427, 240):
+        err('boss card must be 427x240')
+    if Image.open(os.path.join(RES, 'past_win_pic.png')).size != (115, 71):
+        err('past win pic must be 115x71')
+    ok('boss: %d clips, card, win pic' % len(names))
+
+
 def dll_manifest():
     """Embedded resource names inside the built DLL, or None when not built / monodis missing."""
     if not os.path.exists(DLL):
@@ -88,13 +112,15 @@ def dll_manifest():
 def check_dll(man):
     if man is None:
         return
-    for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom', 'PlutoVetVisit.Resources.Objects.exam_table.png']:
+    for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom', 'PlutoVetVisit.Resources.Objects.exam_table.png',
+                 'PlutoVetVisit.Resources.Boss.vet.idle.vet_idle_001.png', 'PlutoVetVisit.Resources.Boss.vet_bosscard.png',
+                 'PlutoVetVisit.Resources.past_win_pic.png']:
         if name not in man:
             err('DLL lacks embedded resource ' + name)
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room, check_objects]
+CHECKS = [check_thunderstore, check_room, check_objects, check_boss]
 
 
 def main():
