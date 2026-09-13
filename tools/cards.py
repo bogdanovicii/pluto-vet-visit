@@ -53,7 +53,7 @@ def win_pic(project):
         import character_anims as A                     # the main mod's Pluto, read-only
         cat = V.image(A.IDLE_SIDE[0])
         im.paste(cat, (72, 12 - cat.height + 2), cat)
-    except (ImportError, AttributeError, KeyError):
+    except (ImportError, AttributeError, KeyError, IndexError):
         d.ellipse((74, 0, 96, 14), fill=(0x8E, 0x71, 0x50, 255), outline=V.PALETTE['o'])
     d.rectangle((2, 2, 12, 12), fill=V.PALETTE['!'])
     return im

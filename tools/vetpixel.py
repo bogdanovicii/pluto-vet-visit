@@ -1,4 +1,6 @@
-"""Palette and helpers for the Vet Visit art. Reuses the main mod's pixel toolkit read-only.
+"""Palette and helpers for the Vet Visit art. Reuses the main mod's palette-independent pixel
+helpers read-only, but keeps its own literal PALETTE so an unrelated palette edit in the main mod
+cannot silently re-render our committed PNGs (see tools/tests/test_palette.py).
 
 Every sprite is a list of equal-length strings; each character is a palette key, '.' is transparent.
 """
@@ -12,10 +14,25 @@ PROJECT = os.path.dirname(HERE)
 MAIN_TOOLS = os.path.join(os.path.dirname(PROJECT), 'tools')
 if MAIN_TOOLS not in sys.path:
     sys.path.insert(0, MAIN_TOOLS)
-from pixel import (PALETTE as BASE_PALETTE, img_from_rows, check_rect, pad, shift, flip_h,  # noqa: E402,F401
-                   overlay, erase, recolor, rows_from_img)
+from pixel import img_from_rows, check_rect, pad, shift, overlay, erase, rows_from_img  # noqa: E402,F401
 
-PALETTE = dict(BASE_PALETTE)
+# Snapshotted verbatim from ../tools/pixel.py's PALETTE: only the base cat/body keys our art
+# actually uses (scanned from vet_poses.py, clinic_objects.py, projectiles.py and cards.py).
+# Deliberately literal (not imported) so an unrelated edit to the main mod's palette cannot
+# silently re-render our committed PNGs. tools/tests/test_palette.py enforces this stays in
+# sync on purpose rather than by accident.
+PALETTE = {
+    '.': None,
+    'o': (0x1E, 0x16, 0x14, 255),  # outline
+    'W': (0xFA, 0xF6, 0xEE, 255),  # white fur
+    'w': (0xD6, 0xCE, 0xC6, 255),  # white fur shade (cooler)
+    'B': (0x8B, 0x7A, 0x66, 255),  # tabby base: grey-brown taupe (h32 s27 v55)
+    'g': (0x1B, 0x2A, 0x1B, 255),  # pupil
+    'K': (0xF2, 0xF2, 0xF2, 255),  # highlight white
+    'H': (0xFF, 0x5C, 0x8A, 255),  # heart pink
+    'Z': (0x74, 0x76, 0x80, 255),  # grey cat on the bag
+    'e': (0xC3, 0xD3, 0x7A, 255),  # eye light (cards only)
+}
 PALETTE.update({
     '#': (0x3A, 0x3F, 0x4A, 255),  # steel dark
     '%': (0x8C, 0x94, 0xA2, 255),  # steel mid
