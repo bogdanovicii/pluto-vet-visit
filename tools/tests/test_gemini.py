@@ -1,3 +1,5 @@
+import contextlib
+import io
 import os
 import sys
 import tempfile
@@ -28,23 +30,33 @@ class GeminiTests(unittest.TestCase):
                 fh.write('# comment\nVETVISIT_TEST_A="alpha"\nVETVISIT_TEST_B=beta\n\n')
             os.environ.pop('VETVISIT_TEST_A', None)
             os.environ['VETVISIT_TEST_B'] = 'kept'
-            names = G.load_env(path)
-            self.assertEqual(names, ['VETVISIT_TEST_A'])
-            self.assertEqual(os.environ['VETVISIT_TEST_A'], 'alpha')
-            self.assertEqual(os.environ['VETVISIT_TEST_B'], 'kept')
+            try:
+                names = G.load_env(path)
+                self.assertEqual(names, ['VETVISIT_TEST_A'])
+                self.assertEqual(os.environ['VETVISIT_TEST_A'], 'alpha')
+                self.assertEqual(os.environ['VETVISIT_TEST_B'], 'kept')
+            finally:
+                os.environ.pop('VETVISIT_TEST_A', None)
+                os.environ.pop('VETVISIT_TEST_B', None)
 
     def test_load_env_missing_file(self):
         self.assertEqual(G.load_env('/nonexistent/.env'), [])
 
     def test_dry_run_calls_no_cli(self):
-        called = []
-        original = G.run_cli
-        G.run_cli = lambda args: called.append(args) or {'success': True, 'filePath': 'x'}
-        try:
-            self.assertEqual(G.main(['--dry-run']), 0)
-        finally:
-            G.run_cli = original
-        self.assertEqual(called, [])
+        with tempfile.TemporaryDirectory() as d:
+            called = []
+            original, original_out = G.run_cli, G.OUT_DIR
+            G.run_cli, G.OUT_DIR = lambda args: called.append(args) or {'success': True, 'filePath': 'x'}, d
+            buf = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(buf):
+                    self.assertEqual(G.main(['--dry-run']), 0)
+            finally:
+                G.run_cli, G.OUT_DIR = original, original_out
+            self.assertEqual(called, [])
+            output = buf.getvalue()
+            self.assertIn('would generate:', output)
+            self.assertNotIn('nothing to generate', output)
 
     def test_generate_writes_where_asked(self):
         with tempfile.TemporaryDirectory() as d:
