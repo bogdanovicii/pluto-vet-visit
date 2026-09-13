@@ -14,6 +14,19 @@ namespace PlutoVetVisit
         public static readonly Vector2 CameraFocus = new Vector2(12.5f, 8.5f);
         public static readonly Vector2 Controller = new Vector2(13.0f, 1.0f);
         public static readonly ObjectSpec[] OBJECTS = {
+            new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 2, 0, 44, 16, 0.0f),
+            new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
+            new ObjectSpec("pluto_cart", "cart", ObjectSpec.Layer.Low, 0, 0, 24, 14, 0.0f),
+            new ObjectSpec("pluto_sink", "sink", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
+            new ObjectSpec("pluto_scale", "scale", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_carrier", "carrier", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
+            new ObjectSpec("pluto_poster", "poster", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_cone", "cone", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_toy_mouse", "toy_mouse", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_toy_ball", "toy_ball", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_feather_wand", "feather_wand", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_scratch_post", "scratch_post", ObjectSpec.Layer.Low, 2, 0, 12, 8, 0.0f),
+            new ObjectSpec("pluto_syringe_tray", "syringe_tray", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
         };
     }
 

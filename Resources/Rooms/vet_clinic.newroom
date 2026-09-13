@@ -21,12 +21,120 @@
   {
    "x": 13.0,
    "y": 1.0
+  },
+  {
+   "x": 1.0,
+   "y": 15.0
+  },
+  {
+   "x": 4.0,
+   "y": 15.0
+  },
+  {
+   "x": 7.0,
+   "y": 15.0
+  },
+  {
+   "x": 12.0,
+   "y": 15.0
+  },
+  {
+   "x": 17.0,
+   "y": 15.0
+  },
+  {
+   "x": 20.0,
+   "y": 15.0
+  },
+  {
+   "x": 23.0,
+   "y": 15.0
+  },
+  {
+   "x": 23.0,
+   "y": 9.0
+  },
+  {
+   "x": 11.0,
+   "y": 8.0
+  },
+  {
+   "x": 16.0,
+   "y": 8.5
+  },
+  {
+   "x": 3.0,
+   "y": 10.0
+  },
+  {
+   "x": 8.0,
+   "y": 11.0
+  },
+  {
+   "x": 20.0,
+   "y": 12.0
+  },
+  {
+   "x": 2.0,
+   "y": 1.5
+  },
+  {
+   "x": 22.0,
+   "y": 2.0
+  },
+  {
+   "x": 8.0,
+   "y": 5.0
+  },
+  {
+   "x": 18.0,
+   "y": 4.0
+  },
+  {
+   "x": 14.0,
+   "y": 3.5
   }
  ],
  "placeableGUIDs": [
-  "pluto_past_controller"
+  "pluto_past_controller",
+  "pluto_cabinet",
+  "pluto_cabinet",
+  "pluto_cabinet",
+  "pluto_poster",
+  "pluto_cabinet",
+  "pluto_cabinet",
+  "pluto_cabinet",
+  "pluto_sink",
+  "pluto_exam_table",
+  "pluto_cart",
+  "pluto_scale",
+  "pluto_syringe_tray",
+  "pluto_cone",
+  "pluto_carrier",
+  "pluto_scratch_post",
+  "pluto_toy_mouse",
+  "pluto_toy_ball",
+  "pluto_feather_wand"
  ],
  "placeableAttributes": [
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
   ""
  ],
  "enemyReinforcementLayers": [],

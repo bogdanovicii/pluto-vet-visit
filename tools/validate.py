@@ -62,6 +62,17 @@ def check_room():
     ok('room %dx%d, %d placeables' % (w, h, len(data['placeableGUIDs'])))
 
 
+def check_objects():
+    import clinic_objects
+    for o in clinic_objects.OBJECTS:
+        p = os.path.join(RES, 'Objects', o.png + '.png')
+        if not os.path.exists(p):
+            err('object PNG missing: ' + p)
+        elif Image.open(p).size != o.size:
+            err('%s: PNG size %s != %s' % (o.png, Image.open(p).size, o.size))
+    ok('%d object sprites' % len(clinic_objects.OBJECTS))
+
+
 def dll_manifest():
     """Embedded resource names inside the built DLL, or None when not built / monodis missing."""
     if not os.path.exists(DLL):
@@ -77,13 +88,13 @@ def dll_manifest():
 def check_dll(man):
     if man is None:
         return
-    for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom']:
+    for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom', 'PlutoVetVisit.Resources.Objects.exam_table.png']:
         if name not in man:
             err('DLL lacks embedded resource ' + name)
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room]
+CHECKS = [check_thunderstore, check_room, check_objects]
 
 
 def main():
