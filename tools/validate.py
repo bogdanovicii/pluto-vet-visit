@@ -38,6 +38,30 @@ def check_thunderstore():
     ok('thunderstore manifest/icon/readme')
 
 
+def check_room():
+    import clinic_room
+    path = os.path.join(RES, 'Rooms', 'vet_clinic.newroom')
+    if not os.path.exists(path):
+        err('vet_clinic.newroom missing (run tools/make_art.py)')
+        return
+    data = json.load(open(path))
+    w, h = data['roomSize']['x'], data['roomSize']['y']
+    if len(data['tileInfo']) != w * h:
+        err('tileInfo length %d != %d' % (len(data['tileInfo']), w * h))
+    if data['category'] != 'ENTRANCE':
+        err('room category must be ENTRANCE')
+    if data != clinic_room.room_data():
+        err('vet_clinic.newroom is stale (run tools/make_art.py)')
+    cs = open(os.path.join(PROJECT, 'src', 'ClinicLayout.cs')).read()
+    if cs != clinic_room.layout_cs():
+        err('ClinicLayout.cs is stale (run tools/make_art.py)')
+    known = {o.name for o in clinic_room.O.OBJECTS} | {clinic_room.CONTROLLER}
+    unknown = sorted(set(data['placeableGUIDs']) - known)
+    if unknown:
+        err('room places unknown objects: %s' % unknown)
+    ok('room %dx%d, %d placeables' % (w, h, len(data['placeableGUIDs'])))
+
+
 def dll_manifest():
     """Embedded resource names inside the built DLL, or None when not built / monodis missing."""
     if not os.path.exists(DLL):
@@ -53,10 +77,13 @@ def dll_manifest():
 def check_dll(man):
     if man is None:
         return
+    for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom']:
+        if name not in man:
+            err('DLL lacks embedded resource ' + name)
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore]
+CHECKS = [check_thunderstore, check_room]
 
 
 def main():

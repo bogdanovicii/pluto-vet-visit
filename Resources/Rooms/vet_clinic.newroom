@@ -1,0 +1,59 @@
+{
+ "tileInfo": "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+ "roomSize": {
+  "x": 26,
+  "y": 18
+ },
+ "waveTriggers": [],
+ "nodeTypes": [],
+ "nodeWrapModes": [],
+ "nodePositions": [],
+ "nodePaths": [],
+ "nodeOrder": [],
+ "category": "ENTRANCE",
+ "normalSubCategory": "",
+ "specialSubCategory": "",
+ "bossSubCategory": "",
+ "enemyPositions": [],
+ "enemyGUIDs": [],
+ "enemyAttributes": [],
+ "placeablePositions": [
+  {
+   "x": 13.0,
+   "y": 1.0
+  }
+ ],
+ "placeableGUIDs": [
+  "pluto_past_controller"
+ ],
+ "placeableAttributes": [
+  ""
+ ],
+ "enemyReinforcementLayers": [],
+ "exitPositions": [
+  {
+   "x": 13.0,
+   "y": 0.0
+  }
+ ],
+ "exitDirections": [
+  "SOUTH"
+ ],
+ "floors": [],
+ "weight": 1.0,
+ "isSpecialRoom": false,
+ "randomizeEnemyPositions": false,
+ "doFloorDecoration": false,
+ "doWallDecoration": false,
+ "doLighting": true,
+ "darkRoom": false,
+ "visualSubtype": -1,
+ "superSpecialRoomType": "none",
+ "AmbientLight_R": 0.0,
+ "AmbientLight_G": 0.0,
+ "AmbientLight_B": 0.0,
+ "usesAmbientLight": false,
+ "nodePathVisible": [],
+ "specialRoomPool": "",
+ "additionalPauseDelay": []
+}

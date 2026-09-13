@@ -10,10 +10,13 @@ sys.path.insert(0, HERE)
 PROJECT = os.path.dirname(HERE)
 
 import icon  # noqa: E402
+import clinic_room  # noqa: E402
 
 
 def main():
     print('icon      ', icon.write(PROJECT))
+    for p in clinic_room.write(PROJECT):
+        print('room      ', p)
     print('done')
 
 
