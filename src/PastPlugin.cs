@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using BepInEx;
+using HarmonyLib;
 using UnityEngine;
 
 namespace PlutoVetVisit
@@ -19,14 +21,45 @@ namespace PlutoVetVisit
         public const string VERSION = "0.1.0";
         public const string PLUTO_GUID = "bogdan.etg.plutothecat";
 
+        private Harmony harmony;
+
         public void Start()
         {
+            PastConfig.Bind(Config);   // BepInEx/config/bogdan.etg.plutovetvisit.cfg
+            if (!PastConfig.Enabled) { Log("disabled by config"); return; }
+            harmony = new Harmony(GUID);
             ETGModMainBehaviour.WaitForGameManagerStart(GMStart);
         }
 
         public void GMStart(GameManager gameManager)
         {
-            Log("plugin " + VERSION + " loaded (nothing registered yet)");
+            StartCoroutine(InitWhenPlutoReady());
+        }
+
+        /// <summary>Pluto's plugin registers its GameManager callback first, but wait a little anyway.</summary>
+        private IEnumerator InitWhenPlutoReady()
+        {
+            float waited = 0f;
+            while (!PlutoLink.Find() && waited < 15f)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            if (!PlutoLink.Found)
+            {
+                Log("Pluto the Cat not found after 15 s (is Pluto_The_Cat installed and did it build?). The Vet Visit is disabled.");
+                yield break;
+            }
+            Log("found " + PlutoLink.Data.nameShort + " after " + waited.ToString("0.0") + " s");
+            Init();
+        }
+
+        private void Init()
+        {
+            bool ok = true;
+            ok &= Step("harmony", () => harmony.PatchAll(typeof(PastPlugin).Assembly));
+            if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
+            Log("The Vet Visit is ready (no level registered yet).");
         }
 
         /// <summary>Runs one load step in isolation so one broken feature cannot take the rest down.</summary>
