@@ -54,6 +54,14 @@ class VetTests(unittest.TestCase):
         self.assertEqual(cards.boss_card(PROJECT).size, (427, 240))
         self.assertEqual(cards.win_pic(PROJECT).size, (115, 71))
 
+    def test_projectile_sprites(self):
+        import projectiles as PR
+        self.assertEqual({k: (len(v[0]), len(v)) for k, v in PR.SPRITES.items()},
+                         {'vet_syringe_001': (12, 4), 'vet_droplet_001': (5, 5), 'vet_pill_001': (8, 4)})
+        for rows in PR.SPRITES.values():
+            V.R(rows)
+            V.image(rows)
+
 
 if __name__ == '__main__':
     unittest.main()

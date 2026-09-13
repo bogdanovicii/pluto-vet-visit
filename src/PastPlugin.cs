@@ -62,6 +62,7 @@ namespace PlutoVetVisit
             ok &= Step("objects", ClinicObjects.Init);
             ok &= Step("room", ClinicRoom.Load);
             ok &= Step("level", PastLevel.Register);
+            ok &= Step("sprites", () => ETGMod.Assets.SetupSpritesFromAssembly(typeof(PastPlugin).Assembly, "PlutoVetVisit/Resources/SpriteRoot"));
             ok &= Step("boss", VetBoss.Init);
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
             Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME,

@@ -94,6 +94,9 @@ def check_boss():
         err('boss card must be 427x240')
     if Image.open(os.path.join(RES, 'past_win_pic.png')).size != (115, 71):
         err('past win pic must be 115x71')
+    for name in ('vet_syringe_001', 'vet_droplet_001', 'vet_pill_001'):
+        if not os.path.exists(os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', name + '.png')):
+            err('projectile sprite missing: ' + name)
     ok('boss: %d clips, card, win pic' % len(names))
 
 
@@ -114,7 +117,8 @@ def check_dll(man):
         return
     for name in ['PlutoVetVisit.Resources.Rooms.vet_clinic.newroom', 'PlutoVetVisit.Resources.Objects.exam_table.png',
                  'PlutoVetVisit.Resources.Boss.vet.idle.vet_idle_001.png', 'PlutoVetVisit.Resources.Boss.vet_bosscard.png',
-                 'PlutoVetVisit.Resources.past_win_pic.png']:
+                 'PlutoVetVisit.Resources.past_win_pic.png',
+                 'PlutoVetVisit.Resources.SpriteRoot.ProjectileCollection.vet_syringe_001.png']:
         if name not in man:
             err('DLL lacks embedded resource ' + name)
     ok('DLL embeds %d PNGs' % man.count('.png'))

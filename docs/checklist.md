@@ -44,3 +44,10 @@ Set `DebugEndAfterSeconds = 0`.
 5. `spawn pluto:the_vet` in any normal room spawns him without an intro (BossTriggerZone), fighting immediately is not expected there.
 6. If the intro clip plays facing right while the Vet faces left, report it: the fix is introAnim = "" plus introDirectionalAnim = "intro" in VetBoss.cs.
 Send back: whether the intro fired, whether damage registers, and how the fight feels (too easy / too hard).
+
+## Milestone 4 — phase two and polish
+1. Syringes, droplets and pills use their own sprites (not the red Bullet Kin bullet).
+2. Above half health: aimed syringes, droplet fans, and slow pills that burst into six droplets.
+3. Below half health: everything faster, plus rings of sixteen syringes (two rings, offset).
+4. Fight length and difficulty with a full late-run loadout: report the time to kill; tune `[Boss] BossHealth` / `BossDpsCap`.
+5. The Gemini boss card and win picture show (if generated).

@@ -43,4 +43,48 @@ namespace PlutoVetVisit
             }
         }
     }
+
+    /// <summary>A pill drifts for 40 frames, then bursts into six droplets and vanishes.</summary>
+    public class PillBullet : Bullet
+    {
+        public PillBullet() : base("pill", false, false, false) { }
+
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            yield return Wait(40);
+            float start = RandomAngle();
+            for (int i = 0; i < 6; i++)
+                Fire(new Direction(SubdivideCircle(start, 6, i), DirectionType.Absolute), new Speed(6f, SpeedType.Absolute), new DropletBullet());
+            Vanish(false);
+        }
+    }
+
+    /// <summary>Pill Time: four slow pills in a narrow fan; each bursts (PillBullet).</summary>
+    public class PillTimeScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float aim = GetAimDirection(0f, 4f);
+            for (int i = 0; i < 4; i++)
+            {
+                Fire(new Direction(SubdivideArc(aim - 30f, 60f, 4, i), DirectionType.Absolute), new Speed(4f, SpeedType.Absolute), new PillBullet());
+                yield return Wait(6);
+            }
+            yield return Wait(20);
+        }
+    }
+
+    /// <summary>Cone of Shame (below half health): a ring of sixteen syringes, then a second ring offset by half a step.</summary>
+    public class ConeOfShameScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            for (int ring = 0; ring < 2; ring++)
+            {
+                for (int i = 0; i < 16; i++)
+                    Fire(new Direction(SubdivideCircle(0f, 16, i, 1f, ring == 1), DirectionType.Absolute), new Speed(5.5f, SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(24);
+            }
+        }
+    }
 }

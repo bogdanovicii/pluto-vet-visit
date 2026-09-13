@@ -77,8 +77,9 @@ namespace PlutoVetVisit
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
-            bank.Bullets.Add(EnemyBuildingTools.CopyBulletBankEntry(kin, "syringe", "DNC"));
-            bank.Bullets.Add(EnemyBuildingTools.CopyBulletBankEntry(kin, "droplet", "DNC"));
+            bank.Bullets.Add(Entry(kin, "syringe", "vet_syringe_001", 12, 4));
+            bank.Bullets.Add(Entry(kin, "droplet", "vet_droplet_001", 5, 5));
+            bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 8, 4));
 
             GameObject shootPoint = EnemyBuildingTools.GenerateShootPoint(Prefab, actor.sprite.WorldCenter + new Vector2(0.9f, 0.4f), "syringe_tip");
             bs.TargetBehaviors = new List<TargetBehaviorBase>
@@ -177,12 +178,30 @@ namespace PlutoVetVisit
             EnemyBuildingTools.AddNewDirectionAnimation(anim, name, new[] { "vet_" + name, "vet_" + name }, new[] { FlipType.None, FlipType.Flip }, DirType.TwoWayHorizontal);
         }
 
+        /// <summary>A copy of a vanilla bullet-bank entry whose projectile prefab wears one of our sprites.</summary>
+        public static AIBulletBank.Entry Entry(AIBulletBank.Entry template, string name, string sprite, int w, int h)
+        {
+            AIBulletBank.Entry e = EnemyBuildingTools.CopyBulletBankEntry(template, name, "DNC");
+            GameObject clone = FakePrefab.Clone(e.BulletObject);
+            Projectile p = clone.GetComponent<Projectile>();
+            p.SetProjectileSpriteRight(sprite, w, h, false, tk2dBaseSprite.Anchor.MiddleCenter, w, h);
+            e.BulletObject = clone;
+            return e;
+        }
+
         private static List<AttackBehaviorGroup.AttackGroupItem> BuildAttacks(GameObject shootPoint)
         {
             return new List<AttackBehaviorGroup.AttackGroupItem>
             {
-                Item("booster shot", 1f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f, 0f, 1f)),
-                Item("spray bottle", 1f, Shoot(typeof(SprayBottleScript), shootPoint, 2.2f, 0f, 1f)),
+                // Phase 1 (health above one half)
+                Item("booster shot", 1f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f, 0.5f, 1f)),
+                Item("spray bottle", 1f, Shoot(typeof(SprayBottleScript), shootPoint, 2.2f, 0.5f, 1f)),
+                Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.0f, 0.5f, 1f)),
+                // Phase 2 (half health and below): quicker, plus the Cone of Shame
+                Item("booster shot 2", 1f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f, 0f, 0.5f)),
+                Item("spray bottle 2", 1f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f, 0f, 0.5f)),
+                Item("pill time 2", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 2.2f, 0f, 0.5f)),
+                Item("cone of shame", 1.5f, Shoot(typeof(ConeOfShameScript), shootPoint, 2.5f, 0f, 0.5f)),
             };
         }
 

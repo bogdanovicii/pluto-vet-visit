@@ -14,6 +14,7 @@ import clinic_objects  # noqa: E402
 import clinic_room  # noqa: E402
 import vet_poses  # noqa: E402
 import cards  # noqa: E402
+import projectiles  # noqa: E402
 
 
 def main():
@@ -27,6 +28,8 @@ def main():
     print('preview   ', vet_poses.preview(PROJECT))
     for p in cards.write(PROJECT):
         print('card      ', p)
+    for p in projectiles.write(PROJECT):
+        print('projectile', p)
     print('done')
 
 
