@@ -6,6 +6,7 @@ namespace PlutoVetVisit
     public static class PastConfig
     {
         public static bool Enabled = true;
+        public static bool GuaranteePastAccess = true;
         public static float BossHealth = 1200f;
         public static float BossDpsCap = -1f;
         public static string BossMusic = "Play_MUS_Boss_Theme_Beholster";
@@ -19,6 +20,7 @@ namespace PlutoVetVisit
         public static void Bind(ConfigFile cfg)
         {
             Enabled = cfg.Bind("General", "Enabled", Enabled, "Attach The Vet Visit to Pluto.").Value;
+            GuaranteePastAccess = cfg.Bind("General", "GuaranteePastAccess", GuaranteePastAccess, "When Pluto takes the Bullet That Can Kill The Past from the Blacksmith, set the flag the Ark needs so his past opens (vanilla flow otherwise).").Value;
             BossHealth = cfg.Bind("Boss", "BossHealth", BossHealth, "The Vet's health.").Value;
             BossDpsCap = cfg.Bind("Boss", "BossDpsCap", BossDpsCap, "Boss damage-per-second cap for the past level (-1 = none, vanilla pasts use -1).").Value;
             BossMusic = cfg.Bind("Boss", "BossMusic", BossMusic, "Wwise event played during the fight.").Value;
