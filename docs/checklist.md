@@ -5,12 +5,14 @@ Nothing here can run on the build Mac. Each milestone is a test zip; send back `
 ## Milestone 1 — plumbing (Pluto_Vet_Visit-0.1.0.zip)
 
 Setup: import the latest `Pluto_The_Cat-*.zip` and `dist/Pluto_Vet_Visit-0.1.0.zip` (r2modman -> Settings -> Import local mod).
-Launch once, then set `[Debug] DebugEndAfterSeconds = 8` in `BepInEx/config/bogdan.etg.plutovetvisit.cfg`.
+Launch once, then set `[Debug] DebugEndAfterSeconds = 20` in `BepInEx/config/bogdan.etg.plutovetvisit.cfg` (the debug
+ending now runs in parallel with the ~10 s dialogue, so this must be at least 20; alternatively also set
+`[Debug] SkipIntro = true` so the dialogue is skipped instead).
 
 1. Launch. Console shows `[VetVisit] found Pluto`, `registered level tt_pluto_past`, `The Vet Visit is ready`, and no `step "..." failed`.
 2. In the Breach select Pluto, open the console and run `vet_visit`. Expected: fade to black, then a white/grey lab-tiled
    room 26 x 18 with a doorway at the bottom middle; Pluto near the bottom-left. Log: `built past dungeon`, `clinic ready`.
-3. After 8 s: freeze frame, credits tube, the win page (Pluto's win picture once Task 9 ships it). Log: `past killed`.
+3. After 20 s: freeze frame, credits tube, the win page with Pluto's win picture. Log: `past killed`.
    The main-menu button returns to the Breach.
 4. Back in the Breach, Pluto's info panel shows the past as killed.
 5. The real route: as Pluto, talk to the Blacksmith (Bullet That Can Kill The Past), beat the Lich, fire the Gun in the Ark.
@@ -23,7 +25,7 @@ Send back: `./vet_check.sh` output, a screenshot of step 2, and whether steps 4-
 
 ## Milestone 2 — the clinic
 
-Same setup; `DebugEndAfterSeconds` may stay at 8 so the past still ends by itself.
+Same setup; keep `DebugEndAfterSeconds = 20` so the past still ends by itself after the dialogue.
 1. `vet_visit`: the room is dressed: six glass cabinets and a poster along the top, the steel exam table in the middle,
    a cart with syringes, a sink, a scale, the carrier bottom-left, toys and a cone on the floor.
 2. Pluto cannot walk through the table, cabinets, sink, carrier or scratching post; he walks over toys, the tray, the cone and the scale.
@@ -41,12 +43,14 @@ Set `DebugEndAfterSeconds = 0`.
 1. `vet_visit`: The Vet stands behind the table during the dialogue and does nothing; the bubbles come from him.
 2. After the hiss: the walk-in, the boss card "THE VET — Doctor's Orders" with the card art, the boss health bar, boss music.
    Log: `The Vet spawned`, `fight started`.
-3. He paces behind the table and alternates two attacks: three aimed syringes, and two fans of droplets.
-   Pluto's kibble damages him (bar goes down). Contact with him hurts.
+3. He paces behind the table and cycles three phase-one attacks: Booster Shot (three aimed syringes), Spray Bottle
+   (two fans of droplets), and Pill Time (four slow pills that burst into six droplets). Below half health the tempo
+   rises and the Cone of Shame rings appear (milestone 4 has the details). Pluto's kibble damages him (bar goes down).
+   Contact with him hurts.
 4. On death: death animation, harmless explosion ring, `The Vet is down`, then the ending from milestone 1 and the win page with
    the Pluto win picture.
 5. `spawn pluto:the_vet` in any normal room spawns him without an intro (BossTriggerZone), fighting immediately is not expected there.
-6. If the intro clip plays facing right while the Vet faces left, report it: the fix is introAnim = "" plus introDirectionalAnim = "intro" in VetBoss.cs.
+6. Expect the intro clip to play facing right even though the Vet faces Pluto on his left; if so, report it: the fix is introAnim = "" plus introDirectionalAnim = "intro" in VetBoss.cs.
 Send back: whether the intro fired, whether damage registers, and how the fight feels (too easy / too hard).
 
 **Result:** pending
@@ -57,5 +61,7 @@ Send back: whether the intro fired, whether damage registers, and how the fight 
 3. Below half health: everything faster, plus rings of sixteen syringes (two rings, offset).
 4. Fight length and difficulty with a full late-run loadout: report the time to kill; tune `[Boss] BossHealth` / `BossDpsCap`.
 5. The Gemini boss card and win picture show (if generated).
+6. Bullets leave from the syringe tip, not from the Vet's feet.
+7. Syringe, droplet and pill hitboxes feel fair (they use full-sprite footprints).
 
 **Result:** pending
