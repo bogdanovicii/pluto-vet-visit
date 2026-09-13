@@ -30,3 +30,17 @@ Same setup; `DebugEndAfterSeconds` may stay at 8 so the past still ends by itsel
    returns and Pluto can move. `[Debug] SkipIntro = true` skips them.
 5. Props render above the floor and below Pluto when he walks in front of them (report anything drawn on top of Pluto).
 Send back: screenshot of the room, and any prop that looks wrong.
+
+## Milestone 3 — The Vet
+
+Set `DebugEndAfterSeconds = 0`.
+1. `vet_visit`: The Vet stands behind the table during the dialogue and does nothing; the bubbles come from him.
+2. After the hiss: the walk-in, the boss card "THE VET — Doctor's Orders" with the card art, the boss health bar, boss music.
+   Log: `The Vet spawned`, `fight started`.
+3. He paces behind the table and alternates two attacks: three aimed syringes, and two fans of droplets.
+   Pluto's kibble damages him (bar goes down). Contact with him hurts.
+4. On death: death animation, harmless explosion ring, `The Vet is down`, then the ending from milestone 1 and the win page with
+   the Pluto win picture.
+5. `spawn pluto:the_vet` in any normal room spawns him without an intro (BossTriggerZone), fighting immediately is not expected there.
+6. If the intro clip plays facing right while the Vet faces left, report it: the fix is introAnim = "" plus introDirectionalAnim = "intro" in VetBoss.cs.
+Send back: whether the intro fired, whether damage registers, and how the fight feels (too easy / too hard).

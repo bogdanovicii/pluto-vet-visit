@@ -15,6 +15,7 @@ namespace PlutoVetVisit
         private RoomHandler room;
         private Vector2 origin; // world position of room cell (0, 0)
         private bool ending;
+        private AIActor vet;
 
         private IEnumerator Start()
         {
@@ -35,14 +36,57 @@ namespace PlutoVetVisit
                 Place(GameManager.Instance.SecondaryPlayer, ClinicLayout.Spawn + new Vector2(1.5f, 0f));
             Pixelator.Instance.TriggerPastFadeIn();
             yield return new WaitForSeconds(0.5f);
+            if (PastConfig.DebugEndAfterSeconds > 0f) StartCoroutine(DebugEnding());
+            vet = SpawnVet();
             if (!PastConfig.SkipIntro) yield return StartCoroutine(Dialogue(player));
+            StartFight(player);
+        }
 
-            if (PastConfig.DebugEndAfterSeconds > 0f)
+        private IEnumerator DebugEnding()
+        {
+            PastPlugin.Log("debug: ending the past in " + PastConfig.DebugEndAfterSeconds + " s");
+            yield return new WaitForSeconds(PastConfig.DebugEndAfterSeconds);
+            OnBossDied();
+        }
+
+        /// <summary>The Vet stands behind the table, visible but inert, until the intro finishes.</summary>
+        private AIActor SpawnVet()
+        {
+            if (VetBoss.Prefab == null)
             {
-                PastPlugin.Log("debug: ending the past in " + PastConfig.DebugEndAfterSeconds + " s");
-                yield return new WaitForSeconds(PastConfig.DebugEndAfterSeconds);
-                OnBossDied();
+                PastPlugin.Log("no boss prefab; the clinic stays empty");
+                return null;
             }
+            AIActor prefab = VetBoss.Prefab.GetComponent<AIActor>();
+            AIActor a = AIActor.Spawn(prefab, World(ClinicLayout.Vet), room, true, AIActor.AwakenAnimationType.Default, false);
+            a.gameObject.name = "The Vet";
+            a.behaviorSpeculator.enabled = false;
+            a.healthHaver.PreventAllDamage = true;
+            PastPlugin.Log("The Vet spawned at " + World(ClinicLayout.Vet));
+            return a;
+        }
+
+        private void StartFight(PlayerController player)
+        {
+            if (vet == null) return;
+            GenericIntroDoer intro = vet.GetComponent<GenericIntroDoer>();
+            if (intro == null)
+            {
+                Wake();
+                return;
+            }
+            intro.ConfigureOnPlacement(room);
+            intro.OnIntroFinished = Wake;
+            intro.TriggerSequence(player); // walk-in, boss card, health bar, boss music
+        }
+
+        private void Wake()
+        {
+            if (vet == null) return;
+            vet.HasBeenEngaged = true;
+            vet.behaviorSpeculator.enabled = true;
+            vet.healthHaver.PreventAllDamage = false;
+            PastPlugin.Log("fight started");
         }
 
         public Vector2 World(Vector2 cell)
@@ -61,9 +105,9 @@ namespace PlutoVetVisit
 
         private GameObject speaker;
 
-        /// <summary>Where the Vet's lines come from. Task 10 returns the spawned boss; until then a point behind the table.</summary>
         protected virtual Transform SpeakerTransform()
         {
+            if (vet != null) return vet.transform;
             if (speaker == null)
             {
                 speaker = new GameObject("VetSpeaker");
@@ -112,6 +156,7 @@ namespace PlutoVetVisit
             GameStatsManager.Instance.SetCharacterSpecificFlag(PlutoLink.Identity, CharacterSpecificGungeonFlags.KILLED_PAST, true);
             GameStatsManager.Instance.RegisterStatChange(TrackedStats.TIMES_KILLED_PAST, 1f);
             PastPlugin.Log("past killed: KILLED_PAST set for identity " + (int)PlutoLink.Identity);
+            if (vet != null && vet.healthHaver != null) vet.healthHaver.PreventAllDamage = true;
             yield return new WaitForSeconds(3.5f);
 
             PlayerController p = GameManager.Instance.PrimaryPlayer;
