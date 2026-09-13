@@ -1,0 +1,11 @@
+{
+  "name": "Pluto_Vet_Visit",
+  "version_number": "0.1.0",
+  "website_url": "",
+  "description": "Pluto the Cat's past: The Vet Visit. Test package, needs Pluto_The_Cat installed.",
+  "dependencies": [
+    "BepInEx-BepInExPack_EtG-5.4.2101",
+    "MtG_API-Mod_the_Gungeon_API-1.9.2",
+    "Alexandria-Alexandria-0.5.10"
+  ]
+}
