@@ -19,6 +19,8 @@ Launch once, then set `[Debug] DebugEndAfterSeconds = 8` in `BepInEx/config/bogd
 
 Send back: `./vet_check.sh` output, a screenshot of step 2, and whether steps 4-6 passed.
 
+**Result:** pending
+
 ## Milestone 2 — the clinic
 
 Same setup; `DebugEndAfterSeconds` may stay at 8 so the past still ends by itself.
@@ -30,6 +32,8 @@ Same setup; `DebugEndAfterSeconds` may stay at 8 so the past still ends by itsel
    returns and Pluto can move. `[Debug] SkipIntro = true` skips them.
 5. Props render above the floor and below Pluto when he walks in front of them (report anything drawn on top of Pluto).
 Send back: screenshot of the room, and any prop that looks wrong.
+
+**Result:** pending
 
 ## Milestone 3 — The Vet
 
@@ -45,9 +49,13 @@ Set `DebugEndAfterSeconds = 0`.
 6. If the intro clip plays facing right while the Vet faces left, report it: the fix is introAnim = "" plus introDirectionalAnim = "intro" in VetBoss.cs.
 Send back: whether the intro fired, whether damage registers, and how the fight feels (too easy / too hard).
 
+**Result:** pending
+
 ## Milestone 4 — phase two and polish
 1. Syringes, droplets and pills use their own sprites (not the red Bullet Kin bullet).
 2. Above half health: aimed syringes, droplet fans, and slow pills that burst into six droplets.
 3. Below half health: everything faster, plus rings of sixteen syringes (two rings, offset).
 4. Fight length and difficulty with a full late-run loadout: report the time to kill; tune `[Boss] BossHealth` / `BossDpsCap`.
 5. The Gemini boss card and win picture show (if generated).
+
+**Result:** pending

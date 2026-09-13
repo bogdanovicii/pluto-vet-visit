@@ -4,3 +4,19 @@ Pluto's past: a white veterinary clinic and The Vet, a doctor with a syringe gun
 (r2modman -> Settings -> Import local mod), then this zip. From the Breach, as Pluto, open the console and run
 `vet_visit` to jump straight into the past, or beat the Lich with the Bullet That Can Kill The Past.
 Run `vet_check.sh` after playing to grade the log.
+
+## Config
+
+Settings live in `BepInEx/config/bogdan.etg.plutovetvisit.cfg`:
+- `Enabled` - attach The Vet Visit to Pluto.
+- `BossHealth` - The Vet's health.
+- `BossDpsCap` - boss damage-per-second cap for the past level (-1 = none).
+- `BossMusic` - Wwise event played during the fight.
+- `RoomVisualSubtype` - override the room's visual subtype in the lab tileset (-1 = default).
+- `SkipIntro` - skip the dialogue before the fight.
+- `DebugEndAfterSeconds` - if > 0, the past ends by itself after this many seconds (tests the ending without a boss).
+- `Line1` - the Vet's first line.
+- `Line2` - the Vet's second line.
+- `Line3` - Pluto's answer.
+
+The plugin does nothing if Pluto_The_Cat is missing.
