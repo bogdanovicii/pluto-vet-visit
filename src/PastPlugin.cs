@@ -58,8 +58,16 @@ namespace PlutoVetVisit
         {
             bool ok = true;
             ok &= Step("harmony", () => harmony.PatchAll(typeof(PastPlugin).Assembly));
+            ok &= Step("room", ClinicRoom.Load);
+            ok &= Step("level", PastLevel.Register);
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
-            Log("The Vet Visit is ready (no level registered yet).");
+            Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME, null));
+            Step("console", () => ETGModConsole.Commands.AddUnit("vet_visit", args =>
+            {
+                Log("loading " + PastLevel.SCENE_NAME + " from the console");
+                GameManager.Instance.LoadCustomLevel(PastLevel.SCENE_NAME);
+            }));
+            Log("The Vet Visit is ready. Pluto's past: " + PastLevel.SCENE_NAME);
         }
 
         /// <summary>Runs one load step in isolation so one broken feature cannot take the rest down.</summary>
