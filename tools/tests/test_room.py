@@ -20,11 +20,35 @@ class RoomTests(unittest.TestCase):
         self.assertTrue(set(info) <= {'1', '2'})
 
     def test_tileinfo_bottom_row_first(self):
-        info = C.tile_info()
-        bottom = ''.join(C.CELL[c] for c in C.ROOM_MAP[-1])
-        top = ''.join(C.CELL[c] for c in C.ROOM_MAP[0])
-        self.assertEqual(info[:C.WIDTH], bottom)
-        self.assertEqual(info[-C.WIDTH:], top)
+        saved = C.ROOM_MAP
+        try:
+            # asymmetric map so the bottom (last ASCII row) and top (first ASCII row) differ
+            C.ROOM_MAP = ['#' + '.' * (C.WIDTH - 1)] + ['.' * C.WIDTH] * (C.HEIGHT - 1)
+            info = C.tile_info()
+            bottom = ''.join(C.CELL[c] for c in C.ROOM_MAP[-1])
+            top = ''.join(C.CELL[c] for c in C.ROOM_MAP[0])
+            self.assertEqual(info[:C.WIDTH], bottom)
+            self.assertEqual(info[-C.WIDTH:], top)
+        finally:
+            C.ROOM_MAP = saved
+
+    def test_flip_and_is_floor_with_an_asymmetric_map(self):
+        saved = C.ROOM_MAP
+        try:
+            # one wall at the top-left ASCII cell = game cell (0, HEIGHT-1)
+            C.ROOM_MAP = ['#' + '.' * (C.WIDTH - 1)] + ['.' * C.WIDTH] * (C.HEIGHT - 1)
+            info = C.tile_info()
+            self.assertEqual(len(info), C.WIDTH * C.HEIGHT)
+            self.assertEqual(info[0], '1')                      # first char = game cell (0, 0) = bottom row
+            self.assertEqual(info[-C.WIDTH], '2')               # last row of tileInfo = top ASCII row
+            self.assertEqual(info.count('2'), 1)
+            self.assertFalse(C.is_floor(0, C.HEIGHT - 1))       # the wall
+            self.assertTrue(C.is_floor(0, 0))
+            self.assertFalse(C.is_floor(-1, 0))
+            self.assertFalse(C.is_floor(C.WIDTH, 0))
+            self.assertFalse(C.is_floor(0, C.HEIGHT))
+        finally:
+            C.ROOM_MAP = saved
 
     def test_room_data_json_roundtrip(self):
         data = json.loads(C.to_json())
