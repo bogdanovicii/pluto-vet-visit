@@ -52,6 +52,11 @@ namespace PlutoVetVisit
         /// <summary>The Vet stands behind the table, visible but inert, until the intro finishes.</summary>
         private AIActor SpawnVet()
         {
+            if (room == null)
+            {
+                PastPlugin.Log("no room for the Vet; the fight cannot start");
+                return null;
+            }
             if (VetBoss.Prefab == null)
             {
                 PastPlugin.Log("no boss prefab; the clinic stays empty");
@@ -69,6 +74,11 @@ namespace PlutoVetVisit
         private void StartFight(PlayerController player)
         {
             if (vet == null) return;
+            if (room == null)
+            {
+                PastPlugin.Log("no room for the Vet; the fight cannot start");
+                return;
+            }
             GenericIntroDoer intro = vet.GetComponent<GenericIntroDoer>();
             if (intro == null)
             {
@@ -121,16 +131,22 @@ namespace PlutoVetVisit
         {
             bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
             player.SetInputOverride("past");
-            if (coop) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
+            if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
             PastCameraUtility.LockConversation(World(ClinicLayout.CameraFocus));
-            yield return new WaitForSeconds(0.8f);
-            Transform who = SpeakerTransform();
-            yield return StartCoroutine(Say(who, PastConfig.Line1, 2.5f));
-            yield return StartCoroutine(Say(who, PastConfig.Line2, 3.5f));
-            yield return StartCoroutine(Say(player.transform, PastConfig.Line3, 1.5f));
-            PastCameraUtility.UnlockConversation();
-            player.ClearInputOverride("past");
-            if (coop) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+            try
+            {
+                yield return new WaitForSeconds(0.8f);
+                Transform who = SpeakerTransform();
+                yield return StartCoroutine(Say(who, PastConfig.Line1, 2.5f));
+                yield return StartCoroutine(Say(who, PastConfig.Line2, 3.5f));
+                yield return StartCoroutine(Say(player.transform, PastConfig.Line3, 1.5f));
+            }
+            finally
+            {
+                PastCameraUtility.UnlockConversation();
+                player.ClearInputOverride("past");
+                if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+            }
         }
 
         private IEnumerator Say(Transform who, string text, float seconds)

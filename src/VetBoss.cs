@@ -146,7 +146,7 @@ namespace PlutoVetVisit
                 doScreenShake = true, doStickyFriction = true, doExplosionRing = true, playDefaultSFX = true, isFreezeExplosion = false,
             };
             Gun rpg = PickupObjectDatabase.GetById(19) as Gun; // borrow the RPG's explosion look when available
-            ExplosiveModifier rpgBoom = rpg != null && rpg.DefaultModule.projectiles.Count > 0 ? rpg.DefaultModule.projectiles[0].GetComponent<ExplosiveModifier>() : null;
+            ExplosiveModifier rpgBoom = rpg != null && rpg.DefaultModule != null && rpg.DefaultModule.projectiles != null && rpg.DefaultModule.projectiles.Count > 0 ? rpg.DefaultModule.projectiles[0].GetComponent<ExplosiveModifier>() : null;
             if (rpgBoom != null && rpgBoom.explosionData != null)
             {
                 boom.explosionData.useDefaultExplosion = false;

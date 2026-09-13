@@ -4,7 +4,7 @@ using Brave.BulletScript;
 namespace PlutoVetVisit
 {
     // Bullet scripts run at 60 frames per second: Wait(8) is eight frames. Speeds are tiles per second.
-    // Bank names must exist on the boss's AIBulletBank (VetBoss adds "syringe" and "droplet").
+    // Bank names must exist on the boss's AIBulletBank (VetBoss adds "syringe", "droplet" and "pill").
 
     public class SyringeBullet : Bullet
     {

@@ -19,8 +19,10 @@ namespace PlutoVetVisit
 
         public static GameLevelDefinition Definition;
 
-        // The template prefab is a shared asset (playing the Marine past later in the session must still work),
-        // so everything we change on it is saved here and restored by the postfix below.
+        // The template prefab is a shared asset (playing the Marine past later in the session must still work).
+        // The flow list and the three name strings are saved here and restored by the postfix below; the other
+        // three fields (LevelOverrideType, BossMasteryTokenItemId, PrefabsToAutoSpawn) are already at these
+        // values on the Soldier prefab.
         private static List<DungeonFlow> savedFlows;
         private static string savedShortName, savedFloorName, savedOverrideText;
 
