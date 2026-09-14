@@ -71,6 +71,38 @@ class RoomTests(unittest.TestCase):
         for name, (x, y) in C.NAMED.items():
             self.assertTrue(C.is_floor(x, y), name)
 
+    def test_zone_walls_and_door_gaps(self):
+        # two-cell-thick dividers with a two-cell gap on the centre line, everything else floor
+        for y in range(C.HEIGHT):
+            wall_row = y in (13, 14, 32, 33)
+            for x in range(C.WIDTH):
+                expect_wall = wall_row and x not in (14, 15)
+                self.assertEqual(C.cell(x, y) == '#', expect_wall, (x, y))
+        self.assertEqual(C.ZONES, {'WARD_MIN_Y': 15, 'THEATRE_MIN_Y': 34})
+        self.assertLess(C.NAMED['Spawn'][1], 13)
+        self.assertGreater(C.NAMED['Vet'][1], C.ZONES['THEATRE_MIN_Y'])
+
+    def test_doors_stand_in_the_gaps(self):
+        doors = [cell for name, cell in C.PLACEABLES if name == C.DOOR]
+        self.assertEqual(doors, [(14.0, 13.0), (14.0, 32.0)])
+        for x, y in doors:
+            self.assertTrue(C.is_floor(x, y) and C.is_floor(x + 1, y) and C.is_floor(x, y + 1) and C.is_floor(x + 1, y + 1))
+            self.assertFalse(C.is_floor(x - 1, y) or C.is_floor(x + 2, y))
+
+    def test_wave_spawns_in_the_ward_on_floor(self):
+        for name, cells in C.SPAWNS.items():
+            self.assertGreaterEqual(len(cells), 3, name)
+            for x, y in cells:
+                self.assertTrue(C.is_floor(x, y), (name, x, y))
+                self.assertTrue(C.ZONES['WARD_MIN_Y'] <= y < 32, (name, x, y))
+
+    def test_layout_cs_has_zones_and_spawns(self):
+        cs = C.layout_cs()
+        for name in C.ZONES:
+            self.assertIn('public const float %s = ' % name, cs)
+        for name in C.SPAWNS:
+            self.assertIn('public static readonly Vector2[] %s = { new Vector2(' % name, cs)
+
     def test_exit_on_south_border(self):
         (x, y), direction = C.EXITS[0]
         self.assertEqual(y, 0)

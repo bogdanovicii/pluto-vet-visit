@@ -65,3 +65,21 @@ Send back: whether the intro fired, whether damage registers, and how the fight 
 7. Syringe, droplet and pill hitboxes feel fair (they use full-sprite footprints).
 
 **Result:** pending
+
+## Milestone 5 — three zones and gates (Pluto_Vet_Visit-0.5.0.zip)
+
+Set `DebugEndAfterSeconds = 0`. Log lines to look for: `doors found: 2`, `the ward door opens`, `the ward door closes behind Pluto`,
+`wave 1: 3 enemies`, `wave 1 cleared`, `wave 2: 5 enemies`, `wave 2 cleared`, `the theatre door opens`, `The Vet spawned`, `fight started`.
+1. `vet_visit`: Pluto starts bottom-left of a tall room beside the carrier; chairs along the left wall, the reception desk on the right,
+   a closed teal double door in the wall above. After about a second the door slides open (frame only, floor visible through it).
+2. Walk through the door into the ward (kennels on both walls, a counter in the middle). Once Pluto is a cell and a half inside, the
+   door behind him closes and blocks the way back (walk into it; shoot it: bullets stop). Three enemies appear by the side walls.
+3. Kill them: five more appear by the kennels. Kill those: the far door opens. If anything is stuck in a wall, note it; after 90 s the
+   game puts the wave down by itself and logs it.
+4. Walk into the theatre: the door closes behind Pluto, the Vet stands behind the table, the dialogue plays, the fight starts as before.
+   Beat him: the ending as in milestone 1.
+5. `[Debug] SkipWaves = true`: the ward door closes and the theatre door opens at once (no enemies).
+6. Rendering: doors draw above the floor and below Pluto when he stands south of them; kennels and the station block movement; nothing
+   from the ward is visible through the wall from the waiting room (report if the wall segments render as pillars or gaps instead of a wall).
+
+**Result:** pending

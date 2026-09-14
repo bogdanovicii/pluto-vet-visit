@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+- The past is now one 30 x 52 room in three zones, like the Marine's Primerdyne lab: the waiting room at the bottom (carrier, chairs, reception), the ward in the middle (kennels along both walls, a nurse station, the medical kit), and the operating theatre at the top (the old clinic dressing: cabinets, table, cart, sink, toys).
+- Sliding clinic doors gate the zones. The ward door opens a second after the fade-in; it closes behind Pluto once he is inside, and the theatre door opens only when the ward is cleared. Each door is a hand-drawn prop with a closed and an open frame.
+- The ward has two waves of vanilla enemies (config `[Waves] Wave1` / `Wave2`, names or GUIDs; default mutant bullet kin, rats and parrots) that stand up at the side doors and then at the kennels. A wave that is still alive after `WaveTimeoutSeconds` (90) is put down so the past cannot get stuck. Vet Techs and the Nurse replace them in 0.6.0.
+- The Vet now spawns when Pluto enters the theatre; the dialogue and the fight are unchanged.
+- New props: clinic door, kennel (closed and open), nurse station. Config `[Debug] SkipWaves` walks the zones without spawning.
+
 ## 0.4.0
 - The Vet redrawn: glasses, stethoscope, coat pocket with pen and name tag, dark shoes, and a proper vaccine gun (syringe pistol with plunger, barrel, needle and grip) that he raises to shoot; walk cycle with shoes; shots leave from the needle. His frames ship without a drawn outline because the game outlines actors itself (he had a double outline).
 - Sixteen new clinic props: reception desk with monitor and papers, two waiting chairs on a floor mat, a potted plant, a window with blinds, a wall clock, an X-ray light box, a medicine shelf, a fish tank, a sharps bin, an IV stand, a treat jar, Royal Canin food and water bowls, a litter box, paw prints and a wet-floor sign.

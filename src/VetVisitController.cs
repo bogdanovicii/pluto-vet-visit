@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Dungeonator;
 using Gungeon;
@@ -7,8 +8,9 @@ using Gungeon;
 namespace PlutoVetVisit
 {
     /// <summary>
-    /// Placed in the clinic room by name (ClinicLayout.CONTROLLER_OBJECT). Runs the past: fade-in, dialogue,
-    /// the boss, and the ending. Modelled on the vanilla PastLabMarineController / PilotPastController.
+    /// Placed in the clinic room by name (ClinicLayout.CONTROLLER_OBJECT). Runs the past through its three zones:
+    /// the waiting room (no combat), the ward (two waves behind a sealed door), the operating theatre (dialogue,
+    /// the boss) and the ending. Modelled on the vanilla PastLabMarineController / PilotPastController.
     /// </summary>
     public class VetVisitController : MonoBehaviour
     {
@@ -18,6 +20,7 @@ namespace PlutoVetVisit
         private Vector2 origin; // world position of room cell (0, 0)
         private bool ending;
         private AIActor vet;
+        private ClinicDoor wardDoor, theatreDoor;
 
         private IEnumerator Start()
         {
@@ -43,9 +46,138 @@ namespace PlutoVetVisit
             Pixelator.Instance.TriggerPastFadeIn();
             yield return new WaitForSeconds(0.5f);
             if (PastConfig.DebugEndAfterSeconds > 0f) StartCoroutine(DebugEnding());
+            FindDoors();
+            yield return StartCoroutine(RunZones(player));
+        }
+
+        // ------------------------------------------------------------------ zones and gates
+
+        /// <summary>The two placed door clones, told apart by height: the ward door is the lower one.</summary>
+        private void FindDoors()
+        {
+            List<ClinicDoor> doors = new List<ClinicDoor>(ClinicDoor.All);
+            doors.RemoveAll(d => d == null);
+            doors.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
+            if (doors.Count >= 1) wardDoor = doors[0];
+            if (doors.Count >= 2) theatreDoor = doors[1];
+            PastPlugin.Log("doors found: " + doors.Count + " (expected 2)");
+        }
+
+        private static void SetDoor(ClinicDoor door, bool open, string what)
+        {
+            if (door == null) { PastPlugin.Log(what + ": no door prop, nothing to " + (open ? "open" : "close")); return; }
+            door.SetOpen(open);
+            PastPlugin.Log(what);
+        }
+
+        /// <summary>Act 1 (walk), act 2 (two waves behind the sealed ward door), act 3 (the Vet).</summary>
+        private IEnumerator RunZones(PlayerController player)
+        {
+            // Act 1: the waiting room. No combat; the intro cutscene arrives in 0.7.0.
+            yield return new WaitForSeconds(1f);
+            SetDoor(wardDoor, true, "the ward door opens");
+            yield return StartCoroutine(WaitForZone(ClinicLayout.WARD_MIN_Y + 1.5f));
+
+            // Act 2: the ward. Sealed behind Pluto; two waves; the theatre door opens when the second is dead.
+            SetDoor(wardDoor, false, "the ward door closes behind Pluto");
+            if (PastConfig.SkipWaves) PastPlugin.Log("debug: waves skipped");
+            else
+            {
+                yield return StartCoroutine(RunWave("wave 1", PastConfig.Wave1, ClinicLayout.Wave1Spawns));
+                yield return StartCoroutine(RunWave("wave 2", PastConfig.Wave2, ClinicLayout.Wave2Spawns));
+            }
+            SetDoor(theatreDoor, true, "the theatre door opens");
+            yield return StartCoroutine(WaitForZone(ClinicLayout.THEATRE_MIN_Y + 1.5f));
+
+            // Act 3: the operating theatre.
+            SetDoor(theatreDoor, false, "the theatre door closes behind Pluto");
             vet = SpawnVet();
             if (!PastConfig.SkipIntro) yield return StartCoroutine(Dialogue(player));
             StartFight(player);
+        }
+
+        /// <summary>Waits until any player's centre is past the given room-cell height.</summary>
+        private IEnumerator WaitForZone(float cellY)
+        {
+            while (true)
+            {
+                if (PlayerPast(GameManager.Instance.PrimaryPlayer, cellY)) yield break;
+                if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER && PlayerPast(GameManager.Instance.SecondaryPlayer, cellY)) yield break;
+                yield return null;
+            }
+        }
+
+        private bool PlayerPast(PlayerController p, float cellY)
+        {
+            return p != null && p.healthHaver != null && !p.healthHaver.IsDead && p.CenterPosition.y - origin.y >= cellY;
+        }
+
+        // ------------------------------------------------------------------ waves
+
+        // Console names the config accepts without a GUID (vanilla enemies used by the v2 design).
+        private static readonly Dictionary<string, string> ENEMY_GUIDS = new Dictionary<string, string>
+        {
+            { "rat", "6ad1cafc268f4214a101dca7af61bc91" },
+            { "parrot", "4b21a913e8c54056bc05cafecf9da880" },
+            { "mutant_bullet_kin", "d4a9836f8ab14f3fadd0f597438b1f1f" },
+            { "bullet_kin", "01972dee89fc4404a5c408d50007dad5" },
+            { "chick", "95ea1a31fc9e4415a5f271b9aedf9b15" },
+            { "rabbit", "42432592685e47c9941e339879379d3a" },
+            { "squirrel", "4254a93fc3c84c0dbe0a8f0dddf48a5a" },
+        };
+
+        private static AIActor ResolveEnemy(string token)
+        {
+            token = token.Trim();
+            if (token.Length == 0) return null;
+            string guid;
+            if (!ENEMY_GUIDS.TryGetValue(token, out guid)) guid = token;
+            try { return EnemyDatabase.GetOrLoadByGuid(guid); }
+            catch (Exception e) { PastPlugin.Log("unknown enemy '" + token + "': " + e.Message); return null; }
+        }
+
+        /// <summary>Spawns one wave at the given cells and waits until every actor of it is dead.</summary>
+        private IEnumerator RunWave(string label, string list, Vector2[] cells)
+        {
+            List<AIActor> alive = new List<AIActor>();
+            string[] tokens = (list ?? string.Empty).Split(',');
+            int i = 0;
+            foreach (string token in tokens)
+            {
+                AIActor prefab = ResolveEnemy(token);
+                if (prefab == null || cells == null || cells.Length == 0) continue;
+                Vector2 cell = cells[i % cells.Length];
+                i++;
+                try
+                {
+                    AIActor a = AIActor.Spawn(prefab, World(cell), room, true, AIActor.AwakenAnimationType.Spawn, true);
+                    if (a == null) continue;
+                    a.IgnoreForRoomClear = true;    // the room's own clear bookkeeping (rewards, unseal) stays out of it
+                    a.HasBeenEngaged = true;
+                    alive.Add(a);
+                }
+                catch (Exception e) { PastPlugin.Log(label + ": could not spawn " + token + ": " + e.Message); }
+            }
+            PastPlugin.Log(label + ": " + alive.Count + " enemies");
+            if (alive.Count == 0) yield break;
+            float waited = 0f;
+            while (true)
+            {
+                alive.RemoveAll(a => a == null || a.healthHaver == null || a.healthHaver.IsDead);
+                if (alive.Count == 0) break;
+                waited += BraveTime.DeltaTime;
+                if (PastConfig.WaveTimeoutSeconds > 0f && waited > PastConfig.WaveTimeoutSeconds)
+                {
+                    PastPlugin.Log(label + ": " + alive.Count + " still alive after " + PastConfig.WaveTimeoutSeconds + " s; putting them down");
+                    foreach (AIActor a in alive)
+                        try { a.healthHaver.ApplyDamage(1e6f, Vector2.zero, "vetvisit", CoreDamageTypes.None, DamageCategory.Unstoppable, true, null, true); }
+                        catch (Exception e) { PastPlugin.Log("could not put down " + a.name + ": " + e.Message); }
+                    break;
+                }
+                yield return null;
+            }
+            PastPlugin.Log(label + " cleared");
+            yield return new WaitForSeconds(0.75f);
         }
 
         private IEnumerator DebugEnding()

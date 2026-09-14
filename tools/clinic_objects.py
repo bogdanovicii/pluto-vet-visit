@@ -460,6 +460,84 @@ WET_FLOOR_SIGN = R([
     "oo........oo",
 ])
 
+# ================================================================== v0.5 props: the gates and the ward
+# ------------------------------------------------------------------ sliding clinic door 32x40: steel frame, two teal panels
+# The door prop sits in the 2x2 gap of a zone wall. Closed: both panels meet in the middle. Open: the panels have
+# slid into the wall, only the frame remains (transparent centre shows the floor behind). ClinicDoor.cs swaps them.
+def _door_frame():
+    rows = ['.' * 32] * 40
+    rows = overlay(rows, box(32, 6, '%', top='&', bottom='#'), 0, 0)          # lintel
+    for y in range(5, 40):
+        rows[y] = 'o%&o' + rows[y][4:28] + 'o&%o'                             # side posts
+    rows[39] = 'oooo' + rows[39][4:28] + 'oooo'
+    return rows
+
+
+def _door_panel(w, glass_x):
+    pan = box(w, 34, '$', top='~', bottom='~')
+    pan = overlay(pan, ['oooooo', 'o^^^^o', 'o^^^^o', 'o^^^^o', 'o^^^^o', 'o^^^^o', 'o^^^^o', 'oooooo'], glass_x, 5)  # window
+    pan = overlay(pan, ['o', '&', '&', '&', '&', 'o'], w - 3, 18)            # handle
+    return pan
+
+
+_dc = _door_frame()
+_dc = overlay(_dc, _door_panel(12, 3), 4, 5)
+_dc = overlay(_dc, _door_panel(12, 3), 16, 5)
+_dc[39] = 'o' * 32                                                            # sill
+CLINIC_DOOR = R(_dc)
+
+_do = _door_frame()
+_do = overlay(_do, ['~~', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$',
+                    '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '~~'], 4, 5)   # panel edge left
+_do = overlay(_do, ['~~', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$',
+                    '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '~~'], 26, 5)  # panel edge right
+_do[39] = 'oooo' + '0' * 24 + 'oooo'                                          # sill
+CLINIC_DOOR_OPEN = R(_do)
+
+# ------------------------------------------------------------------ kennel cage 32x32: steel box, barred door, tray
+def _kennel(open_door):
+    rows = box(32, 32, '#', top='&', bottom='%')
+    rows[1] = 'o' + '&' * 30 + 'o'
+    rows[2] = 'o' + '%' * 30 + 'o'
+    # dark interior with a blue blanket
+    rows = overlay(rows, box(28, 24, '#', top='#'), 2, 4)
+    rows = overlay(rows, ['|' * 22, '/' * 22], 5, 24)
+    if not open_door:
+        bars = []
+        for y in range(22):
+            bars.append(''.join('%' if x % 4 == 1 else ('&' if x % 4 == 2 else '.') for x in range(26)))
+        rows = overlay(rows, bars, 3, 5)
+        rows = overlay(rows, ['o' * 26], 3, 5)
+        rows = overlay(rows, ['o' * 26], 3, 26)
+        rows = overlay(rows, ['oo', 'o&', 'oo'], 27, 14)                     # latch
+    else:
+        # door swung outward to the right: a short barred strip at the right edge, interior in full view
+        strip = []
+        for y in range(22):
+            strip.append(''.join('%' if x % 3 == 0 else ('&' if x % 3 == 1 else '.') for x in range(5)))
+        rows = overlay(rows, strip, 26, 5)
+        rows = overlay(rows, ['o' * 5], 26, 5)
+        rows = overlay(rows, ['o' * 5], 26, 26)
+        rows = overlay(rows, ['o' * 26], 3, 5)
+        rows = overlay(rows, ['o' * 26], 3, 26)
+    rows[29] = 'o' + '%' * 30 + 'o'                                          # tray lip
+    rows[30] = 'o' + '#' * 30 + 'o'
+    return rows
+
+
+KENNEL = R(_kennel(False))
+KENNEL_OPEN = R(_kennel(True))
+
+# ------------------------------------------------------------------ nurse station 48x24: white counter, steel front, teal stripe, clipboard
+_ns = ['.' * 48] * 24
+_ns = overlay(_ns, box(48, 10, '_', top='0', bottom='0'), 0, 4)               # counter top
+_ns = overlay(_ns, box(48, 12, '&', top='%', bottom='%'), 0, 12)             # steel front
+_ns = overlay(_ns, ['$' * 46], 1, 15)                                        # teal stripe
+_ns[23] = 'o' * 48
+_ns = overlay(_ns, ['oooooooo', 'o&&&&&&o', 'o&oooo&o', 'o&&&&&&o', 'o&oooo&o', 'oooooooo'], 32, 0)   # clipboard
+_ns = overlay(_ns, ['..o..', '.o%o.', 'o%%%o', 'ooooo'], 8, 0)               # call bell
+NURSE_STATION = R(_ns)
+
 OBJECTS = [
     Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 2, 0, 44, 16)),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
@@ -491,45 +569,62 @@ OBJECTS = [
     Obj('pluto_floor_mat', 'floor_mat', FLOOR_MAT, None, -2.5),
     Obj('pluto_paw_prints', 'paw_prints', PAW_PRINTS, None, -2.0),
     Obj('pluto_wet_floor_sign', 'wet_floor_sign', WET_FLOOR_SIGN, ('low', 0, 0, 12, 6)),
+    # v0.5: the zone door (ClinicDoor.cs swaps in EXTRA_PNGS['clinic_door_open'] and drops the collider), the ward
+    Obj('pluto_clinic_door', 'clinic_door', CLINIC_DOOR, ('high', 0, 0, 32, 32)),
+    Obj('pluto_kennel', 'kennel', KENNEL, ('high', 0, 0, 32, 16)),
+    Obj('pluto_kennel_open', 'kennel_open', KENNEL_OPEN, ('high', 0, 0, 32, 16)),
+    Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 48, 12)),
 ]
 
-# Placements (game cells). Cabinets and the poster stand along the north edge; the table is the arena centre;
-# the carrier is in the waiting corner next to Pluto's spawn (6, 2.5); the Vet stands at (12.5, 11.5).
+# Extra sprites that are not placeable props: alternate frames a component swaps in (file stem -> rows).
+EXTRA_PNGS = {'clinic_door_open': CLINIC_DOOR_OPEN}
+
+# Placements (game cells) by zone. The sprite's lower-left corner sits on the cell.
+# Waiting room y 1..12: carrier and spawn bottom-left, chairs along the west wall, reception on the east.
+# Ward y 15..31: kennels along both long walls, nurse station in the middle, medical kit along the north wall.
+# Theatre y 34..50: the old clinic dressing moved up (cabinets along the north edge, the table in the middle).
 PROPS = [
-    # north wall, left to right: cabinets, window, poster, X-ray box, medicine shelf, cabinets; clock above the window
-    ('pluto_cabinet', (0.5, 15.0)), ('pluto_cabinet', (3.0, 15.0)),
-    ('pluto_window', (6.0, 15.5)), ('pluto_clock', (8.6, 17.1)),
-    ('pluto_poster', (9.0, 15.0)), ('pluto_xray_box', (10.5, 15.5)),
-    ('pluto_med_shelf', (14.0, 15.0)),
-    ('pluto_cabinet', (17.0, 15.0)), ('pluto_cabinet', (20.0, 15.0)), ('pluto_cabinet', (23.0, 15.0)),
-    # exam area: table in the middle, cart and IV stand beside it, syringe tray and cone on the floor
-    ('pluto_exam_table', (11.0, 8.0)),
-    ('pluto_cart', (16.0, 8.5)),
-    ('pluto_iv_stand', (9.5, 9.5)),
-    ('pluto_syringe_tray', (8.0, 12.0)),
-    ('pluto_cone', (20.0, 12.0)),
-    ('pluto_wet_floor_sign', (16.0, 5.5)),
-    ('pluto_paw_prints', (8.0, 5.0)),
-    # right wall: sink, fish tank, sharps bin
-    ('pluto_sink', (23.0, 10.5)),
-    ('pluto_fish_tank', (23.0, 6.5)),
-    ('pluto_sharps_bin', (24.5, 4.0)),
-    # waiting corner (bottom-left): mat, chairs, plant, carrier by Pluto's spawn, toys
-    ('pluto_floor_mat', (0.5, 4.0)),
-    ('pluto_chair', (1.0, 5.0)), ('pluto_chair', (2.5, 5.0)),
-    ('pluto_plant', (0.5, 8.0)),
-    ('pluto_scale', (4.0, 10.0)),
+    # --- waiting room
     ('pluto_carrier', (2.0, 1.5)),
-    ('pluto_toy_mouse', (7.0, 6.0)),
-    ('pluto_toy_ball', (18.0, 4.0)),
-    ('pluto_feather_wand', (14.0, 3.5)),
-    # cat corner (left, under the scale): litter box and Royal Canin bowls
-    ('pluto_litter_box', (1.0, 11.5)),
-    ('pluto_food_bowls', (5.5, 12.5)),
-    # reception (bottom-right): desk with the treat jar, scratching post
-    ('pluto_reception_desk', (18.5, 1.5)),
-    ('pluto_treat_jar', (21.4, 3.3)),
-    ('pluto_scratch_post', (22.5, 4.5)),
+    ('pluto_floor_mat', (0.5, 4.0)),
+    ('pluto_chair', (1.0, 5.5)), ('pluto_chair', (1.0, 7.0)), ('pluto_chair', (1.0, 8.5)), ('pluto_chair', (1.0, 10.0)),
+    ('pluto_window', (7.0, 10.5)), ('pluto_clock', (10.0, 11.4)),
+    ('pluto_poster', (12.0, 10.5)),
+    ('pluto_wet_floor_sign', (14.5, 5.0)),
+    ('pluto_paw_prints', (9.0, 3.5)),
+    ('pluto_toy_mouse', (11.0, 7.0)),
+    ('pluto_reception_desk', (19.0, 9.5)),
+    ('pluto_treat_jar', (21.9, 11.3)),
+    ('pluto_plant', (26.5, 10.5)),
+    ('pluto_fish_tank', (26.0, 6.0)),
+    ('pluto_scratch_post', (26.5, 3.0)),
+    ('pluto_plant', (26.5, 1.0)),
+    # --- ward
+    ('pluto_kennel', (1.0, 16.5)), ('pluto_kennel_open', (1.0, 20.0)), ('pluto_kennel', (1.0, 25.0)), ('pluto_kennel_open', (1.0, 28.5)),
+    ('pluto_kennel_open', (27.0, 16.5)), ('pluto_kennel', (27.0, 20.0)), ('pluto_kennel_open', (27.0, 25.0)), ('pluto_kennel', (27.0, 28.5)),
+    ('pluto_nurse_station', (12.0, 22.5)),
+    ('pluto_food_bowls', (16.0, 21.0)),
+    ('pluto_litter_box', (10.0, 20.5)),
+    ('pluto_xray_box', (5.0, 30.0)), ('pluto_med_shelf', (8.0, 29.5)),
+    ('pluto_iv_stand', (19.5, 29.5)), ('pluto_sharps_bin', (21.5, 30.0)), ('pluto_litter_box', (24.0, 30.0)),
+    ('pluto_paw_prints', (14.0, 17.0)),
+    # --- operating theatre
+    ('pluto_cabinet', (1.0, 48.0)), ('pluto_cabinet', (3.5, 48.0)), ('pluto_cabinet', (6.0, 48.0)),
+    ('pluto_window', (9.0, 48.5)), ('pluto_clock', (11.6, 50.1)),
+    ('pluto_poster', (12.0, 48.0)),
+    ('pluto_cabinet', (16.0, 48.0)), ('pluto_cabinet', (19.0, 48.0)), ('pluto_cabinet', (22.0, 48.0)), ('pluto_cabinet', (25.0, 48.0)),
+    ('pluto_exam_table', (13.0, 41.0)),
+    ('pluto_cart', (18.0, 41.5)),
+    ('pluto_iv_stand', (11.5, 42.5)),
+    ('pluto_syringe_tray', (10.0, 45.0)),
+    ('pluto_cone', (22.0, 45.0)),
+    ('pluto_sink', (25.0, 43.5)),
+    ('pluto_scale', (4.0, 43.0)),
+    ('pluto_toy_mouse', (7.0, 39.0)),
+    ('pluto_toy_ball', (20.0, 37.0)),
+    ('pluto_feather_wand', (16.0, 36.5)),
+    ('pluto_scratch_post', (24.5, 37.5)),
+    ('pluto_paw_prints', (8.0, 36.0)),
 ]
 
 
@@ -540,11 +635,15 @@ def write(project):
         p = os.path.join(out, o.png + '.png')
         save(o.rows, p)
         paths.append(p)
+    for stem, rows in EXTRA_PNGS.items():
+        p = os.path.join(out, stem + '.png')
+        save(rows, p)
+        paths.append(p)
     return paths
 
 
 def preview(project):
     p = os.path.join(project, 'docs', 'preview', 'objects-sheet.png')
-    sheet([[o.rows for o in OBJECTS[:5]], [o.rows for o in OBJECTS[5:9]], [o.rows for o in OBJECTS[9:13]],
-           [o.rows for o in OBJECTS[13:19]], [o.rows for o in OBJECTS[19:25]], [o.rows for o in OBJECTS[25:]]], p, scale=4)
+    rows = [o.rows for o in OBJECTS] + list(EXTRA_PNGS.values())
+    sheet([rows[i:i + 6] for i in range(0, len(rows), 6)], p, scale=4)
     return p

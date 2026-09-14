@@ -1,5 +1,9 @@
 """The vet clinic room as an ASCII cell map -> Alexandria .newroom JSON, ClinicLayout.cs and a preview.
 
+One 30 x 52 room, three zones stacked south to north (waiting room, ward, operating theatre), separated by
+two-cell-thick wall segments with a two-cell gap on the centre line. A clinic door prop (pluto_clinic_door) sits
+in each gap; VetVisitController seals it behind Pluto and opens the next one when the zone's waves are dead.
+
 Coordinates everywhere else in this file are GAME coordinates: x to the right, y up, cell (0,0) at the
 room's bottom-left. ROOM_MAP is written top row first for readability and flipped on export.
 """
@@ -10,44 +14,95 @@ from PIL import Image, ImageDraw
 
 import clinic_objects as O
 
-WIDTH, HEIGHT = 26, 18
+WIDTH, HEIGHT = 30, 52
 SCALE = 8  # preview pixels per cell
 
 ROOM_MAP = [
-    "..........................",  # y = 17 (north). Cabinets and the poster stand along this edge.
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",  # y = 9  exam table row
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",
-    "..........................",  # y = 2  carrier / waiting corner
-    "..........................",
-    "..........................",  # y = 0 (south)
+    "..............................",  # y = 51 (north edge; the generator adds the outer walls)
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "##############..##############",  # theatre wall, door gap at x 14..15
+    "##############..##############",
+    "..............................",  # ward y 15..31
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "##############..##############",  # ward wall, door gap at x 14..15
+    "##############..##############",
+    "..............................",  # waiting room y 1..12
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",  # y = 0 (south edge)
 ]
 CELL = {'.': '1', '#': '2'}
 
 CONTROLLER = 'pluto_past_controller'
 NAMED = {
-    'Spawn': (6.0, 2.5),        # Pluto starts here, beside the carrier
-    'Vet': (12.5, 11.5),        # The Vet stands behind the exam table
-    'Table': (12.5, 9.0),       # exam table centre
-    'CameraFocus': (12.5, 8.5), # camera lock point during the dialogue
-    'Controller': (13.0, 1.0),  # invisible controller object
+    'Spawn': (5.0, 2.5),         # Pluto starts here, beside the carrier (waiting room)
+    'Vet': (14.5, 44.5),         # The Vet stands behind the exam table (theatre)
+    'Table': (14.5, 42.0),       # exam table centre
+    'CameraFocus': (14.5, 41.5), # camera lock point during the dialogue
+    'Controller': (14.0, 1.0),   # invisible controller object
+    'WardDoor': (14.0, 13.0),    # lower-left cell of the door gap in the first wall (the door prop stands here)
+    'TheatreDoor': (14.0, 32.0), # same for the second wall
 }
-EXITS = [((13, 0), 'SOUTH')]    # one unused south exit (the generator wants a door somewhere)
+# Zone thresholds (cell y): Pluto is "in" a zone once his y passes it. The controller seals the door behind him then.
+ZONES = {
+    'WARD_MIN_Y': 15,
+    'THEATRE_MIN_Y': 34,
+}
+# Where the waves stand up. Wave 1 comes out of the side doors (east and west wall, mid-ward); wave 2 out of
+# the kennels. Each is a list of cells; the controller reads the enemy list from the config.
+SPAWNS = {
+    'Wave1Spawns': [(2.0, 23.5), (27.0, 23.5), (2.0, 19.5), (27.0, 27.5)],
+    'Wave2Spawns': [(3.5, 17.5), (3.5, 29.5), (25.5, 17.5), (25.5, 29.5), (14.5, 29.0), (9.0, 17.5)],
+}
+EXITS = [((14, 0), 'SOUTH')]     # one unused south exit (the generator wants a door somewhere)
+
+
+DOOR = 'pluto_clinic_door'
 
 
 def PLACEABLES_():
-    return [(CONTROLLER, NAMED['Controller'])] + list(O.PROPS)
+    return ([(CONTROLLER, NAMED['Controller']), (DOOR, NAMED['WardDoor']), (DOOR, NAMED['TheatreDoor'])]
+            + list(O.PROPS))
 
 
 PLACEABLES = PLACEABLES_()
@@ -110,9 +165,15 @@ def layout_cs():
         '        public const int WIDTH = %d;' % WIDTH,
         '        public const int HEIGHT = %d;' % HEIGHT,
         '        public const string CONTROLLER_OBJECT = "%s";' % CONTROLLER,
+        '        public const string DOOR_OBJECT = "%s";' % DOOR,
     ]
     for name, (x, y) in NAMED.items():
         lines.append('        public static readonly Vector2 %s = new Vector2(%sf, %sf);' % (name, x, y))
+    for name, value in ZONES.items():
+        lines.append('        public const float %s = %sf;' % (name, float(value)))
+    for name, cells in SPAWNS.items():
+        lines.append('        public static readonly Vector2[] %s = { %s };'
+                     % (name, ', '.join('new Vector2(%sf, %sf)' % (x, y) for x, y in cells)))
     lines.append('        public static readonly ObjectSpec[] OBJECTS = {')
     for o in O.OBJECTS:
         if o.collider is None:
@@ -163,6 +224,10 @@ def preview_image():
         px, py = x * SCALE, (HEIGHT - y) * SCALE
         d.ellipse((px - 3, py - 3, px + 3, py + 3), fill=(0x3F, 0x9E, 0x8F, 255))
         d.text((px + 4, py - 6), name, fill=(0x2C, 0x73, 0x67, 255))
+    for name, cells in SPAWNS.items():
+        for x, y in cells:
+            px, py = x * SCALE, (HEIGHT - y) * SCALE
+            d.rectangle((px - 3, py - 3, px + 3, py + 3), fill=(0xD8, 0x3A, 0x3A, 255))
     for (x, y), _ in EXITS:
         d.rectangle((x * SCALE, (HEIGHT - y) * SCALE - SCALE, x * SCALE + 2 * SCALE, (HEIGHT - y) * SCALE), fill=(0x7D, 0xB4, 0x47, 255))
     return im

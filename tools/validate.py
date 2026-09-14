@@ -70,7 +70,13 @@ def check_objects():
             err('object PNG missing: ' + p)
         elif Image.open(p).size != o.size:
             err('%s: PNG size %s != %s' % (o.png, Image.open(p).size, o.size))
-    ok('%d object sprites' % len(clinic_objects.OBJECTS))
+    for stem, rows in clinic_objects.EXTRA_PNGS.items():
+        p = os.path.join(RES, 'Objects', stem + '.png')
+        if not os.path.exists(p):
+            err('extra PNG missing: ' + p)
+        elif Image.open(p).size != (max(len(r) for r in rows), len(rows)):
+            err('%s: PNG size does not match its rows' % stem)
+    ok('%d object sprites + %d extra frames' % (len(clinic_objects.OBJECTS), len(clinic_objects.EXTRA_PNGS)))
 
 
 def check_boss():

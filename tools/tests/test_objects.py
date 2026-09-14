@@ -17,6 +17,8 @@ EXPECTED_SIZES = {
     'pluto_xray_box': (24, 20), 'pluto_med_shelf': (32, 36), 'pluto_clock': (10, 10), 'pluto_fish_tank': (32, 24),
     'pluto_sharps_bin': (12, 14), 'pluto_iv_stand': (12, 32), 'pluto_treat_jar': (8, 10), 'pluto_food_bowls': (20, 8),
     'pluto_litter_box': (20, 12), 'pluto_floor_mat': (48, 24), 'pluto_paw_prints': (24, 16), 'pluto_wet_floor_sign': (12, 16),
+    # v0.5
+    'pluto_clinic_door': (32, 40), 'pluto_kennel': (32, 32), 'pluto_kennel_open': (32, 32), 'pluto_nurse_station': (48, 24),
 }
 
 
@@ -46,7 +48,8 @@ class ObjectTests(unittest.TestCase):
         blocking = {o.name for o in O.OBJECTS if o.collider is not None}
         self.assertEqual(blocking, {'pluto_exam_table', 'pluto_cabinet', 'pluto_cart', 'pluto_sink', 'pluto_carrier', 'pluto_scratch_post',
                                     'pluto_reception_desk', 'pluto_chair', 'pluto_plant', 'pluto_med_shelf', 'pluto_fish_tank',
-                                    'pluto_sharps_bin', 'pluto_iv_stand', 'pluto_litter_box', 'pluto_wet_floor_sign'})
+                                    'pluto_sharps_bin', 'pluto_iv_stand', 'pluto_litter_box', 'pluto_wet_floor_sign',
+                                    'pluto_clinic_door', 'pluto_kennel', 'pluto_kennel_open', 'pluto_nurse_station'})
 
     def test_props_placed_inside_room(self):
         sizes = {o.name: o.size for o in O.OBJECTS}
@@ -56,10 +59,18 @@ class ObjectTests(unittest.TestCase):
             self.assertTrue(0 <= x and x + w / 16.0 <= C.WIDTH, name)
             self.assertTrue(0 <= y and y + h / 16.0 <= C.HEIGHT + 2.5, name)  # wall-side props may overhang the north edge
 
+    def test_extra_pngs_are_valid_and_match_their_prop(self):
+        door = next(o for o in O.OBJECTS if o.name == 'pluto_clinic_door')
+        self.assertEqual(O.Obj('x', 'x', O.EXTRA_PNGS['clinic_door_open']).size, door.size)
+        for rows in O.EXTRA_PNGS.values():
+            V.R(rows)
+            V.image(rows)
+
     def test_named_cells_clear_of_blocking_props(self):
         sizes = {o.name: (o.size, o.collider) for o in O.OBJECTS}
-        for cell_name in ('Spawn', 'Vet'):
-            cx, cy = C.NAMED[cell_name]
+        checks = [C.NAMED[n] for n in ('Spawn', 'Vet')] + [c for cells in C.SPAWNS.values() for c in cells]
+        for cx, cy in checks:
+            cell_name = '(%s, %s)' % (cx, cy)
             for name, (x, y) in O.PROPS:
                 (w, h), collider = sizes[name]
                 if collider is None:

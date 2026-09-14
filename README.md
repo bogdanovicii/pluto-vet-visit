@@ -44,7 +44,7 @@ PlutoVetVisit/
   tools/
     clinic_room.py, clinic_objects.py, vet_poses.py   ASCII pixel-art sources (single source of truth)
     cards.py, icon.py, projectiles.py, vetpixel.py, make_art.py, gemini_art.py, validate.py
-    tests/                       33 unit tests (test_room, test_objects, test_vet, test_gemini)
+    tests/                       46 unit tests (test_room, test_objects, test_vet, test_gemini, test_past_concepts)
   thunderstore/                 manifest.json, README.md, CHANGELOG.md, icon.png — the r2modman test package
 ```
 

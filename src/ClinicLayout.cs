@@ -5,14 +5,21 @@ namespace PlutoVetVisit
 {
     public static class ClinicLayout
     {
-        public const int WIDTH = 26;
-        public const int HEIGHT = 18;
+        public const int WIDTH = 30;
+        public const int HEIGHT = 52;
         public const string CONTROLLER_OBJECT = "pluto_past_controller";
-        public static readonly Vector2 Spawn = new Vector2(6.0f, 2.5f);
-        public static readonly Vector2 Vet = new Vector2(12.5f, 11.5f);
-        public static readonly Vector2 Table = new Vector2(12.5f, 9.0f);
-        public static readonly Vector2 CameraFocus = new Vector2(12.5f, 8.5f);
-        public static readonly Vector2 Controller = new Vector2(13.0f, 1.0f);
+        public const string DOOR_OBJECT = "pluto_clinic_door";
+        public static readonly Vector2 Spawn = new Vector2(5.0f, 2.5f);
+        public static readonly Vector2 Vet = new Vector2(14.5f, 44.5f);
+        public static readonly Vector2 Table = new Vector2(14.5f, 42.0f);
+        public static readonly Vector2 CameraFocus = new Vector2(14.5f, 41.5f);
+        public static readonly Vector2 Controller = new Vector2(14.0f, 1.0f);
+        public static readonly Vector2 WardDoor = new Vector2(14.0f, 13.0f);
+        public static readonly Vector2 TheatreDoor = new Vector2(14.0f, 32.0f);
+        public const float WARD_MIN_Y = 15.0f;
+        public const float THEATRE_MIN_Y = 34.0f;
+        public static readonly Vector2[] Wave1Spawns = { new Vector2(2.0f, 23.5f), new Vector2(27.0f, 23.5f), new Vector2(2.0f, 19.5f), new Vector2(27.0f, 27.5f) };
+        public static readonly Vector2[] Wave2Spawns = { new Vector2(3.5f, 17.5f), new Vector2(3.5f, 29.5f), new Vector2(25.5f, 17.5f), new Vector2(25.5f, 29.5f), new Vector2(14.5f, 29.0f), new Vector2(9.0f, 17.5f) };
         public static readonly ObjectSpec[] OBJECTS = {
             new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 2, 0, 44, 16, 0.0f),
             new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
@@ -43,6 +50,10 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_floor_mat", "floor_mat", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.5f),
             new ObjectSpec("pluto_paw_prints", "paw_prints", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.0f),
             new ObjectSpec("pluto_wet_floor_sign", "wet_floor_sign", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
+            new ObjectSpec("pluto_clinic_door", "clinic_door", ObjectSpec.Layer.High, 0, 0, 32, 32, 0.0f),
+            new ObjectSpec("pluto_kennel", "kennel", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
+            new ObjectSpec("pluto_kennel_open", "kennel_open", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
+            new ObjectSpec("pluto_nurse_station", "nurse_station", ObjectSpec.Layer.High, 0, 0, 48, 12, 0.0f),
         };
     }
 

@@ -38,7 +38,18 @@ namespace PlutoVetVisit
                 CollisionLayer layer = spec.Collider == ObjectSpec.Layer.High ? CollisionLayer.HighObstacle : CollisionLayer.LowObstacle;
                 AddCollider(go, layer, spec.OffX, spec.OffY, spec.W, spec.H);
             }
+            if (spec.Name == ClinicLayout.DOOR_OBJECT) AddDoor(go, asm);
             return go;
+        }
+
+        /// <summary>The zone door: the open frame joins the closed sprite's collection so ClinicDoor can swap them.</summary>
+        private static void AddDoor(GameObject go, Assembly asm)
+        {
+            tk2dSprite sprite = go.GetComponent<tk2dSprite>();
+            ClinicDoor door = go.AddComponent<ClinicDoor>();
+            door.closedId = sprite.spriteId;
+            door.openId = SpriteBuilder.AddSpriteToCollection(OBJECT_ROOT + "/clinic_door_open.png", sprite.Collection, asm);
+            PastPlugin.Log("clinic door: closed sprite " + door.closedId + ", open sprite " + door.openId);
         }
 
         /// <summary>One manual pixel collider (pixels from the sprite's lower-left), the way the floor-making guide does it.</summary>
