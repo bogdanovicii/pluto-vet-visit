@@ -1,45 +1,29 @@
-"""Boss card (427x240) and past win picture (115x71). Uses reference/gemini/*_raw.png when present, else composes
-from the pixel art so the build never depends on the API."""
+"""Boss card (427x240) and past win picture (115x71), composed from the hand-drawn pixel art only. The Gemini paintings
+in reference/gemini/ are references, never shipped (the user asked for hand-drawn everything in 0.11)."""
 import os
 
 from PIL import Image, ImageDraw
 
 import vetpixel as V
+import vet_card as VC
 import vet_poses as P
 
 CARD = (427, 240)
 WIN = (115, 71)
 
 
-def gemini(project, name):
-    p = os.path.join(project, 'reference', 'gemini', name)
-    return Image.open(p).convert('RGBA') if os.path.exists(p) else None
-
-
-def fit_cover(im, w, h):
-    """Resize to cover w x h, then centre-crop."""
-    s = max(w / im.width, h / im.height)
-    im = im.resize((max(w, round(im.width * s)), max(h, round(im.height * s))), Image.LANCZOS)
-    x, y = (im.width - w) // 2, (im.height - h) // 2
-    return im.crop((x, y, x + w, y + h))
-
-
 def boss_card(project):
-    src = gemini(project, 'vet_bosscard_raw.png')
-    if src is not None:
-        return fit_cover(src, *CARD)
+    """Hand-drawn only (0.11): a transparent 427x240 card holding the Vet's portrait (tools/vet_card.py, drawn at card
+    resolution with its own outline) in the right half, like the vanilla boss cards. The game draws the name, the speed
+    streaks and the player's card (on top, over the left side) itself, so everything outside the portrait stays empty."""
     im = Image.new('RGBA', CARD, (0, 0, 0, 0))
-    vet = V.image(P.BASE).crop(V.image(P.BASE).getbbox())
-    vet = vet.resize((vet.width * 5, vet.height * 5), Image.NEAREST)
-    im.paste(vet, (CARD[0] - vet.width - 24, CARD[1] - vet.height - 12), vet)
+    portrait = V.image(VC.PORTRAIT)
+    im.paste(portrait, VC.ORIGIN, portrait)
     return im
 
 
 def win_pic(project):
-    src = gemini(project, 'past_win_pic_raw.png')
-    if src is not None:
-        big = fit_cover(src, WIN[0] * 4, WIN[1] * 4)
-        return big.resize(WIN, Image.LANCZOS).quantize(64).convert('RGBA')
+    """Hand-drawn only (0.11): Pluto on the exam table, the Vet lying on the tiles."""
     im = Image.new('RGBA', WIN, V.PALETTE['_'])
     d = ImageDraw.Draw(im)
     for y in range(0, WIN[1], 8):                      # tile grid

@@ -204,3 +204,71 @@ Pluto's cardboard box and dodge rolls must still hide the gun normally.
 5. Report hearts lost and the time to kill the Vet (target 60-90 s).
 
 **Result:** pending
+
+### 0.10.1 result (Steam machine, 2026-09-14)
+The whole past ran start to finish: 0 CreateProjectileFromBank exceptions, Pluto fired, everyone shot, `past killed`. Fight ~60-90 s,
+past ~3 min, 1.5 of 3 hearts lost. But enemy bullets passed through Pluto (no hits), the wave-2 "rat" was the harmless Candle Rat,
+`Duplicate prefab name` appeared in the fight, the boss card showed the Vet for a second and then Pluto's portrait covered it, and some
+dialogue boxes were off screen.
+
+## Milestone 11 — a hard past (Pluto_Vet_Visit-0.11.0.zip)
+
+Delete `BepInEx/config/bogdan.etg.plutovetvisit.cfg` once (new defaults for waves, health and the new `[Balance]`, `[Waves]`, `[Props]`
+and `[Story]` keys). Use Pluto_The_Cat with the transparent boss card (the character session's fix) for the card check.
+
+Checked in the decompiled game before this build:
+- Bullets: Alexandria's `SetProjectileSpriteRight` moves the sprite into ETGMod's ProjectileCollection; the vanilla bullet's BagelCollider
+  looks up the frame `10x10_projectile_dubred_dark_001` in its own collection, the lookup fails and `PixelCollider.RegenerateEmptyCollider`
+  makes the hitbox 0x0. Every copy now gets a Manual box sized to its sprite. `SpawnPool.CreatePrefabPool` logs `Duplicate prefab name`
+  when copies share a GameObject name; each copy is now named `PlutoVet_<bank>_<n>`.
+- Boss card: `BossCardUIController` stretches the boss art and the player's card over the whole screen and draws the player's on top
+  (ZOrder 14 over 6) from about 1.0 s. Pluto's card must be transparent except bottom-left (character session); the Vet's card is now a
+  transparent hand-drawn portrait in the right half, like the Beholster card.
+- Dialogue: TextBox and ThoughtBubble prefabs have `fitToScreen` off; the letterbox leaves ~70 % of the height. Lines now anchor at the head,
+  the locked camera pans to show each box, boxes are nudged into view outside cutscenes, the intercom is a LetterBox over Pluto.
+- AI: `FleeTargetBehavior` triggers on every hit and ended the Vet's interruptible attacks; vanilla floor bosses use a Seek leash only.
+  `DashBehavior` reads `ShadowObject` every tick; `AIActor.Start` creates it only with `HasShadow` on (BossBuilder turns it off).
+- Waves: `6ad1cafc...` is the Candle Rat (harmless, no brain, `#KILLEDBYDEFAULT` = "Your own slow reflexes"); every wave GUID was checked
+  against the prefab data and the ETGMod id map.
+
+Log lines to look for:
+- At launch: `bank syringe: go PlutoVet_syringe_0, ... colliders 1 [Projectile Manual manual 10x4 at -5,-2 ...]` (one per bank entry:
+  syringe 10x4, droplet 5x5, pill 6x4, net 10x10, cloud 12x12), `Syringe Tech built: 25 HP`, `registered N custom objects (A animated, E examinable)`.
+- First shot of each actor: `Vet Tech first shot: go PlutoVet_syringe_..., ... built 10x4 ...`. `built 0x0` = the hitbox bug is back: send the line.
+- No `Duplicate prefab name`, no `warning: ... harmless critter`, no `line failed` / `bubble failed`.
+
+Steps:
+1. Hits: stand in front of a Tech burst. Pluto takes half a heart per syringe, flashes and is knocked back; dodge-rolling through a bullet
+   does not hurt. Same for the Nurse's droplets and net and the Vet's patterns.
+2. Waiting room: the intro pans to every speaker (Receptionist, Owner, Rex, Grandma, the intercom) and every box is fully on screen;
+   Pluto thinks "Food?" and "Traitor." in thought bubbles. Advance: the first press completes the text, the second closes it. After the
+   intro, bystanders chat every 8-12 s; talking to the Receptionist, Rex or Grandma gives a different line each time. Examine props
+   (outlined in white when close): a thought bubble over Pluto.
+3. Ward: when the door opens Rex and Grandma react; the greeting Tech's lines are on screen; intercom lines appear as a parchment box over
+   Pluto. Wave 1 (two Vet Techs, a Syringe Tech): Techs strafe instead of standing, side-step, sometimes lunge, and a Tech shouts when the
+   wave starts or a crewmate falls. Wave 2 (mutant shotgun kin, mutant bullet kin, shroomer, poisbulon, creech, syringe tech): all attack.
+4. Theatre: the boss card shows the Vet's portrait on the right and Pluto's on the left together (with the fixed character card).
+   The Vet strafes and hops sideways between patterns; being hit no longer cancels his tell. 60 %: "Hold STILL." and the phase-two set
+   (droplet wall, spiral, cone, stitches that stop and re-aim, the scalpel ring with a gap, anesthesia clouds, leap-in ring).
+   50 %: the Nurse and a Syringe Tech come in; the Nurse sprays, hops back and throws the net, sweeps a tranquilizer spray, and below
+   half her health adds the IV line; she shouts every 7-10 s; if she falls the Vet reacts. 25 %: "Just... a little... snip!", a
+   poisbulon and a fungun come in, phase three (snip time, hard wall, full course, double hops).
+5. Difficulty report: hearts lost in the ward and in the fight, time to kill the Vet, whether any pattern felt unfair (no visible gap,
+   no tell), and whether the camera ever panned somewhere confusing.
+6. Room: the three zones follow a grid. Waiting room: two rows of five orange chairs on a rug facing a coffee table, a carrier at each end,
+   plants framing the south exit, the reception counter with a back cabinet, a water cooler and the fish tank on the east wall, signs
+   "WAITING ROOM" and "WARD" on the wall. Ward: the kennel banks, a nurse-station island with a stool, a teal floor stripe door to door,
+   supply shelf and scrubs rack on the north wall, IV stands flanking the door, the "SURGERY" sign. Theatre: the table centred under the
+   lamp on a floor mat with instrument trolleys either side, the anaesthesia machine (breathing) and the heart monitor (ECG) at its head,
+   counters left and right, a biohazard bin, toys in the south-west corner. Report anything floating, overlapping or drawn over Pluto.
+7. Animated props: fish swim and bubbles rise, the clock ticks, the reception screen blinks, the IV drips, the monitor scrolls, the
+   anaesthesia bellows move. Examinable props (white outline when close, interact): 20 props give Pluto a thought, e.g. the fish tank,
+   the lost-cat notice, the supply shelf, the cone counter. Lines are in `[Props] Comment_*`.
+
+Balance knobs (no rebuild): `[Balance] BulletSpeedScale`, `BossCooldownScale`, `BossSpeed`, `BossHopCooldown` (2.6), `TechSpeed`,
+`TechRange` (9), `TechCooldown` (2.0), `TechDartCooldown` (5.5), `SyringeTechHealth` (25), `SyringeTechSpeed` (5), `SyringeTechRange` (4.5),
+`SyringeFanCooldown` (2.4), `NurseSpeed`, `NurseFanCooldown` (2.2), `NurseNetCooldown` (4.5), `NurseSprayCooldown` (4), `NurseIVCooldown` (5);
+`[Boss] BossHealth` (800); `[Cast] TechHealth` (20), `NurseHealth` (160), `BossReinforcements`; `[Waves] Wave1`, `Wave2`, `Reinforce2`,
+`Reinforce3`; easier: `BulletSpeedScale = 0.85`, `BossCooldownScale = 1.25`, `Wave2 = mutant_bullet_kin,shroomer,syringe_tech`.
+
+**Result:** pending

@@ -154,11 +154,17 @@ def check_boss():
         for b in names:
             if a != b and b.startswith(a):
                 err('clip folder %s is a prefix of %s (Alexandria matches by StartsWith)' % (a, b))
-    if Image.open(os.path.join(RES, 'Boss', 'vet_bosscard.png')).size != (427, 240):
+    card = Image.open(os.path.join(RES, 'Boss', 'vet_bosscard.png')).convert('RGBA')
+    if card.size != (427, 240):
         err('boss card must be 427x240')
+    alpha = card.getchannel('A')
+    if alpha.crop((0, 0, 190, 240)).getbbox() is not None:
+        err('boss card must be transparent left of x 190: the player card is drawn over the whole screen on top of it')
+    if alpha.histogram()[0] < 0.5 * 427 * 240:
+        err('boss card must be at least half transparent (vanilla boss cards are 60-75 % transparent)')
     if Image.open(os.path.join(RES, 'past_win_pic.png')).size != (115, 71):
         err('past win pic must be 115x71')
-    for name in ('vet_syringe_001', 'vet_droplet_001', 'vet_pill_001'):
+    for name in ('vet_syringe_001', 'vet_droplet_001', 'vet_pill_001', 'vet_net_001', 'vet_cloud_001'):
         if not os.path.exists(os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', name + '.png')):
             err('projectile sprite missing: ' + name)
     ok('boss: %d clips, card, win pic' % len(names))
@@ -184,6 +190,7 @@ def _check_clips(label, root, prefix, clips, canvas, prefix_rule=True):
 def check_cast():
     import tech_poses, nurse_poses, npc_poses, cast_layout
     _check_clips('tech', os.path.join(RES, 'Enemies', 'tech'), 'tech', tech_poses.CLIPS, tech_poses.CANVAS)
+    _check_clips('stech', os.path.join(RES, 'Enemies', 'stech'), 'stech', tech_poses.STECH_CLIPS, tech_poses.CANVAS)
     _check_clips('nurse', os.path.join(RES, 'Enemies', 'nurse'), 'nurse', nurse_poses.CLIPS, nurse_poses.CANVAS)
     for who, spec in npc_poses.NPCS.items():
         # NPC clips are loaded by explicit path (ClinicNpc.Build), so the StartsWith rule does not apply to them

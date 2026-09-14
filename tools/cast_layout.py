@@ -4,6 +4,7 @@ The C# never hard-codes a pixel number that the art decides: tech_poses.py, nurs
 this module writes them out, and tools/validate.py fails the build when the generated file is stale.
 """
 import os
+import types
 from collections import OrderedDict
 
 import tech_poses as T
@@ -47,6 +48,8 @@ def layout_cs():
         '        public const string NPC_ROOT = "%s";' % NPC_ROOT,
     ]
     lines += _enemy_block('TECH', T, 'tech')
+    stech = types.SimpleNamespace(CANVAS=T.CANVAS, HITBOX=T.HITBOX, SHOOT_POINT=T.STECH_SHOOT_POINT, CLIPS=T.STECH_CLIPS)
+    lines += _enemy_block('STECH', stech, 'stech')
     lines += _enemy_block('NURSE', N, 'nurse')
     lines.append('        public static readonly NpcSpec[] NPCS = {')
     for name, who in NPC_OBJECTS.items():

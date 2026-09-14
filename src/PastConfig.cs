@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BepInEx.Configuration;
 
 namespace PlutoVetVisit
@@ -13,12 +14,12 @@ namespace PlutoVetVisit
         public static int RoomVisualSubtype = -1;
         public static bool SkipIntro = false;
         public static bool SkipWaves = false;
-        public static string Wave1 = "vet_tech,vet_tech,vet_tech";
-        public static string Wave2 = "vet_tech,vet_tech,mutant_bullet_kin,rat,parrot";
+        public static string Wave1 = "vet_tech,vet_tech,syringe_tech";
+        public static string Wave2 = "mutant_shotgun_kin,mutant_bullet_kin,shroomer,poisbulon,creech,syringe_tech";
         public static float WaveTimeoutSeconds = 90f;
         public static float DebugEndAfterSeconds = 0f;
-        public static float TechHealth = 18f;
-        public static float NurseHealth = 150f;
+        public static float TechHealth = 20f;
+        public static float NurseHealth = 160f;
         public static bool BossReinforcements = true;
         public static string Line1 = "Right on time, Pluto.";
         public static string Line2 = "Just a little snip. You won't feel a thing.";
@@ -41,6 +42,17 @@ namespace PlutoVetVisit
         public static string Fight3 = "Grab him!";
         public static string Fight4 = "Just... a little... snip!";
         public static string Fight5 = "About time, Nurse.";
+        public static string FightPhase2 = "Hold STILL.";
+        public static string NurseBarks = "Open wide!|Bad kitty!|Hold him, doctor!";
+        public static string NurseDown = "NURSE! ...Fine. I'll do it myself.";
+        public static string IntroRex2 = "Psst. New guy. You know what a procedure is?";
+        public static string IntroThink1 = "Food?";
+        public static string IntroGrandma2 = "Oh, kitten.";
+        public static string IntroThink2 = "Traitor.";
+        public static string WaitingChatter = "receptionist:Please hold.|rex:I can hear the clippers.|grandma:Zzz...|receptionist:The doctor is ready for you, Pluto.|rex:Is it hot in here? It's hot in here.|grandma:Nine lives. Spend them wisely.";
+        public static string TechBarkStart = "He's loose! Get him!";
+        public static string TechBarks = "Man down!|Watch the claws!|Where's the net?|He bit me!|Corner him!";
+        public static string WardThink = "Not if I see him first.";
         public static string DoorRex = "Don't go in there!";
         public static string DoorGrandma = "Chin up, kitten.";
         public static bool FloorTiles = true;
@@ -52,13 +64,33 @@ namespace PlutoVetVisit
         public static float BossSpeed = 3f;
         public static float TechSpeed = 4.5f;
         public static float NurseSpeed = 3.2f;
-        public static float TechCooldown = 1.8f;
+        public static float TechCooldown = 2.0f;
+        public static float TechRange = 9f;
+        public static float TechDartCooldown = 5.5f;
+        public static float SyringeTechHealth = 25f;
+        public static float SyringeTechSpeed = 5f;
+        public static float SyringeTechRange = 4.5f;
+        public static float SyringeFanCooldown = 2.4f;
+        public static float NurseSprayCooldown = 4f;
+        public static float NurseIVCooldown = 5f;
+        public static float BossHopCooldown = 2.6f;
+        public static string Reinforce2 = "nurse,syringe_tech";
+        public static string Reinforce3 = "poisbulon,fungun";
         public static float NurseFanCooldown = 2.2f;
         public static float NurseNetCooldown = 4.5f;
         public static string CommentOwner = "...";
-        public static string CommentReceptionist = "The doctor will see you now.";
-        public static string CommentRex = "Don't let them take you in the back.";
-        public static string CommentGrandma = "Hmph. In my day we bit them.";
+        public static string CommentReceptionist = "The doctor will see you now.|Please fill in the form. With your paw.|No, you cannot have a treat.";
+        public static string CommentRex = "Don't let them take you in the back.|I went in a dog. I came out a dog. A quieter dog.|Is that a cone? Tell me that's not a cone.";
+        public static string CommentGrandma = "Hmph. In my day we bit them.|Nine lives, kitten. I'm on my twelfth.|Zzz...";
+
+        // What Pluto thinks when he examines a prop; defaults come from the generated ClinicLayout (tools/clinic_objects.py).
+        private static readonly Dictionary<string, string> propComments = new Dictionary<string, string>();
+
+        public static string PropComment(string propName)
+        {
+            string text;
+            return propName != null && propComments.TryGetValue(propName, out text) ? text : string.Empty;
+        }
 
         public static string Comment(string who)
         {
@@ -82,7 +114,7 @@ namespace PlutoVetVisit
             RoomVisualSubtype = cfg.Bind("Room", "RoomVisualSubtype", RoomVisualSubtype, "Override the room's visual subtype in the lab tileset (-1 = default).").Value;
             SkipIntro = cfg.Bind("Debug", "SkipIntro", SkipIntro, "Skip the dialogue before the fight.").Value;
             SkipWaves = cfg.Bind("Debug", "SkipWaves", SkipWaves, "Open the ward without spawning its two waves (tests the walk and the doors).").Value;
-            Wave1 = cfg.Bind("Waves", "Wave1", Wave1, "Ward wave 1: comma-separated enemy names (vet_tech, nurse, rat, parrot, mutant_bullet_kin, bullet_kin) or GUIDs. Spawned at the side doors.").Value;
+            Wave1 = cfg.Bind("Waves", "Wave1", Wave1, "Ward wave 1: comma-separated enemy names or GUIDs. Names: vet_tech, syringe_tech, nurse, bullet_kin, veteran_bullet_kin, mutant_bullet_kin, mutant_shotgun_kin, red_shotgun_kin, blue_shotgun_kin, shroomer, fungun, poisbulon, shotgrub, creech, misfire_beast, parrot. Spawned by the kennel banks.").Value;
             Wave2 = cfg.Bind("Waves", "Wave2", Wave2, "Ward wave 2: same format. Spawned at the kennels.").Value;
             WaveTimeoutSeconds = cfg.Bind("Waves", "WaveTimeoutSeconds", WaveTimeoutSeconds, "If a wave is still alive after this many seconds it is put down so the past cannot get stuck.").Value;
             DebugEndAfterSeconds = cfg.Bind("Debug", "DebugEndAfterSeconds", DebugEndAfterSeconds, "If > 0, the past ends by itself after this many seconds (tests the ending without a boss).").Value;
@@ -112,6 +144,21 @@ namespace PlutoVetVisit
             Fight5 = cfg.Bind("Story", "Fight5", Fight5, "The Vet when the Nurse comes in.").Value;
             DoorRex = cfg.Bind("Story", "DoorRex", DoorRex, "Rex when the ward door opens.").Value;
             DoorGrandma = cfg.Bind("Story", "DoorGrandma", DoorGrandma, "Grandma Cat when the ward door opens.").Value;
+            FightPhase2 = cfg.Bind("Story", "FightPhase2", FightPhase2, "The Vet at 60 % health (phase two).").Value;
+            NurseBarks = cfg.Bind("Story", "NurseBarks", NurseBarks, "The Nurse's shouts during the fight, every 7-10 s (separate lines with |).").Value;
+            NurseDown = cfg.Bind("Story", "NurseDown", NurseDown, "The Vet when the Nurse falls.").Value;
+            IntroRex2 = cfg.Bind("Story", "IntroRex2", IntroRex2, "Rex's second line in the intro.").Value;
+            IntroThink1 = cfg.Bind("Story", "IntroThink1", IntroThink1, "Pluto's thought after Rex's question.").Value;
+            IntroGrandma2 = cfg.Bind("Story", "IntroGrandma2", IntroGrandma2, "Grandma Cat's answer to Pluto's thought.").Value;
+            IntroThink2 = cfg.Bind("Story", "IntroThink2", IntroThink2, "Pluto's thought when the Owner walks out.").Value;
+            WaitingChatter = cfg.Bind("Story", "WaitingChatter", WaitingChatter, "Bystander chatter while Pluto is in the waiting room: who:line|who:line (who = receptionist, rex, grandma).").Value;
+            TechBarkStart = cfg.Bind("Story", "TechBarkStart", TechBarkStart, "A Vet Tech when a ward wave or the reinforcements start.").Value;
+            TechBarks = cfg.Bind("Story", "TechBarks", TechBarks, "What a surviving Tech sometimes shouts when a crewmate falls (separate lines with |).").Value;
+            WardThink = cfg.Bind("Story", "WardThink", WardThink, "Pluto's thought after the intercom calls him to the doctor.").Value;
+            foreach (ObjectSpec spec in ClinicLayout.OBJECTS)
+                if (!string.IsNullOrEmpty(spec.Comment))
+                    propComments[spec.Name] = cfg.Bind("Props", "Comment_" + spec.Name.Replace("pluto_", string.Empty), spec.Comment,
+                        "What Pluto thinks when he examines this prop (empty = not examinable).").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
             WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;
             AmbientR = cfg.Bind("Room", "AmbientR", AmbientR, "Ambient light red (the lab template is 0.91/0.64/0.64; 1/1/1 is neutral).").Value;
@@ -125,10 +172,21 @@ namespace PlutoVetVisit
             TechCooldown = cfg.Bind("Balance", "TechCooldown", TechCooldown, "Seconds between a Tech's three-round bursts (Hegemony soldiers: about 1.8).").Value;
             NurseFanCooldown = cfg.Bind("Balance", "NurseFanCooldown", NurseFanCooldown, "Seconds between the Nurse's droplet fans.").Value;
             NurseNetCooldown = cfg.Bind("Balance", "NurseNetCooldown", NurseNetCooldown, "Seconds between the Nurse's net throws.").Value;
+            TechRange = cfg.Bind("Balance", "TechRange", TechRange, "How close a Vet Tech comes before it strafes (tiles; Bullet Kin 7, Veteran Kin 11).").Value;
+            TechDartCooldown = cfg.Bind("Balance", "TechDartCooldown", TechDartCooldown, "Seconds between a Vet Tech's dart-rifle shots.").Value;
+            SyringeTechHealth = cfg.Bind("Balance", "SyringeTechHealth", SyringeTechHealth, "A Syringe Tech's health.").Value;
+            SyringeTechSpeed = cfg.Bind("Balance", "SyringeTechSpeed", SyringeTechSpeed, "A Syringe Tech's walking speed.").Value;
+            SyringeTechRange = cfg.Bind("Balance", "SyringeTechRange", SyringeTechRange, "How close a Syringe Tech comes before it circles (tiles).").Value;
+            SyringeFanCooldown = cfg.Bind("Balance", "SyringeFanCooldown", SyringeFanCooldown, "Seconds between the syringe-shotgun fans (Red Shotgun Kin 3.5).").Value;
+            NurseSprayCooldown = cfg.Bind("Balance", "NurseSprayCooldown", NurseSprayCooldown, "Seconds between the Nurse's tranquilizer sprays.").Value;
+            NurseIVCooldown = cfg.Bind("Balance", "NurseIVCooldown", NurseIVCooldown, "Seconds between the Nurse's IV lines (below half health).").Value;
+            BossHopCooldown = cfg.Bind("Balance", "BossHopCooldown", BossHopCooldown, "Seconds between the Vet's sidestep hops in phase two (phase one x1.35, phase three x0.7).").Value;
+            Reinforce2 = cfg.Bind("Waves", "Reinforce2", Reinforce2, "Who comes in when the Vet drops to half health (same names as the waves).").Value;
+            Reinforce3 = cfg.Bind("Waves", "Reinforce3", Reinforce3, "Who comes in at a quarter of his health (empty = nobody).").Value;
             CommentOwner = cfg.Bind("Story", "CommentOwner", CommentOwner, "What the Owner says when Pluto talks to him (he leaves in the intro, so rarely seen).").Value;
-            CommentReceptionist = cfg.Bind("Story", "CommentReceptionist", CommentReceptionist, "Receptionist's line when Pluto talks to her.").Value;
-            CommentRex = cfg.Bind("Story", "CommentRex", CommentRex, "Rex's line when Pluto talks to him.").Value;
-            CommentGrandma = cfg.Bind("Story", "CommentGrandma", CommentGrandma, "Grandma Cat's line when Pluto talks to her.").Value;
+            CommentReceptionist = cfg.Bind("Story", "CommentReceptionist", CommentReceptionist, "Receptionist's lines when Pluto talks to her (one per interaction; separate lines with |).").Value;
+            CommentRex = cfg.Bind("Story", "CommentRex", CommentRex, "Rex's lines when Pluto talks to him (one per interaction; separate lines with |).").Value;
+            CommentGrandma = cfg.Bind("Story", "CommentGrandma", CommentGrandma, "Grandma Cat's lines when Pluto talks to her (one per interaction; separate lines with |).").Value;
         }
     }
 }

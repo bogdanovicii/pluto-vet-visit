@@ -148,20 +148,44 @@ class RoomTests(unittest.TestCase):
         self.assertIn('public static readonly ObjectSpec[] OBJECTS', cs)
 
     def test_layout_cs_object_spec_contract(self):
-        """ClinicObjects.cs reads spec.Perpendicular: a 9th constructor argument from Obj.stand."""
+        """v0.11 contract: 12 constructor arguments - ..., bool perpendicular (Obj.stand), int frames, float fps, string comment."""
         cs = C.layout_cs()
-        self.assertIn('public bool Perpendicular;', cs)
+        for field in ('public bool Perpendicular;', 'public int Frames;', 'public float Fps;', 'public string Comment;'):
+            self.assertIn(field, cs)
         self.assertIn('public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, '
-                      'float heightOffGround, bool perpendicular)', cs)
-        self.assertIn('Perpendicular = perpendicular;', cs)
+                      'float heightOffGround, bool perpendicular, int frames, float fps, string comment)', cs)
+        self.assertIn('Perpendicular = perpendicular; Frames = frames; Fps = fps; Comment = comment;', cs)
         for o in C.O.OBJECTS:
-            line = next(l for l in cs.splitlines() if l.strip().startswith('new ObjectSpec("%s",' % o.name))
-            self.assertEqual(line.count(','), 9, line)
-            self.assertTrue(line.endswith(', %s),' % ('true' if o.stand else 'false')), line)
+            line = next(l.strip() for l in cs.splitlines() if l.strip().startswith('new ObjectSpec("%s",' % o.name))
+            self.assertTrue(line.endswith('"),'), line)
+            head, comment = line[:-3].rsplit(', "', 1)
+            self.assertEqual(comment, C.cs_escape(o.comment), line)
+            args = head[len('new ObjectSpec('):].split(', ')
+            self.assertEqual(len(args) + 1, 12, line)
+            self.assertEqual(args[8], 'true' if o.stand else 'false', line)
+            self.assertEqual(args[9], str(o.frame_count), line)
+            self.assertEqual(float(args[10].rstrip('f')), o.fps, line)
         faces = [l for l in cs.splitlines() if '"pluto_wall_face' in l]
         self.assertEqual(len(faces), 2)
         for l in faces:
-            self.assertIn('-0.2f, true),', l)
+            self.assertIn('-0.2f, true, 1, ', l)
+
+    def test_cs_escape(self):
+        self.assertEqual(C.cs_escape('Sushi. Behind glass.'), 'Sushi. Behind glass.')
+        self.assertEqual(C.cs_escape('a "b" \\ c'), 'a \\"b\\" \\\\ c')
+        self.assertEqual(C.cs_escape('café\n'), 'caf')
+
+    def test_npc_and_spawn_positions_stay_clear(self):
+        """Every wave spawn stays inside its zone; the NPCs stand on floor inside the waiting room, clear of high colliders."""
+        specs = {o.name: o for o in C.O.OBJECTS}
+        for name, (x, y) in C.NPCS:
+            for prop, (px, py) in C.O.PROPS:
+                col = specs[prop].collider
+                if col is None or col[0] != 'high':
+                    continue
+                _, ox, oy, w, h = col
+                inside = px + ox / 16.0 <= x < px + (ox + w) / 16.0 and py + oy / 16.0 <= y < py + (oy + h) / 16.0
+                self.assertFalse(inside, (name, prop))
 
     def test_preview_image_size(self):
         im = C.preview_image()
@@ -173,7 +197,7 @@ class RoomTests(unittest.TestCase):
             raise unittest.SkipTest('run tools/make_art.py first')
         im = C.sprite_preview_image(project)
         self.assertEqual(im.size, (C.WIDTH * C.PX, C.HEIGHT * C.PX))
-        self.assertEqual(im.getpixel((8, im.height - 8))[:3], (0xF4, 0xF6, 0xF8))        # the waiting-room floor at (0, 0)
+        self.assertEqual(im.getpixel((8, im.height - 8))[:3], (0xF8, 0xF3, 0xEA))        # the warm waiting-room floor at (0, 0)
 
 
 if __name__ == '__main__':

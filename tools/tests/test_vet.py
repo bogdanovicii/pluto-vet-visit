@@ -54,10 +54,35 @@ class VetTests(unittest.TestCase):
         self.assertEqual(cards.boss_card(PROJECT).size, (427, 240))
         self.assertEqual(cards.win_pic(PROJECT).size, (115, 71))
 
+    def test_boss_card_is_a_cut_out_in_the_right_half(self):
+        # The game draws the player's card over the whole screen on top of the boss card: ours must leave the left empty.
+        alpha = cards.boss_card(PROJECT).getchannel('A')
+        self.assertIsNone(alpha.crop((0, 0, 190, 240)).getbbox())
+        box = alpha.getbbox()
+        self.assertIsNotNone(box)
+        self.assertGreater(box[0], 190)                                 # the figure starts right of x 190
+        self.assertGreaterEqual(box[3] - box[1], 180)                   # a large portrait, like the vanilla cards
+        self.assertGreater(alpha.histogram()[0], 0.5 * 427 * 240)       # mostly transparent
+
+    def test_boss_card_portrait_rows(self):
+        import vet_card as VC
+        rows = VC.PORTRAIT
+        self.assertTrue(rows)
+        self.assertEqual({len(r) for r in rows}, {len(rows[0])})       # rectangular
+        unknown = {ch for r in rows for ch in r} - set(V.PALETTE)
+        self.assertEqual(unknown, set())                                # palette keys only
+        self.assertLessEqual(VC.ORIGIN[0] + len(rows[0]), 427)
+        self.assertLessEqual(VC.ORIGIN[1] + len(rows), 240)
+
+    def test_cards_do_not_use_gemini_images(self):
+        import inspect
+        self.assertNotIn('gemini', inspect.getsource(cards).split('"""', 2)[2].lower())
+
     def test_projectile_sprites(self):
         import projectiles as PR
         self.assertEqual({k: (len(v[0]), len(v)) for k, v in PR.SPRITES.items()},
-                         {'vet_syringe_001': (12, 4), 'vet_droplet_001': (5, 5), 'vet_pill_001': (8, 4), 'vet_net_001': (12, 12)})
+                         {'vet_syringe_001': (12, 4), 'vet_droplet_001': (5, 5), 'vet_pill_001': (8, 4), 'vet_net_001': (12, 12),
+                          'vet_cloud_001': (14, 14)})
         for rows in PR.SPRITES.values():
             V.R(rows)
             V.image(rows)

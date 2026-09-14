@@ -38,6 +38,23 @@ SPRITES = {
         "..oo&&&&oo..",
         "....oooo....",
     ]),
+    # the Vet's anesthesia cloud: a slow, lingering puff, translucent at the edge with a pale blue core
+    'vet_cloud_001': R([
+        "....oooooo....",
+        "..oo^^^^^^oo..",
+        ".o^^^wWWw^^^o.",
+        ".o^^wWWWWw^^o.",
+        "o^^wWWKKWWw^^o",
+        "o^wWWK**KWWw^o",
+        "o^wWK****KWw^o",
+        "o^wWK****KWw^o",
+        "o^wWWK**KWWw^o",
+        "o^^wWWKKWWw^^o",
+        ".o^^wWWWWw^^o.",
+        ".o^^^wWWw^^^o.",
+        "..oo^^^^^^oo..",
+        "....oooooo....",
+    ]),
 }
 
 

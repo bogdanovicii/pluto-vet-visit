@@ -305,6 +305,38 @@ PROMPTS = [
 # Images that get a second candidate by default (the four level maps).
 MULTI = {'level_overview.png', 'zone1_waiting_room.png', 'zone2_ward.png', 'zone3_theatre.png'}
 
+# v0.11 layout references: symmetric, grid-aligned furniture plans per zone (references only, never pixels). Kept in their
+# own list so the v0.10 concept set (PROMPTS, pinned by tests/test_past_concepts.py) stays unchanged; plan() reads both.
+LAYOUT = (
+    'STRUCTURED LAYOUT: furniture placed on a strict tile grid, aligned in straight rows and columns, grouped by '
+    'function, mirror-symmetric about the vertical centre line wherever the brief says so, with a wide open walkway '
+    'from the south door to the north door on the centre line. Straight-down top-down floor plan feel, every prop axis '
+    'aligned. '
+)
+LAYOUT_PROMPTS = [
+    P('layout_waiting_room', '16:9', MAP_ROOM + LAYOUT +
+      'Map of the veterinary clinic waiting room only, 30 tiles wide and 13 tiles tall, the north wall face with a '
+      'sliding clinic door in its exact centre. West half: two straight rows of orange plastic chairs #F08A24 facing '
+      'each other across a low wooden coffee table with magazines, a rug under the chairs, a blue cat carrier #6F8FBF '
+      'beside the south row. East half: one long straight reception counter with a computer, a bell and a treat jar, a '
+      'back cabinet against the wall behind it, a floor mat in front. Two potted plants framing the south entrance, a '
+      'notice board with pinned paper and a cat poster on the north wall, a water cooler, a fish tank on a stand, a wall '
+      'clock. '),
+    P('layout_ward', '16:9', MAP_ROOM + LAYOUT +
+      'Map of the clinic ward only, 30 tiles wide and 17 tiles tall, sliding clinic doors in the centre of the south '
+      'and north walls, a teal guide stripe painted on the floor from door to door. Stacked steel kennel cages in a '
+      'continuous bank along both the west and east walls, mirror-symmetric. A central nurse station island with a '
+      'stool, a supply shelf with boxes and a scrubs rack along the north wall, a medicine trolley, two IV stands '
+      'flanking the north door, a large open floor for a fight around the station. '),
+    P('layout_theatre', '16:9', MAP_ROOM + LAYOUT +
+      'Map of the operating theatre only, 30 tiles wide and 18 tiles tall, a sliding clinic door in the centre of the '
+      'south wall. The steel operating table with brown straps centred under a round surgical lamp on a floor mat, '
+      'instrument trolleys with tools at both sides of the table, an anaesthesia machine and a heart monitor at the '
+      'head of the table, glass cabinets and a scrub sink along the north wall, a side counter on the west with a cone '
+      'of shame and folded towels, a counter on the east with a printer and a sanitizer dispenser, a biohazard bin. '
+      'Wide open floor around the table as a boss arena. '),
+]
+
 # ---------------------------------------------------------------- generation
 
 
@@ -316,7 +348,7 @@ def out_path(prompt, candidate):
 def plan(force=False, only=None, candidates=2):
     jobs = []
     wanted = None if only is None else {n.strip().removesuffix('.png') for n in only.split(',')}
-    for p in PROMPTS:
+    for p in PROMPTS + LAYOUT_PROMPTS:
         if wanted is not None and p.name[:-4] not in wanted:
             continue
         n = candidates if p.name in MULTI else 1

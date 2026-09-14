@@ -268,4 +268,166 @@ namespace PlutoVetVisit
             }
         }
     }
+
+    // ------------------------------------------------------------------ 0.11: weapon-like helpers and the Vet's surgery set
+
+    /// <summary>Syringe Tech: the syringe shotgun. Five syringes over 36 degrees at 9, then four at 7 in the gaps 20 frames
+    /// later (the Blue Shotgun Kin's re-pump).</summary>
+    public class SyringeShotgunScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float aim = GetAimDirection(0f, Pace.S(9f));
+            for (int i = 0; i < 5; i++)
+                Fire(new Direction(SubdivideArc(aim - 18f, 36f, 5, i), DirectionType.Absolute), new Speed(Pace.S(9f), SpeedType.Absolute), new SyringeBullet());
+            yield return Wait(20);
+            for (int i = 0; i < 4; i++)
+                Fire(new Direction(aim - 13.5f + 9f * i, DirectionType.Absolute), new Speed(Pace.S(7f), SpeedType.Absolute), new SyringeBullet());
+        }
+    }
+
+    /// <summary>Vet Tech: the dart rifle. One fast dart that leads Pluto fully, then an unled one eight frames later: a straight
+    /// strafe eats the first, stopping eats the second.</summary>
+    public class DartRifleScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            Fire(new Direction(GetAimDirection(1f, Pace.S(12f)), DirectionType.Absolute), new Speed(Pace.S(12f), SpeedType.Absolute), new SyringeBullet());
+            yield return Wait(8);
+            Fire(new Direction(GetAimDirection(0f, Pace.S(12f)), DirectionType.Absolute), new Speed(Pace.S(12f), SpeedType.Absolute), new SyringeBullet());
+        }
+    }
+
+    /// <summary>The Nurse: a tranquilizer hose, fourteen droplets one every three frames sweeping 70 degrees through Pluto at 8
+    /// (the Gatling Gull's fan spray); the sweep direction is random.</summary>
+    public class TranquilizerSprayScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float aim = GetAimDirection(0f, Pace.S(8f));
+            int dir = Random.value < 0.5f ? 1 : -1;
+            for (int i = 0; i < 14; i++)
+            {
+                Fire(new Direction(aim + dir * (-35f + 70f * i / 13f), DirectionType.Absolute), new Speed(Pace.S(8f), SpeedType.Absolute), new DropletBullet());
+                yield return Wait(3);
+            }
+        }
+    }
+
+    /// <summary>The Nurse below half health: the IV line. Twelve droplets five frames apart, alternately 35 degrees either side,
+    /// each curling back onto the aim line over half a second: a braided stream. Step sideways.</summary>
+    public class IVLineScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float aim = GetAimDirection(0f, Pace.S(7f));
+            for (int i = 0; i < 12; i++)
+            {
+                Fire(new Direction(aim + (i % 2 == 0 ? 35f : -35f), DirectionType.Absolute), new Speed(Pace.S(7f), SpeedType.Absolute), new CurlBullet(aim));
+                yield return Wait(5);
+            }
+        }
+    }
+
+    public class CurlBullet : Bullet
+    {
+        private readonly float line;
+
+        public CurlBullet(float line) : base("droplet", false, false, false) { this.line = line; }
+
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            ChangeDirection(new Direction(line, DirectionType.Absolute), 30);
+            yield return Wait(300);
+            Vanish(false);
+        }
+    }
+
+    /// <summary>The Vet: the scalpel ring. Twenty-four syringes at 6 with a 60-degree gap placed 45-90 degrees off Pluto (never
+    /// on him), then three aimed syringes at 10.</summary>
+    public class ScalpelRingScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            EndOnBlank = true;
+            float aim = GetAimDirection(0f, Pace.S(6f));
+            float gapCentre = aim + (Random.value < 0.5f ? 1f : -1f) * Random.Range(45f, 90f);
+            for (int i = 0; i < 24; i++)
+            {
+                float a = aim + i * 15f;
+                if (Mathf.Abs(Mathf.DeltaAngle(a, gapCentre)) < 30f) continue;
+                Fire(new Direction(a, DirectionType.Absolute), new Speed(Pace.S(6f), SpeedType.Absolute), new SyringeBullet());
+            }
+            yield return Wait(30);
+            for (int i = 0; i < 3; i++)
+            {
+                Fire(new Direction(GetAimDirection(0.5f, Pace.S(10f)), DirectionType.Absolute), new Speed(Pace.S(10f), SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(6);
+            }
+        }
+    }
+
+    /// <summary>A syringe that stops, hangs where Pluto can see it, then re-aims at him.</summary>
+    public class StitchBullet : Bullet
+    {
+        private readonly int hold;
+
+        public StitchBullet(int hold) : base("syringe", false, false, false) { this.hold = hold; }
+
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            ChangeSpeed(new Speed(0f, SpeedType.Absolute), 20);
+            yield return Wait(20 + hold);
+            ChangeDirection(new Direction(0f, DirectionType.Aim), 1);
+            ChangeSpeed(new Speed(Pace.S(9f), SpeedType.Absolute), 12);
+            yield return Wait(240);
+            Vanish(false);
+        }
+    }
+
+    /// <summary>The Vet: stitches. Eight syringes in a 100-degree fan at 10 stop, hang half a second, then re-aim one by one
+    /// five frames apart.</summary>
+    public class StitchesScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            EndOnBlank = true;
+            float aim = GetAimDirection(0f, Pace.S(10f));
+            for (int i = 0; i < 8; i++)
+                Fire(new Direction(SubdivideArc(aim - 50f, 100f, 8, i), DirectionType.Absolute), new Speed(Pace.S(10f), SpeedType.Absolute), new StitchBullet(30 + 5 * i));
+            yield return Wait(90);
+        }
+    }
+
+    /// <summary>A big slow cloud that drifts to a near stop and lingers four seconds.</summary>
+    public class CloudBullet : Bullet
+    {
+        public CloudBullet() : base("cloud", false, false, false) { }
+
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            ChangeSpeed(new Speed(Pace.S(0.6f), SpeedType.Absolute), 60);
+            yield return Wait(240);
+            Vanish(false);
+        }
+    }
+
+    /// <summary>The Vet: anesthesia. Seven clouds in a 120-degree arc at 4 that settle and linger (they shape the arena, they
+    /// do not snipe), then a three-syringe booster.</summary>
+    public class AnesthesiaCloudScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            EndOnBlank = true;
+            float aim = GetAimDirection(0f, Pace.S(4f));
+            for (int i = 0; i < 7; i++)
+                Fire(new Direction(SubdivideArc(aim - 60f, 120f, 7, i), DirectionType.Absolute), new Speed(Pace.S(4f), SpeedType.Absolute), new CloudBullet());
+            yield return Wait(40);
+            for (int i = 0; i < 3; i++)
+            {
+                Fire(new Direction(GetAimDirection(i == 1 ? 0f : 0.7f, Pace.S(10f)), DirectionType.Absolute), new Speed(Pace.S(10f), SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(6);
+            }
+        }
+    }
 }

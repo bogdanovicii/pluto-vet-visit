@@ -172,6 +172,28 @@ Take: the four floor variants (plain, drain, paw print, cracked), the wall face 
 strip, the top strip alone, the outer corner, the framed door gap, the floor-to-wall shadow band.
 Ignore: the three figures at the bottom (padding Gemini added), the floor grout brightness (use #DCE0E6).
 
+## v0.11 layout references (prompts added, not generated yet)
+
+`tools/gemini_past_concepts.py` has a second list, `LAYOUT_PROMPTS`, with three 16:9 top-down plans meant to show a
+structured, grid-aligned and mirror-symmetric furniture layout per zone. They are kept out of `PROMPTS` so the v0.10
+concept set above stays unchanged; `plan()` reads both lists. Generate them with
+`python3 tools/gemini_past_concepts.py --only layout_waiting_room,layout_ward,layout_theatre --candidates 1`.
+
+On 2026-09-14 the run failed for all three: the Gemini API answered that the project's prepaid credits are depleted.
+No files were written. The v0.11 layout in `tools/clinic_objects.py` was planned from the existing zone maps and prop
+sheets instead.
+
+- `layout_waiting_room.png`: two chair rows facing a coffee table on a rug, a carrier by the chairs, one straight
+  reception counter with a back cabinet and a mat, plants framing the south entrance, a notice board, a water cooler,
+  the fish tank, the clock. Take: the grouping and the open centre aisle. Ignore: any lettering, perspective.
+- `layout_ward.png`: mirrored kennel banks, a central nurse-station island with a stool, the supply shelf and scrubs
+  rack on the north wall, a medicine trolley, IV stands flanking the north door, the teal guide stripe door to door.
+- `layout_theatre.png`: the strapped table centred under the lamp on a floor mat, instrument trolleys at its sides,
+  anaesthesia machine and heart monitor at its head, cabinets and a scrub sink on the north wall, a west counter with
+  the cone and towels, an east counter with a printer and sanitizer, a biohazard bin, an open boss-arena floor.
+
+As with every image on this page: references only. Never pixelize, trace or copy them into `Resources/`.
+
 ## Story beats
 
 ### 14. `beat_intro.png` (16:9, round 2)

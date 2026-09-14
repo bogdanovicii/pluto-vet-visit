@@ -10,6 +10,12 @@ namespace PlutoVetVisit
         public const int TECH_SHOOT_X = 30, TECH_SHOOT_Y = 10;
         public static readonly string[] TECH_CLIPS = { "idle", "move", "tell", "fire", "die" };
         public static readonly int[] TECH_FRAMES = { 4, 6, 3, 3, 6 };
+        public const string STECH_ROOT = "PlutoVetVisit/Resources/Enemies/stech";
+        public const int STECH_W = 32, STECH_H = 32;
+        public const int STECH_HIT_X = 8, STECH_HIT_Y = 0, STECH_HIT_W = 12, STECH_HIT_H = 26;
+        public const int STECH_SHOOT_X = 30, STECH_SHOOT_Y = 10;
+        public static readonly string[] STECH_CLIPS = { "idle", "move", "tell", "fire", "die" };
+        public static readonly int[] STECH_FRAMES = { 4, 6, 3, 3, 6 };
         public const string NURSE_ROOT = "PlutoVetVisit/Resources/Enemies/nurse";
         public const int NURSE_W = 48, NURSE_H = 40;
         public const int NURSE_HIT_X = 11, NURSE_HIT_Y = 0, NURSE_HIT_W = 21, NURSE_HIT_H = 38;

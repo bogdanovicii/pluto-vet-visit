@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Brave.BulletScript;
 using Alexandria.EnemyAPI;
 using Alexandria.ItemAPI;
 using DirType = DirectionalAnimation.DirectionType;
@@ -60,6 +62,16 @@ namespace PlutoVetVisit
             actor.PreventFallingInPitsEver = true;
             actor.CanDropCurrency = false;
             actor.procedurallyOutlined = true;
+            // BossBuilder turns the shadow off; DashBehavior (his hops) reads ShadowObject every tick, and AIActor.Start
+            // only makes one when HasShadow is on.
+            actor.HasShadow = true;
+            try
+            {
+                AIActor kinActor = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN);
+                GameObject shadow = kinActor != null ? (kinActor.ShadowPrefab != null ? kinActor.ShadowPrefab : kinActor.ShadowObject) : null;
+                if (shadow != null) EnemyBuildingTools.AddShadowToAIActor(actor, shadow, new Vector2(23f / 16f, 0f), "shadow");
+            }
+            catch (Exception e) { PastPlugin.Log("no borrowed shadow for the Vet (the default blob is used): " + e.Message); }
             actor.specRigidbody.CollideWithOthers = true;
             actor.specRigidbody.CollideWithTileMap = true;
             actor.specRigidbody.PixelColliders.Add(new PixelCollider
@@ -89,19 +101,20 @@ namespace PlutoVetVisit
             bank.Bullets.Add(Entry(kin, "syringe", "vet_syringe_001", 12, 4));
             bank.Bullets.Add(Entry(kin, "droplet", "vet_droplet_001", 5, 5));
             bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 8, 4));
+            bank.Bullets.Add(Entry(kin, "cloud", "vet_cloud_001", 14, 14));
 
             GameObject shootPoint = EnemyBuildingTools.GenerateShootPoint(Prefab, actor.sprite.WorldCenter + new Vector2(1.2f, 0.0f), "syringe_tip"); // the needle of the vaccine gun
             bs.TargetBehaviors = new List<TargetBehaviorBase>
             {
                 new TargetPlayerBehavior { Radius = 35f, LineOfSight = false, ObjectPermanence = true, SearchInterval = 0.25f, PauseOnTargetSwitch = false, PauseTime = 0.25f }
             };
-            // Movement stack, first match wins each tick: back off when Pluto gets close, close in when he is
-            // far, otherwise strafe around him unpredictably. Keeps the fight at syringe range.
+            // Vanilla floor bosses move with a Seek leash only (Beholster 10 tiles). The 0.10 FleeTargetBehavior fired on every
+            // hit and, with interruptible attacks, cancelled his tells: every shot Pluto landed stopped the pattern. Now: close
+            // to 10 tiles, then strafe to random cells on his side of Pluto; the hops in the attack table do the repositioning.
             bs.MovementBehaviors = new List<MovementBehaviorBase>
             {
-                new FleeTargetBehavior { TooCloseDistance = 3.5f, TooCloseLOS = false, CloseDistance = 5f, CloseTime = 2f, DesiredDistance = 7f, CanAttackWhileMoving = true, PathInterval = 0.25f },
-                new SeekTargetBehavior { StopWhenInRange = true, CustomRange = 8.5f, LineOfSight = false, ReturnToSpawn = false, PathInterval = 0.3f },
-                new MoveErraticallyBehavior { PathInterval = 0.35f, PointReachedPauseTime = 0.3f, PreventFiringWhileMoving = false, InitialDelay = 0.5f, StayOnScreen = true, AvoidTarget = true, UseTargetsRoom = true }
+                new SeekTargetBehavior { StopWhenInRange = true, CustomRange = 10f, LineOfSight = false, ReturnToSpawn = false, PathInterval = 0.5f },
+                new MoveErraticallyBehavior { PathInterval = 0.5f, PointReachedPauseTime = 0.25f, PreventFiringWhileMoving = false, InitialDelay = 0f, StayOnScreen = true, AvoidTarget = true, UseTargetsRoom = true },
             };
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
@@ -215,14 +228,98 @@ namespace PlutoVetVisit
             GameObject bullet = e.BulletObject;
             bullet.SetActive(false);
             FakePrefab.MarkAsFakePrefab(bullet);
+            // One name per copy: the pool keys its name dictionary by GameObject name ("Duplicate prefab name" otherwise).
+            bullet.name = "PlutoVet_" + name + "_" + (bulletCopyCount++);
             Projectile p = bullet.GetComponent<Projectile>();
-            p.SetProjectileSpriteRight(sprite, w, h, false, tk2dBaseSprite.Anchor.MiddleCenter, w, h);
+            if (ETGMod.Databases.Items.ProjectileCollection.inst.GetSpriteIdByName(sprite, -1) < 0)
+                PastPlugin.Log("warning: projectile sprite '" + sprite + "' is not in ProjectileCollection; keeping the vanilla look for " + name);
+            else
+                p.SetProjectileSpriteRight(sprite, w, h, false, tk2dBaseSprite.Anchor.MiddleCenter, w, h);
+            // SetProjectileSpriteRight moves the sprite into ETGMod's ProjectileCollection. The vanilla bullet builds its
+            // hitbox as a BagelCollider from the frame "10x10_projectile_dubred_dark_001" of its OWN collection; that
+            // lookup now fails and PixelCollider.RegenerateEmptyCollider makes it 0x0: the 0.10.1 bullets flew through
+            // Pluto. Give every copy a manual box sized to our sprite, centred on the projectile (sprite anchored middle).
+            ManualHitbox(p, w, h);
+            p.collidesWithPlayer = true;
+            p.collidesWithEnemies = false;
+            p.collidesWithProjectiles = false;
+            p.baseData.damage = 0.5f;   // every vanilla enemy bullet takes half a heart
             e.preloadCount = 0;   // AIBulletBank.Awake preloads BulletObject when this is > 0; nothing to preload
             BulletRecipe prior;
             if (Recipes.TryGetValue(name, out prior) && (prior.Sprite != sprite || prior.W != w || prior.H != h))
                 PastPlugin.Log("warning: bank name '" + name + "' is built with two different sprites; one name must mean one sprite, or a repair picks the last");
             Recipes[name] = new BulletRecipe { Sprite = sprite, W = w, H = h, Object = bullet };
+            LogBullet("bank " + name, p);
             return e;
+        }
+
+        private static int bulletCopyCount;
+
+        /// <summary>A manual box collider on the Projectile layer, a little smaller than a sprite of 8 px or more (vanilla
+        /// hitboxes sit inside the art), centred on the projectile position.</summary>
+        public static void ManualHitbox(Projectile p, int w, int h)
+        {
+            SpeculativeRigidbody body = p != null ? p.specRigidbody : null;
+            if (body == null || body.PixelColliders == null) { PastPlugin.Log("warning: projectile without a rigidbody, cannot set its hitbox"); return; }
+            int hw = w >= 8 ? w - 2 : w, hh = h >= 8 ? h - 2 : h;
+            foreach (PixelCollider pc in body.PixelColliders)
+            {
+                pc.ColliderGenerationMode = PixelCollider.PixelColliderGeneration.Manual;
+                pc.CollisionLayer = CollisionLayer.Projectile;
+                pc.IsTrigger = false;
+                pc.Enabled = true;
+                pc.BagleUseFirstFrameOnly = false;
+                pc.SpecifyBagelFrame = string.Empty;
+                pc.ManualWidth = hw;
+                pc.ManualHeight = hh;
+                pc.ManualOffsetX = -hw / 2;
+                pc.ManualOffsetY = -hh / 2;
+            }
+        }
+
+        /// <summary>One line per projectile: name, sprite, flags, damage and every collider (mode, layer, manual size, and the
+        /// built Dimensions, which are only real once a live copy has initialised its rigidbody).</summary>
+        public static void LogBullet(string label, Projectile p)
+        {
+            try
+            {
+                if (p == null) { PastPlugin.Log(label + ": no projectile"); return; }
+                SpeculativeRigidbody b = p.specRigidbody;
+                tk2dBaseSprite s = p.sprite;
+                tk2dSpriteDefinition def = s != null ? s.GetCurrentSpriteDef() : null;
+                string line = label + ": go " + p.gameObject.name + ", active " + p.gameObject.activeSelf
+                    + ", sprite " + (def != null ? def.name : "none")
+                    + ", hitsPlayer " + p.collidesWithPlayer + ", hitsEnemies " + p.collidesWithEnemies
+                    + ", damage " + p.baseData.damage + ", speed " + p.baseData.speed
+                    + ", colliders " + (b != null && b.PixelColliders != null ? b.PixelColliders.Count : -1);
+                if (b != null && b.PixelColliders != null)
+                    foreach (PixelCollider pc in b.PixelColliders)
+                        line += " [" + pc.CollisionLayer + " " + pc.ColliderGenerationMode + " manual " + pc.ManualWidth + "x" + pc.ManualHeight
+                            + " at " + pc.ManualOffsetX + "," + pc.ManualOffsetY + " built " + pc.Dimensions.x + "x" + pc.Dimensions.y + " trigger " + pc.IsTrigger + "]";
+                PastPlugin.Log(line);
+            }
+            catch (Exception ex) { PastPlugin.Log(label + ": bullet log threw: " + ex.Message); }
+        }
+
+        /// <summary>Logs an actor's first live projectile two frames after it spawns, when its collider has been built.</summary>
+        public static void WatchFirstShot(AIActor a)
+        {
+            if (a == null || a.bulletBank == null) return;
+            string who = a.GetActorName();
+            bool logged = false;
+            a.bulletBank.OnBulletSpawned += delegate (Bullet bullet, Projectile projectile)
+            {
+                if (logged || projectile == null || GameManager.Instance == null) return;
+                logged = true;
+                GameManager.Instance.StartCoroutine(LogLater(who + " first shot", projectile));
+            };
+        }
+
+        private static IEnumerator LogLater(string label, Projectile p)
+        {
+            yield return null;
+            yield return null;
+            if (p != null) LogBullet(label, p);
         }
 
         private static bool Usable(AIBulletBank.Entry e)
@@ -295,21 +392,33 @@ namespace PlutoVetVisit
             float c = PastConfig.BossCooldownScale;
             return new List<AttackBehaviorGroup.AttackGroupItem>
             {
-                // Phase 1, 100-60 %: "Consultation". Aimed bursts, fans, slow pills. About one attack every 2.5 s.
-                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f * c, 0.6f, 1f, minRange: 4f, attackCooldown: 0.5f)),
+                // Phase 1, 100-60 %: "Consultation". Aimed bursts (he plants for the tell, moves while firing), fans, slow
+                // pills, and a sidestep hop between attacks. About one pattern every 2.5 s.
+                Item("booster shot", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.6f * c, 0.6f, 1f, minRange: 4f, attackCooldown: 0.5f))),
                 Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f * c, 0.6f, 1f, range: 8f, attackCooldown: 0.6f)),
                 Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.5f * c, 0.6f, 1f, attackCooldown: 0.8f, initialCooldown: 4f)),
-                // Phase 2, 60-25 %: "Treatment". Quicker bursts, the droplet wall (find the gap, follow it), the spiral, the cone.
-                Item("booster shot 2", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f * c, 0.25f, 0.6f, minRange: 4f, attackCooldown: 0.5f)),
+                Item("hop 1", 1.0f, BossHop(PastConfig.BossHopCooldown * 1.35f * c, 0.6f, 1f, 0f)),
+                // Phase 2, 60-25 %: "Treatment". Quicker bursts, the droplet wall, the spiral, the cone, stitches that hang and
+                // re-aim, the scalpel ring with its gap, anesthesia clouds, and the leap-in ring.
+                Item("booster shot 2", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.1f * c, 0.25f, 0.6f, minRange: 4f, attackCooldown: 0.5f))),
                 Item("spray bottle 2", 1.0f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f * c, 0.25f, 0.6f, range: 8f, attackCooldown: 0.6f)),
                 Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f * c, 0.25f, 0.6f, minRange: 5f, attackCooldown: 0.8f)),
-                Item("vaccination spiral", 0.8f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
-                Item("cone of shame", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
-                // Phase 3, last quarter: "Just a little snip". Fast leading bursts, the hard wall, and the full course
-                // (wall then spiral back to back, the way the Gorgun chains her two uzi hoses).
-                Item("snip time", 1.5f, Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f)),
-                Item("cone of shame 3", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
+                Item("vaccination spiral", 0.7f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
+                Item("cone of shame", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
+                Item("stitches", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 2f)),
+                Item("scalpel ring", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
+                Item("anesthesia", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 6.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
+                Item("hop 2", 1.2f, BossHop(PastConfig.BossHopCooldown * c, 0.25f, 0.6f, 0f)),
+                Item("leap and ring", 0.6f, LeapRing(shootPoint, 7f * c, 0f, 0.6f)),
+                // Phase 3, last quarter: "Just a little snip". Fast leading bursts, the hard wall, the full course (wall then
+                // spiral back to back), quicker stitches and rings, clouds, double hops.
+                Item("snip time", 1.5f, Aimed(Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f))),
+                Item("cone of shame 3", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
                 Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 0.8f)),
+                Item("stitches 3", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 3.5f * c, 0f, 0.25f, attackCooldown: 1.0f)),
+                Item("scalpel ring 3", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
+                Item("anesthesia 3", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 5.0f * c, 0f, 0.25f, attackCooldown: 1.0f)),
+                Item("hop 3", 1.5f, BossHop(PastConfig.BossHopCooldown * 0.7f * c, 0f, 0.25f, 0.35f)),
                 new AttackBehaviorGroup.AttackGroupItem
                 {
                     NickName = "full course",
@@ -325,6 +434,38 @@ namespace PlutoVetVisit
                         OverrideCooldowns = new List<float> { 0.4f },
                     }
                 },
+            };
+        }
+
+        /// <summary>An aimed pattern: he stops for the tell, then keeps moving while the bullets go out (vanilla quickshots).</summary>
+        private static ShootBehavior Aimed(ShootBehavior shoot)
+        {
+            shoot.StopDuring = ShootBehavior.StopType.TellOnly;
+            return shoot;
+        }
+
+        /// <summary>A four-tile hop to Pluto's side, never toward him, between patterns (the Gun Cultist's roll without a clip).</summary>
+        private static DashBehavior BossHop(float cooldown, float minHealth, float maxHealth, float doubleChance)
+        {
+            DashBehavior hop = VetTech.Hop(DashBehavior.DashDirection.PerpendicularToTarget, 4f, 0.3f, cooldown, 1f, 1.5f, 0f, true);
+            hop.MinHealthThreshold = minHealth;
+            hop.MaxHealthThreshold = maxHealth;
+            hop.doubleDashChance = doubleChance;
+            hop.AttackCooldown = 0.2f;
+            return hop;
+        }
+
+        /// <summary>A five-tile leap in, then the scalpel ring from where he lands.</summary>
+        private static SequentialAttackBehaviorGroup LeapRing(GameObject shootPoint, float cooldown, float minHealth, float maxHealth)
+        {
+            DashBehavior leap = VetTech.Hop(DashBehavior.DashDirection.KindaTowardTarget, 5f, 0.35f, cooldown, 1f, 4f, 0f, false);
+            leap.MinHealthThreshold = minHealth;
+            leap.MaxHealthThreshold = maxHealth;
+            return new SequentialAttackBehaviorGroup
+            {
+                RunInClass = false,
+                AttackBehaviors = new List<AttackBehaviorBase> { leap, Shoot(typeof(ScalpelRingScript), shootPoint, 0f, minHealth, maxHealth, attackCooldown: 0.8f) },
+                OverrideCooldowns = new List<float> { 0.2f },
             };
         }
 
@@ -348,7 +489,7 @@ namespace PlutoVetVisit
                 ReaimOnFire = false,
                 RequiresTarget = true,
                 PreventTargetSwitching = true,
-                Uninterruptible = false,
+                Uninterruptible = true,   // vanilla bosses and adds finish a pattern once it starts; a hit never cancels a tell
                 TellAnimation = "tell",
                 FireAnimation = "fire",
                 HideGun = false,
@@ -381,7 +522,7 @@ namespace PlutoVetVisit
     /// <summary>Below half health the Vet calls the Nurse and two Techs, once (v2 design, act 3).</summary>
     public class VetReinforcements : BraveBehaviour
     {
-        private bool called, lastFifth;
+        private bool called, lastFifth, phaseTwo;
 
         private void Start()
         {
@@ -391,6 +532,11 @@ namespace PlutoVetVisit
         private void OnDamaged(float resultValue, float maxValue, CoreDamageTypes damageTypes, DamageCategory damageCategory, Vector2 damageDirection)
         {
             if (maxValue <= 0f || VetVisitController.Instance == null) return;
+            if (!phaseTwo && resultValue <= maxValue * 0.6f)
+            {
+                phaseTwo = true;
+                VetVisitController.Instance.PhaseLine(PastConfig.FightPhase2);
+            }
             if (!called && PastConfig.BossReinforcements && resultValue <= maxValue * 0.5f)
             {
                 called = true;

@@ -35,16 +35,16 @@
    "y": 2.5
   },
   {
-   "x": 21.5,
+   "x": 22.5,
    "y": 11.3
   },
   {
-   "x": 0.75,
-   "y": 7.8
+   "x": 3.25,
+   "y": 9.05
   },
   {
-   "x": 0.75,
-   "y": 9.8
+   "x": 7.75,
+   "y": 9.05
   },
   {
    "x": 0.0,
@@ -71,59 +71,115 @@
    "y": 52.0
   },
   {
+   "x": 2.75,
+   "y": 4.75
+  },
+  {
+   "x": 14.0,
+   "y": 3.0
+  },
+  {
+   "x": 22.0,
+   "y": 7.0
+  },
+  {
+   "x": 1.25,
+   "y": 7.5
+  },
+  {
    "x": 1.5,
    "y": 2.5
   },
   {
-   "x": 0.75,
-   "y": 4.0
+   "x": 3.25,
+   "y": 5.25
   },
   {
-   "x": 0.75,
-   "y": 6.0
+   "x": 4.75,
+   "y": 5.25
   },
   {
-   "x": 0.75,
-   "y": 8.0
+   "x": 6.25,
+   "y": 5.25
   },
   {
-   "x": 0.75,
-   "y": 10.0
+   "x": 7.75,
+   "y": 5.25
   },
   {
-   "x": 8.0,
-   "y": 0.75
+   "x": 9.25,
+   "y": 5.25
   },
   {
-   "x": 9.5,
-   "y": 0.75
+   "x": 3.25,
+   "y": 9.25
+  },
+  {
+   "x": 4.75,
+   "y": 9.25
+  },
+  {
+   "x": 6.25,
+   "y": 9.25
+  },
+  {
+   "x": 7.75,
+   "y": 9.25
+  },
+  {
+   "x": 9.25,
+   "y": 9.25
+  },
+  {
+   "x": 5.5,
+   "y": 7.25
   },
   {
    "x": 11.0,
-   "y": 0.75
-  },
-  {
-   "x": 12.5,
-   "y": 0.75
-  },
-  {
-   "x": 14.0,
-   "y": 0.75
-  },
-  {
-   "x": 3.5,
-   "y": 13.75
-  },
-  {
-   "x": 7.0,
-   "y": 13.75
-  },
-  {
-   "x": 10.5,
-   "y": 14.0
+   "y": 9.25
   },
   {
    "x": 12.0,
+   "y": 0.25
+  },
+  {
+   "x": 17.0,
+   "y": 0.25
+  },
+  {
+   "x": 17.75,
+   "y": 4.0
+  },
+  {
+   "x": 20.0,
+   "y": 10.0
+  },
+  {
+   "x": 21.5,
+   "y": 11.75
+  },
+  {
+   "x": 27.5,
+   "y": 4.5
+  },
+  {
+   "x": 28.25,
+   "y": 1.0
+  },
+  {
+   "x": 1.0,
+   "y": 13.75
+  },
+  {
+   "x": 3.5,
+   "y": 14.5
+  },
+  {
+   "x": 7.75,
+   "y": 14.0
+  },
+  {
+   "x": 9.75,
    "y": 13.75
   },
   {
@@ -131,40 +187,16 @@
    "y": 14.125
   },
   {
-   "x": 14.5,
-   "y": 5.0
+   "x": 17.25,
+   "y": 14.5
   },
   {
-   "x": 9.0,
-   "y": 3.5
+   "x": 22.5,
+   "y": 13.75
   },
   {
-   "x": 11.0,
-   "y": 7.0
-  },
-  {
-   "x": 19.0,
-   "y": 10.0
-  },
-  {
-   "x": 19.5,
-   "y": 7.5
-  },
-  {
-   "x": 26.5,
-   "y": 10.5
-  },
-  {
-   "x": 26.0,
-   "y": 5.5
-  },
-  {
-   "x": 26.5,
-   "y": 3.0
-  },
-  {
-   "x": 26.5,
-   "y": 1.0
+   "x": 27.0,
+   "y": 13.75
   },
   {
    "x": 0.5,
@@ -207,32 +239,60 @@
    "y": 28.0
   },
   {
+   "x": 18.375,
+   "y": 23.0
+  },
+  {
+   "x": 10.25,
+   "y": 23.0
+  },
+  {
    "x": 12.0,
    "y": 23.0
   },
   {
-   "x": 4.0,
-   "y": 32.75
+   "x": 14.625,
+   "y": 24.25
   },
   {
-   "x": 11.5,
-   "y": 33.25
+   "x": 5.5,
+   "y": 30.0
   },
   {
-   "x": 18.0,
-   "y": 32.75
+   "x": 9.5,
+   "y": 30.0
   },
   {
-   "x": 10.0,
-   "y": 29.8
+   "x": 12.5,
+   "y": 30.0
   },
   {
-   "x": 17.0,
+   "x": 16.5,
    "y": 30.0
   },
   {
    "x": 19.5,
    "y": 30.0
+  },
+  {
+   "x": 21.5,
+   "y": 30.0
+  },
+  {
+   "x": 6.25,
+   "y": 32.75
+  },
+  {
+   "x": 11.25,
+   "y": 33.5
+  },
+  {
+   "x": 17.125,
+   "y": 33.25
+  },
+  {
+   "x": 22.0,
+   "y": 32.75
   },
   {
    "x": 1.0,
@@ -243,19 +303,11 @@
    "y": 49.0
   },
   {
-   "x": 10.5,
-   "y": 53.0
-  },
-  {
-   "x": 12.0,
-   "y": 52.75
-  },
-  {
-   "x": 16.0,
+   "x": 20.5,
    "y": 49.0
   },
   {
-   "x": 21.0,
+   "x": 23.0,
    "y": 49.0
   },
   {
@@ -263,11 +315,27 @@
    "y": 49.0
   },
   {
-   "x": 27.2,
-   "y": 49.0
+   "x": 10.25,
+   "y": 52.75
   },
   {
-   "x": 11.0,
+   "x": 14.0,
+   "y": 53.0
+  },
+  {
+   "x": 17.25,
+   "y": 52.75
+  },
+  {
+   "x": 21.0,
+   "y": 47.5
+  },
+  {
+   "x": 10.0,
+   "y": 40.25
+  },
+  {
+   "x": 12.5,
    "y": 40.75
   },
   {
@@ -275,24 +343,48 @@
    "y": 41.0
   },
   {
+   "x": 10.25,
+   "y": 41.0
+  },
+  {
+   "x": 17.25,
+   "y": 41.0
+  },
+  {
    "x": 10.0,
-   "y": 45.5
+   "y": 43.75
+  },
+  {
+   "x": 17.25,
+   "y": 43.75
+  },
+  {
+   "x": 8.5,
+   "y": 43.75
+  },
+  {
+   "x": 19.25,
+   "y": 43.75
   },
   {
    "x": 11.5,
+   "y": 45.5
+  },
+  {
+   "x": 13.0,
    "y": 43.0
   },
   {
-   "x": 18.0,
-   "y": 41.5
+   "x": 1.0,
+   "y": 45.0
   },
   {
-   "x": 8.0,
-   "y": 41.5
+   "x": 26.0,
+   "y": 45.0
   },
   {
-   "x": 23.5,
-   "y": 46.5
+   "x": 24.5,
+   "y": 45.0
   },
   {
    "x": 29.0,
@@ -311,11 +403,7 @@
    "y": 39.0
   },
   {
-   "x": 2.0,
-   "y": 41.5
-  },
-  {
-   "x": 5.5,
+   "x": 24.0,
    "y": 36.0
   }
  ],
@@ -333,6 +421,10 @@
   "pluto_wall_face",
   "pluto_wall_face",
   "pluto_wall_face_solid",
+  "pluto_rug",
+  "pluto_paw_prints",
+  "pluto_floor_mat",
+  "pluto_toy_mouse",
   "pluto_carrier",
   "pluto_chair",
   "pluto_chair",
@@ -343,20 +435,24 @@
   "pluto_chair",
   "pluto_chair",
   "pluto_chair",
-  "pluto_wall_tv",
-  "pluto_window",
-  "pluto_clock",
-  "pluto_poster",
-  "pluto_intercom",
+  "pluto_chair",
+  "pluto_coffee_table",
+  "pluto_carrier_open",
+  "pluto_plant",
+  "pluto_plant",
   "pluto_wet_floor_sign",
-  "pluto_paw_prints",
-  "pluto_toy_mouse",
   "pluto_reception_desk",
-  "pluto_floor_mat",
-  "pluto_plant",
+  "pluto_back_cabinet",
   "pluto_fish_tank",
-  "pluto_scratch_post",
-  "pluto_plant",
+  "pluto_water_cooler",
+  "pluto_window",
+  "pluto_sign_waiting",
+  "pluto_clock",
+  "pluto_notice_board",
+  "pluto_intercom",
+  "pluto_sign_ward",
+  "pluto_wall_tv",
+  "pluto_poster",
   "pluto_kennel_cat",
   "pluto_kennel_open_r",
   "pluto_kennel_cone",
@@ -367,36 +463,72 @@
   "pluto_kennel_open_l",
   "pluto_kennel_cat",
   "pluto_kennel_cone",
+  "pluto_food_bowls",
+  "pluto_med_trolley",
   "pluto_nurse_station",
+  "pluto_stool",
+  "pluto_supply_shelf",
+  "pluto_sharps_bin",
+  "pluto_iv_stand",
+  "pluto_iv_stand",
+  "pluto_litter_box",
+  "pluto_scrubs_rack",
   "pluto_xray_box",
+  "pluto_sign_surgery",
   "pluto_prep_sign",
   "pluto_wall_shelf",
-  "pluto_iv_stand",
-  "pluto_sharps_bin",
-  "pluto_litter_box",
-  "pluto_cabinet_wide",
-  "pluto_vaccine_fridge",
-  "pluto_clock",
-  "pluto_poster",
   "pluto_cabinet_wide",
   "pluto_cabinet_wide",
   "pluto_sink",
+  "pluto_vaccine_fridge",
+  "pluto_cabinet_wide",
+  "pluto_poster",
+  "pluto_clock",
+  "pluto_wall_tv",
   "pluto_scale",
+  "pluto_table_mat",
   "pluto_lamp_pool",
   "pluto_exam_table",
-  "pluto_lamp_arm",
-  "pluto_lamp_head",
-  "pluto_cart",
+  "pluto_instrument_trolley",
+  "pluto_instrument_trolley",
+  "pluto_anaesthesia_machine",
   "pluto_monitor_cart",
   "pluto_iv_stand",
+  "pluto_cart",
+  "pluto_lamp_arm",
+  "pluto_lamp_head",
+  "pluto_counter_towels",
+  "pluto_counter_printer",
+  "pluto_biohazard_bin",
   "pluto_side_door",
   "pluto_toy_mouse",
   "pluto_toy_ball",
   "pluto_feather_wand",
-  "pluto_cone",
   "pluto_scratch_post"
  ],
  "placeableAttributes": [
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
   "",
   "",
   "",

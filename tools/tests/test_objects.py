@@ -15,12 +15,12 @@ EXPECTED_SIZES = {
     # v0.4
     'pluto_reception_desk': (112, 40), 'pluto_chair': (24, 24), 'pluto_plant': (16, 28), 'pluto_window': (32, 24),
     'pluto_xray_box': (24, 20), 'pluto_clock': (16, 16), 'pluto_fish_tank': (32, 40),
-    'pluto_sharps_bin': (12, 14), 'pluto_iv_stand': (12, 32), 'pluto_treat_jar': (8, 10), 'pluto_food_bowls': (20, 8),
+    'pluto_sharps_bin': (12, 14), 'pluto_iv_stand': (16, 40), 'pluto_treat_jar': (8, 10), 'pluto_food_bowls': (20, 8),
     'pluto_litter_box': (20, 12), 'pluto_floor_mat': (48, 24), 'pluto_paw_prints': (24, 16), 'pluto_wet_floor_sign': (12, 16),
     # v0.5
     'pluto_clinic_door': (32, 40), 'pluto_nurse_station': (96, 32),
     # v0.6
-    'pluto_prep_sign': (16, 10), 'pluto_monitor_cart': (24, 32),
+    'pluto_prep_sign': (16, 10), 'pluto_monitor_cart': (24, 40),
     'pluto_vaccine_fridge': (24, 40), 'pluto_intercom': (10, 12), 'pluto_wall_tv': (32, 20),
     'pluto_side_door': (16, 32),
     # v0.10
@@ -31,10 +31,25 @@ EXPECTED_SIZES = {
     'pluto_wall_face': (480, 48), 'pluto_wall_face_solid': (480, 48), 'pluto_wall_shelf': (32, 24),
     'pluto_kennel_cat': (40, 48), 'pluto_kennel_dog': (40, 48), 'pluto_kennel_cone': (40, 48),
     'pluto_kennel_open_r': (52, 48), 'pluto_kennel_open_l': (52, 48),
+    # v0.11
+    'pluto_rug': (136, 104), 'pluto_coffee_table': (48, 24), 'pluto_carrier_open': (32, 24), 'pluto_back_cabinet': (64, 32),
+    'pluto_water_cooler': (16, 32), 'pluto_notice_board': (32, 24), 'pluto_sign_waiting': (56, 12), 'pluto_sign_ward': (24, 12),
+    'pluto_sign_surgery': (36, 12), 'pluto_supply_shelf': (48, 40), 'pluto_scrubs_rack': (48, 40), 'pluto_med_trolley': (24, 32),
+    'pluto_stool': (12, 14), 'pluto_anaesthesia_machine': (32, 48), 'pluto_instrument_trolley': (24, 24),
+    'pluto_counter_towels': (48, 32), 'pluto_counter_printer': (48, 32), 'pluto_biohazard_bin': (14, 18), 'pluto_table_mat': (144, 96),
 }
 WALL_FACES = {'pluto_wall_face', 'pluto_wall_face_solid'}
 WALL_DECOR = {'pluto_wall_tv', 'pluto_window', 'pluto_clock', 'pluto_poster', 'pluto_intercom',
-              'pluto_xray_box', 'pluto_prep_sign', 'pluto_wall_shelf'}
+              'pluto_xray_box', 'pluto_prep_sign', 'pluto_wall_shelf',
+              'pluto_notice_board', 'pluto_sign_waiting', 'pluto_sign_ward', 'pluto_sign_surgery'}
+V011_NEW = {n for n in EXPECTED_SIZES if n in (
+    'pluto_rug', 'pluto_coffee_table', 'pluto_carrier_open', 'pluto_back_cabinet', 'pluto_water_cooler', 'pluto_notice_board',
+    'pluto_sign_waiting', 'pluto_sign_ward', 'pluto_sign_surgery', 'pluto_supply_shelf', 'pluto_scrubs_rack', 'pluto_med_trolley',
+    'pluto_stool', 'pluto_anaesthesia_machine', 'pluto_instrument_trolley', 'pluto_counter_towels', 'pluto_counter_printer',
+    'pluto_biohazard_bin', 'pluto_table_mat')}
+ANIMATED = {'pluto_fish_tank': 4, 'pluto_monitor_cart': 6, 'pluto_clock': 2, 'pluto_reception_desk': 2, 'pluto_iv_stand': 3,
+            'pluto_anaesthesia_machine': 3}
+VET = (14.5, 44.5)
 KENNELS = {'pluto_kennel_cat': 4, 'pluto_kennel_dog': 2, 'pluto_kennel_cone': 2, 'pluto_kennel_open_r': 1, 'pluto_kennel_open_l': 1}
 
 
@@ -79,7 +94,11 @@ class ObjectTests(unittest.TestCase):
                                     'pluto_reception_desk', 'pluto_chair', 'pluto_plant', 'pluto_fish_tank',
                                     'pluto_sharps_bin', 'pluto_iv_stand', 'pluto_litter_box', 'pluto_wet_floor_sign',
                                     'pluto_clinic_door', 'pluto_nurse_station',
-                                    'pluto_monitor_cart', 'pluto_vaccine_fridge', 'pluto_cabinet_wide'} | set(KENNELS))
+                                    'pluto_monitor_cart', 'pluto_vaccine_fridge', 'pluto_cabinet_wide',
+                                    'pluto_coffee_table', 'pluto_carrier_open', 'pluto_back_cabinet', 'pluto_water_cooler',
+                                    'pluto_supply_shelf', 'pluto_scrubs_rack', 'pluto_med_trolley', 'pluto_stool',
+                                    'pluto_anaesthesia_machine', 'pluto_instrument_trolley', 'pluto_counter_towels',
+                                    'pluto_counter_printer', 'pluto_biohazard_bin'} | set(KENNELS))
 
     def test_stand_flag(self):
         """Standing = has a collider, except the wall faces and the wall decor, which stand without one."""
@@ -178,9 +197,12 @@ class ObjectTests(unittest.TestCase):
                 for x0, y0_, x1, y1 in rects:
                     self.assertFalse(cx < x1 and x0 < cx + 1 and cy < y1 and y0_ < cy + 1, (name, kind, tx, ty))
             rows = spec(name).rows
+            tile, grout = O.FLOOR_TONES[name]
+            if name == 'pluto_floor_ward':                                  # the guide stripe is not a variant
+                rows = [r[:O.WARD_STRIPE_PX - 4] + r[O.WARD_STRIPE_PX + 4:] for r in rows]
             text = ''.join(rows)
             self.assertNotIn('B', text)
-            self.assertTrue(set(text) <= {'_', '0', '$', '%', '#'}, (name, set(text)))
+            self.assertTrue(set(text) <= {tile, grout, '$', '%', '#'}, (name, set(text)))
             self.assertLessEqual(text.count('$'), 2 * ''.join(O._TILE_PAW).count('$'), name)   # two paws at most
             tile_cells = (len(rows) // 16) * (len(rows[0]) // 16)
             self.assertLess(len(variants) / float(tile_cells), 0.03, name)
@@ -198,9 +220,11 @@ class ObjectTests(unittest.TestCase):
         self.assertEqual(spec('pluto_floor_mat').height_off_ground, -2.5)
 
     def test_clock_is_readable(self):
-        text = ''.join(spec('pluto_clock').rows)
-        self.assertEqual(text.count('!'), 1)
-        self.assertTrue(set(text) <= {'.', 'o', '#', '_', 'K', '!'})
+        for frame in spec('pluto_clock').frames:
+            text = ''.join(frame)
+            self.assertEqual(text.count('!'), 1)
+            self.assertTrue(set(text) <= {'.', 'o', '#', '_', 'K', '!', '%'})
+            self.assertGreaterEqual(text.count('%'), 3)                    # the second hand
 
     def test_high_colliders_do_not_overlap(self):
         """Two 'high' props whose colliders overlap in cell space would fuse into one blocker (and one would be sorted away)."""
@@ -250,19 +274,200 @@ class ObjectTests(unittest.TestCase):
                      'pluto_kennel', 'pluto_kennel_open', 'pluto_med_shelf'):
             self.assertNotIn(gone, names)
         self.assertFalse(hasattr(O, 'FLOOR'))
-        for kept_but_unplaced in ('pluto_treat_jar', 'pluto_food_bowls', 'pluto_syringe_tray', 'pluto_cabinet'):
+        for kept_but_unplaced in ('pluto_treat_jar', 'pluto_syringe_tray', 'pluto_cabinet', 'pluto_cone'):
             self.assertIn(kept_but_unplaced, names)
             self.assertNotIn(kept_but_unplaced, placed)
-        self.assertEqual(sum(1 for n, _ in O.PROPS if n == 'pluto_chair'), 9)
+        self.assertEqual(sum(1 for n, _ in O.PROPS if n == 'pluto_chair'), 10)
         litter = [c for n, c in O.PROPS if n == 'pluto_litter_box']
         self.assertEqual(litter, [(19.5, 30.0)])                            # under the north wall, not mid-floor
 
-    def test_theatre_toys_in_the_south_west_corner(self):
-        for name in ('pluto_toy_mouse', 'pluto_toy_ball', 'pluto_feather_wand', 'pluto_cone', 'pluto_scratch_post'):
+    def test_theatre_toys_in_the_south_corners(self):
+        for name in ('pluto_toy_mouse', 'pluto_toy_ball', 'pluto_feather_wand'):
             cells = [c for n, c in O.PROPS if n == name and c[1] >= 34]
             self.assertEqual(len(cells), 1, name)
             x, y = cells[0]
             self.assertTrue(x <= 6.0 and y <= 42.0, name)
+        posts = [c for n, c in O.PROPS if n == 'pluto_scratch_post']
+        self.assertEqual(len(posts), 1)
+        self.assertTrue(posts[0][0] >= 20.0 and 34 <= posts[0][1] <= 42.0)     # south-east corner
+        for y, row in enumerate(O.CONE):                                        # the cone now sits on the west counter
+            for x, ch in enumerate(row):
+                if ch != '.':
+                    self.assertEqual(O.COUNTER_TOWELS[3 + y][30 + x], ch, (x, y))
+
+    # ------------------------------------------------------------------ v0.11
+    def test_v011_props_are_placed_and_outlined(self):
+        self.assertGreaterEqual(len(V011_NEW), 10)
+        placed = {n for n, _ in O.PROPS}
+        for name in V011_NEW:
+            self.assertIn(name, placed, name)
+            rows = spec(name).rows
+            self.assertIn('o', rows[0] + rows[-1] + ''.join(r[0] + r[-1] for r in rows), name)   # a drawn 'o' outline
+        for name in ('pluto_coffee_table', 'pluto_supply_shelf', 'pluto_back_cabinet'):
+            self.assertIn('\\', ''.join(spec(name).rows), name)                  # wood / cardboard ramp
+        for name in ('pluto_instrument_trolley', 'pluto_anaesthesia_machine', 'pluto_med_trolley'):
+            text = ''.join(spec(name).rows)
+            self.assertTrue({'&', '%', '#'} <= set(text) or {'&', '%', 'K'} <= set(text), name)   # steel ramp
+        self.assertIn('$', ''.join(O.SCRUBS_RACK))
+        self.assertIn('~', ''.join(O.SCRUBS_RACK))
+
+    def test_signs_spell_their_zone(self):
+        for rows, text in ((O.SIGN_WAITING, 'WAITING ROOM'), (O.SIGN_WARD, 'WARD'), (O.SIGN_SURGERY, 'SURGERY')):
+            ink = [''.join('#' if ch == 'W' else '.' for ch in r) for r in rows[3:8]]
+            x0 = (len(rows[0]) - (4 * len(text) - 1)) // 2
+            for i, c in enumerate(text):
+                glyph = [r[x0 + 4 * i:x0 + 4 * i + 3] for r in ink]
+                self.assertEqual(glyph, O.FONT[c], (text, c))
+
+    def test_animated_props(self):
+        animated = {o.name: o for o in O.OBJECTS if o.frames}
+        self.assertEqual({n: o.frame_count for n, o in animated.items()}, ANIMATED)
+        for name, o in animated.items():
+            self.assertTrue(2 <= len(o.frames) <= 8, name)
+            self.assertEqual(o.rows, o.frames[0], name)                          # the placed sprite is frame 1
+            for frame in o.frames:
+                V.R(frame)
+                V.image(frame)
+                self.assertEqual((len(frame[0]), len(frame)), o.size, name)
+            for a, b in zip(o.frames, o.frames[1:] + o.frames[:1]):
+                self.assertNotEqual(a, b, name)                                  # every frame changes something
+            self.assertGreater(o.fps, 0, name)
+        for o in O.OBJECTS:
+            if not o.frames:
+                self.assertEqual(o.frame_count, 1, o.name)
+
+    def test_write_saves_frame_pngs(self):
+        import tempfile
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            paths = O.write(d)
+            out = os.path.join(d, 'Resources', 'Objects')
+            def size(path):
+                with Image.open(path) as im:
+                    return im.size
+
+            for o in O.OBJECTS:
+                self.assertEqual(size(os.path.join(out, o.png + '.png')), o.size, o.name)
+                self.assertFalse(os.path.exists(os.path.join(out, o.png + '_f1.png')), o.name)
+                for k in range(2, o.frame_count + 1):
+                    p = os.path.join(out, '%s_f%d.png' % (o.png, k))
+                    self.assertIn(p, paths)
+                    self.assertEqual(size(p), o.size, p)
+                self.assertFalse(os.path.exists(os.path.join(out, '%s_f%d.png' % (o.png, o.frame_count + 1))), o.name)
+
+    def test_comments(self):
+        commented = [o for o in O.OBJECTS if o.comment]
+        self.assertTrue(12 <= len(commented) <= 20, len(commented))
+        placed = {n for n, _ in O.PROPS}
+        for o in commented:
+            self.assertLess(len(o.comment), 60, o.name)
+            self.assertTrue(all(32 <= ord(ch) < 127 for ch in o.comment), o.name)
+            self.assertFalse(set(o.comment) & {'"', "'", '\\'}, o.name)
+            self.assertIn(o.name, placed, o.name)
+        for name in ('pluto_fish_tank', 'pluto_litter_box'):
+            self.assertTrue(spec(name).comment, name)
+
+    def test_depth_of_the_new_flat_decor(self):
+        hog = {o.name: o.height_off_ground for o in O.OBJECTS}
+        for name in ('pluto_rug', 'pluto_table_mat'):
+            self.assertFalse(spec(name).stand, name)
+            self.assertLess(-4.0, hog[name])
+            self.assertLess(hog[name], hog['pluto_lamp_pool'])
+            self.assertLess(hog[name], hog['pluto_floor_mat'])
+
+    def test_zone_floor_tones_and_the_ward_stripe(self):
+        self.assertEqual(set(''.join(O.FLOOR_WAITING)) & {'_', '0'}, set())
+        self.assertEqual(set(''.join(O.FLOOR_THEATRE)) & {'_', '0'}, set())
+        self.assertEqual(O.FLOOR_TONES['pluto_floor_ward'], ('_', '0'))
+        for y, row in enumerate(O.FLOOR_WARD[2:], start=2):
+            self.assertEqual(row[236:244], '~$$$$$$~', y)
+        for name, variants in O.FLOOR_VARIANTS.items():
+            if name == 'pluto_floor_ward':
+                self.assertFalse({tx for tx, _ in variants} & {14, 15})
+
+    def high_boxes(self):
+        for name, (x, y) in O.PROPS:
+            o = spec(name)
+            if o.collider is not None and o.collider[0] == 'high':
+                yield name, (x, y), collider_box(name, x, y)
+
+    def collider_boxes(self):
+        for name, (x, y) in O.PROPS:
+            if spec(name).collider is not None:
+                yield name, (x, y), collider_box(name, x, y)
+
+    def test_open_fight_areas(self):
+        """The 10 x 8 cells around the Vet and the ward's middle hold no high blocker (the table and the station excepted)."""
+        areas = [((VET[0] - 5, VET[1] - 4, VET[0] + 5, VET[1] + 4), {'pluto_exam_table'}),
+                 ((4.0, 17.0, 26.0, 29.0), {'pluto_nurse_station'})]
+        for (ax0, ay0, ax1, ay1), allowed in areas:
+            for name, cell, (x0, y0, x1, y1) in self.high_boxes():
+                if name in allowed:
+                    continue
+                self.assertFalse(x0 < ax1 and ax0 < x1 and y0 < ay1 and ay0 < y1, '%s at %s blocks a fight area' % (name, cell))
+        tx, ty = 14.5, 42.0
+        for name, cell, (x0, y0, x1, y1) in self.collider_boxes():
+            if name != 'pluto_exam_table':
+                self.assertFalse(x0 < tx + 2.5 and tx - 2.5 < x1 and y0 < ty + 0.5 and ty - 1.0 < y1, (name, cell))
+
+    def test_door_gaps_clear(self):
+        """Nothing with a collider within half a cell of either door gap (x 14..16), on either side of the wall."""
+        for wall in (13.0, 32.0):
+            for name, cell, (x0, y0, x1, y1) in self.collider_boxes():
+                if name == 'pluto_clinic_door':
+                    continue
+                self.assertFalse(x0 < 16.5 and 13.5 < x1 and y0 < wall + 3.0 and wall - 1.5 < y1,
+                                 '%s at %s crowds the door at y %s' % (name, cell, wall))
+
+    def test_waiting_room_chair_rows_are_aligned(self):
+        chairs = sorted(c for n, c in O.PROPS if n == 'pluto_chair')
+        rows = sorted({y for _, y in chairs})
+        self.assertEqual(rows, sorted(O.CHAIR_ROWS))
+        xs = [sorted(x for x, y in chairs if y == row) for row in rows]
+        self.assertEqual(xs[0], xs[1])                                          # the two rows line up column for column
+        self.assertEqual(len(xs[0]), 5)
+        self.assertEqual({round(b - a, 6) for a, b in zip(xs[0], xs[0][1:])}, {O.CHAIR_PITCH})
+        centre = (xs[0][0] + xs[0][-1] + 1.5) / 2
+        (tx, ty), = [c for n, c in O.PROPS if n == 'pluto_coffee_table']
+        self.assertAlmostEqual(tx + 1.5, centre)                               # the table sits centred between the rows
+        self.assertTrue(rows[0] < ty < rows[1])
+        (rx, ry), = [c for n, c in O.PROPS if n == 'pluto_rug']
+        self.assertTrue(rx <= xs[0][0] and rx + 136 / 16.0 >= xs[0][-1] + 1.5 and ry <= rows[0] and ry + 104 / 16.0 >= rows[1] + 1.5)
+        plants = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_plant' and y < 13)
+        self.assertEqual(len(plants), 2)
+        self.assertAlmostEqual(plants[0] + plants[1], 30.0)                   # framing the exit, mirrored about x 15
+
+    def assert_mirrored(self, a, b, axis, zone):
+        def centre(name):
+            (x, y), = [c for n, c in O.PROPS if n == name and zone[0] <= c[1] < zone[1] and (c[0] < axis) == (name == a)] or [(None, None)]
+            return x + EXPECTED_SIZES[name][0] / 32.0, y
+        (ax, ay), (bx, by) = centre(a), centre(b)
+        self.assertAlmostEqual(ax + bx, 2 * axis, msg=(a, b))
+        self.assertEqual(ay, by, (a, b))
+
+    def test_ward_north_wall_is_mirrored(self):
+        for a, b in (('pluto_supply_shelf', 'pluto_scrubs_rack'), ('pluto_sharps_bin', 'pluto_litter_box')):
+            self.assert_mirrored(a, b, 15.0, (15, 32))
+        ivs = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_iv_stand' and 15 <= y < 32)
+        self.assertEqual(len(ivs), 2)
+        self.assertAlmostEqual(ivs[0] + ivs[1], 30.0)
+        (sx, sy), = [c for n, c in O.PROPS if n == 'pluto_nurse_station']
+        self.assertEqual(sx + 3.0, 15.0)                                        # the island on the centre line
+
+    def test_theatre_table_group_is_symmetric(self):
+        axis = 14.5
+        (tx, ty), = [c for n, c in O.PROPS if n == 'pluto_exam_table']
+        self.assertEqual(tx + 2.5, axis)
+        for name in ('pluto_lamp_head', 'pluto_lamp_pool', 'pluto_table_mat'):
+            (x, y), = [c for n, c in O.PROPS if n == name]
+            self.assertEqual(x + EXPECTED_SIZES[name][0] / 32.0, axis, name)
+        trolleys = sorted(x + 0.75 for n, (x, y) in O.PROPS if n == 'pluto_instrument_trolley')
+        self.assertAlmostEqual(trolleys[0] + trolleys[1], 2 * axis)
+        self.assert_mirrored('pluto_anaesthesia_machine', 'pluto_monitor_cart', axis, (34, 52))
+        self.assert_mirrored('pluto_iv_stand', 'pluto_cart', axis, (34, 52))
+        self.assert_mirrored('pluto_counter_towels', 'pluto_counter_printer', 15.0, (34, 52))
+        north = sorted((x, x + EXPECTED_SIZES[n][0] / 16.0) for n, (x, y) in O.PROPS if y == 49.0)
+        self.assertAlmostEqual(north[0][0] + north[-1][1], 30.0)               # the north wall row spans symmetric ends
 
     def test_props_placed_inside_room(self):
         sizes = {o.name: o.size for o in O.OBJECTS}

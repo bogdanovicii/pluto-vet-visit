@@ -112,29 +112,70 @@ def fall(rows, angle):
     return settle(rotate_free(tall, angle))[extra:]
 
 
-IDLE = [BASE, head_bob(BASE), BASE, arm(BASE, 0, 1)]
-MOVE = [with_legs(BASE, LEGS_A), head_bob(with_legs(BASE, LEGS_A)), with_legs(BASE, LEGS_B),
-        with_legs(BASE, LEGS_C), head_bob(with_legs(BASE, LEGS_C)), with_legs(BASE, LEGS_B)]
-TELL = [arm(BASE, 0, -1), arm(BASE, 0, -2), arm(BASE, 0, -3)]
-FIRE = [arm(BASE, 1, 0), arm(BASE, 1, -1), arm(BASE, 0, -1)]
-_lying = fall(BASE, -90)
-DIE = [shift(BASE, -1, 0), fall(BASE, -20), fall(BASE, -45), fall(BASE, -70), _lying, _lying]
+def make_clips(base):
+    """The five clips of a Tech body: every frame is derived from the one hand-drawn base pose."""
+    lying = fall(base, -90)
+    return OrderedDict([
+        ('idle', [base, head_bob(base), base, arm(base, 0, 1)]),
+        ('move', [with_legs(base, LEGS_A), head_bob(with_legs(base, LEGS_A)), with_legs(base, LEGS_B),
+                  with_legs(base, LEGS_C), head_bob(with_legs(base, LEGS_C)), with_legs(base, LEGS_B)]),
+        ('tell', [arm(base, 0, -1), arm(base, 0, -2), arm(base, 0, -3)]),
+        ('fire', [arm(base, 1, 0), arm(base, 1, -1), arm(base, 0, -1)]),
+        ('die', [shift(base, -1, 0), fall(base, -20), fall(base, -45), fall(base, -70), lying, lying]),
+    ])
 
-CLIPS = OrderedDict([('idle', IDLE), ('move', MOVE), ('tell', TELL), ('fire', FIRE), ('die', DIE)])
+
+CLIPS = make_clips(BASE)
+IDLE, MOVE, TELL, FIRE, DIE = CLIPS['idle'], CLIPS['move'], CLIPS['tell'], CLIPS['fire'], CLIPS['die']
+
+# ------------------------------------------------------------------ the Syringe Tech (0.11)
+# The same body in plum scrubs, carrying the syringe shotgun: a wide pump syringe with two needles, hand-drawn into the
+# arm box (12 x 8 canvas pixels, rows 19-26) so the tell and fire clips raise it the same way.
+STECH_KEYS = {'$': '(', '~': ')'}
+SHOTGUN = R([
+    ".ooooooooo..",   # 19 barrel top
+    "o#&&&&&&&o..",   # 20 plunger + barrel light
+    "o#*******%%.",   # 21 upper needle (tip at canvas column 30: the fire clip shoves the arm one pixel forward)
+    "o#*******o..",   # 22 liquid
+    "o#*******%%.",   # 23 lower needle
+    "o=%%%%%%%o..",   # 24 hand + barrel shade
+    "o==ooo##o...",   # 25 fingers + pump grip
+    ".ooo..oo....",   # 26 grip bottom
+])
+STECH_SHOOT_POINT = (30, 10)
+
+
+def recolour(rows, keys):
+    return [''.join(keys.get(ch, ch) for ch in row) for row in rows]
+
+
+def _stech_base():
+    body = recolour(BASE, STECH_KEYS)
+    x0, y0, x1, y1 = ARM_BOX
+    cleared = erase(body, region(body, x0, y0, x1, y1))
+    return overlay(overlay(cleared, SHOTGUN, x0, y0), TORSO_EDGE, x0 - 1, y0)
+
+
+STECH_BASE = _stech_base()
+# The walk-leg overlays are drawn in the Vet Tech's teal, so recolour every derived frame, not only the base.
+STECH_CLIPS = OrderedDict((clip, [recolour(f, STECH_KEYS) for f in frames]) for clip, frames in make_clips(STECH_BASE).items())
 
 
 def write(project):
-    root = os.path.join(project, 'Resources', 'Enemies', 'tech')
     paths = []
-    for clip, frames in CLIPS.items():
-        for i, f in enumerate(frames, 1):
-            p = os.path.join(root, clip, 'tech_%s_%03d.png' % (clip, i))
-            save(strip_outline(f), p)     # the game adds the outline to actors at runtime
-            paths.append(p)
+    for folder, clips in (('tech', CLIPS), ('stech', STECH_CLIPS)):
+        root = os.path.join(project, 'Resources', 'Enemies', folder)
+        for clip, frames in clips.items():
+            for i, f in enumerate(frames, 1):
+                p = os.path.join(root, clip, '%s_%s_%03d.png' % (folder, clip, i))
+                save(strip_outline(f), p)     # the game adds the outline to actors at runtime
+                paths.append(p)
     return paths
 
 
 def preview(project):
     p = os.path.join(project, 'docs', 'preview', 'tech-sheet.png')
     sheet([IDLE + TELL, MOVE, FIRE, DIE], p, scale=4)
+    sheet([STECH_CLIPS['idle'] + STECH_CLIPS['tell'], STECH_CLIPS['move'], STECH_CLIPS['fire'], STECH_CLIPS['die']],
+          os.path.join(project, 'docs', 'preview', 'stech-sheet.png'), scale=4)
     return p

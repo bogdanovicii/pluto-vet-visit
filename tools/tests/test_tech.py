@@ -68,3 +68,44 @@ class TechTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class SyringeTechTests(unittest.TestCase):
+    def test_same_clips_and_canvas_as_the_vet_tech(self):
+        self.assertEqual(list(P.STECH_CLIPS), list(P.CLIPS))
+        self.assertEqual(dict((k, len(v)) for k, v in P.STECH_CLIPS.items()), EXPECTED_FRAMES)
+        for clip, frames in P.STECH_CLIPS.items():
+            for i, f in enumerate(frames):
+                V.R(f)
+                self.assertEqual((len(f[0]), len(f)), P.CANVAS, (clip, i))
+                for row in f:
+                    self.assertTrue(set(row) <= set(V.PALETTE), (clip, i, row))
+
+    def test_no_teal_left_in_any_frame(self):
+        for clip, frames in P.STECH_CLIPS.items():
+            for i, f in enumerate(frames):
+                used = set(''.join(f))
+                self.assertFalse(used & {'$', '~'}, (clip, i))
+
+    def test_plum_scrubs_not_teal(self):
+        keys = set(''.join(P.STECH_BASE))
+        self.assertNotIn('$', keys)
+        self.assertNotIn('~', keys)
+        self.assertTrue(set(P.STECH_KEYS.values()) <= keys)
+
+    def test_two_needles_and_the_shoot_point_on_the_upper_needle(self):
+        x, y = P.STECH_SHOOT_POINT
+        row = P.STECH_BASE[P.CANVAS[1] - 1 - y]
+        self.assertNotEqual(row[x], '.')
+        needles = [r for r in P.STECH_BASE if r[x] == '%']
+        self.assertEqual(len(needles), 2)
+        self.assertTrue(all(r[P.CANVAS[0] - 1] == '.' for r in P.STECH_BASE))   # room for the fire clip's one-pixel shove
+
+    def test_the_vet_tech_frames_are_unchanged_by_the_refactor(self):
+        self.assertEqual(P.CLIPS['idle'][0], P.BASE)
+        self.assertNotEqual(P.STECH_BASE, P.BASE)
+
+    def test_standing_feet_on_bottom_row(self):
+        for clip in STANDING:
+            for i, f in enumerate(P.STECH_CLIPS[clip]):
+                self.assertEqual(V.lowest_opaque_row(f), P.CANVAS[1] - 1, (clip, i))

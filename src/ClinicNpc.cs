@@ -130,18 +130,22 @@ namespace PlutoVetVisit
             if (sprite != null) SpriteOutlineManager.RemoveOutlineFromSprite(sprite);
         }
 
+        private int commentIndex;
+
+        /// <summary>One of the character's lines per interaction, in turn ("line|line|line" in the config).</summary>
         public void Interact(PlayerController interactor)
         {
-            if (string.IsNullOrEmpty(comment) || TextBoxManager.HasTextBox(talkPoint)) return;
-            StartCoroutine(SayComment());
+            if (string.IsNullOrEmpty(comment) || TextBoxManager.HasTextBox(transform)) return;
+            string[] lines = comment.Split('|');
+            string line = lines[commentIndex++ % lines.Length].Trim();
+            if (line.Length > 0) StartCoroutine(SayComment(line));
         }
 
-        private IEnumerator SayComment()
+        private IEnumerator SayComment(string line)
         {
             Play("talk");
-            TextBoxManager.ShowTextBox(talkPoint.position, talkPoint, 2.5f, comment, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, false, false);
-            yield return new WaitForSeconds(2.6f);
-            TextBoxManager.ClearTextBox(talkPoint);
+            PastTalk.Bubble(this, transform, line, 2.8f, false);
+            yield return new WaitForSeconds(2.9f);
             Play(idleClip);
         }
 

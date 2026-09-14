@@ -96,9 +96,11 @@ namespace PlutoVetVisit
             if (!PastConfig.SkipIntro) yield return StartCoroutine(Intro(player));
             else HideOwner();
             SpawnCritters();
+            StartCoroutine(WaitingChatter());
             SetDoor(wardDoor, true, "the ward door opens");
             ReactToDoor();
             yield return StartCoroutine(WaitForZone(ClinicLayout.WARD_MIN_Y + 1.5f));
+            inWaitingRoom = false;
 
             // Act 2: the ward. Sealed behind Pluto; two waves; the theatre door opens when the second is dead.
             SetDoor(wardDoor, false, "the ward door closes behind Pluto");
@@ -111,11 +113,12 @@ namespace PlutoVetVisit
                 {
                     while (wave1Extra != null && wave1Extra.healthHaver != null && !wave1Extra.healthHaver.IsDead) yield return null;
                 }
-                Bubble(Intercom(), PastConfig.Ward4, 2.2f);
+                PastTalk.Announce(this, player.transform, PastConfig.Ward4, 3f);
                 yield return StartCoroutine(RunWave("wave 2", PastConfig.Wave2, ClinicLayout.Wave2Spawns));
                 SpawnHearts();
             }
-            Bubble(Intercom(), PastConfig.Ward5, 3f);
+            PastTalk.Announce(this, player.transform, PastConfig.Ward5, 3f);
+            StartCoroutine(ThoughtLater(player, PastConfig.WardThink, 2f, 3.4f));
             SetDoor(theatreDoor, true, "the theatre door opens");
             yield return StartCoroutine(WaitForZone(ClinicLayout.THEATRE_MIN_Y + 1.5f));
 
@@ -182,7 +185,8 @@ namespace PlutoVetVisit
             return intercom;
         }
 
-        /// <summary>Check-in at the desk, two patients' warnings, the intercom, the Owner leaves. Any line can be skipped.</summary>
+        /// <summary>Act 1: the check-in at the desk, the patients' warnings, Pluto's first thoughts, the intercom, the Owner
+        /// leaves. The camera pans to every speaker; any line can be advanced.</summary>
         private IEnumerator Intro(PlayerController player)
         {
             ClinicNpc owner = ClinicNpc.Find("owner"), desk = ClinicNpc.Find("receptionist"), rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
@@ -195,10 +199,13 @@ namespace PlutoVetVisit
                 yield return StartCoroutine(Line(desk, PastConfig.Intro1, 1.8f));
                 yield return StartCoroutine(Line(owner, PastConfig.Intro2, 3f));
                 yield return StartCoroutine(Line(desk, PastConfig.Intro3, 1.8f));
-                yield return new WaitForSeconds(0.4f);
+                yield return new WaitForSeconds(0.3f);
                 yield return StartCoroutine(Line(rex, PastConfig.Intro4, 2.5f));
                 yield return StartCoroutine(Line(grandma, PastConfig.Intro5, 2.5f));
-                yield return new WaitForSeconds(0.4f);
+                yield return StartCoroutine(Line(rex, PastConfig.IntroRex2, 2.5f));
+                yield return StartCoroutine(Think(player, PastConfig.IntroThink1, 1.6f));
+                yield return StartCoroutine(Line(grandma, PastConfig.IntroGrandma2, 2f));
+                yield return new WaitForSeconds(0.3f);
                 yield return StartCoroutine(Say(Intercom(), PastConfig.Intro6, 1.6f));
                 yield return StartCoroutine(Line(owner, PastConfig.Intro7, 2f));
                 if (owner != null)
@@ -207,11 +214,77 @@ namespace PlutoVetVisit
                     yield return StartCoroutine(owner.Walk(World(ClinicLayout.OwnerExit), 4.5f, "walk_free"));
                     owner.Hide();
                 }
+                yield return StartCoroutine(Think(player, PastConfig.IntroThink2, 1.6f));
+                yield return StartCoroutine(PastTalk.PanTo(player.CenterPosition, 0.35f));   // no snap when the camera unlocks
             }
             finally
             {
                 EndCutscene("intro", player);
             }
+        }
+
+        // ------------------------------------------------------------------ side characters: chatter and barks
+
+        private bool inWaitingRoom = true;
+
+        /// <summary>While Pluto is still in the waiting room, a bystander says something every 8-12 s ([Story] WaitingChatter, "who:line|who:line").</summary>
+        private IEnumerator WaitingChatter()
+        {
+            string[] entries = (PastConfig.WaitingChatter ?? string.Empty).Split('|');
+            int next = 0;
+            while (inWaitingRoom && !ending && entries.Length > 0)
+            {
+                yield return new WaitForSeconds(UnityEngine.Random.Range(8f, 12f));
+                if (!inWaitingRoom || cutscene || ending) continue;
+                string entry = entries[next++ % entries.Length];
+                int colon = entry.IndexOf(':');
+                if (colon <= 0) continue;
+                ClinicNpc npc = ClinicNpc.Find(entry.Substring(0, colon).Trim());
+                if (npc == null) continue;
+                npc.Play("talk");
+                Bubble(npc.transform, entry.Substring(colon + 1).Trim(), 2.6f);
+                StartCoroutine(IdleLater(npc, 2.8f));
+            }
+        }
+
+        private IEnumerator IdleLater(ClinicNpc npc, float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            if (npc != null) npc.Play(npc.idleClip);
+        }
+
+        /// <summary>A Tech shouts when a wave starts, and now and then a surviving Tech reacts when a crewmate goes down ([Story] TechBarks).</summary>
+        private void WatchBarks(List<AIActor> wave)
+        {
+            List<AIActor> crew = new List<AIActor>(wave);
+            string[] barks = (PastConfig.TechBarks ?? string.Empty).Split('|');
+            foreach (AIActor a in crew)
+            {
+                if (a == null || a.healthHaver == null) continue;
+                AIActor fallen = a;
+                a.healthHaver.OnPreDeath += delegate (Vector2 direction)
+                {
+                    if (ending || barks.Length == 0 || UnityEngine.Random.value > 0.45f) return;
+                    foreach (AIActor mate in crew)
+                        if (mate != null && mate != fallen && mate.healthHaver != null && !mate.healthHaver.IsDead && mate.EnemyGuid == VetTech.GUID)
+                        {
+                            Bubble(mate.transform, barks[UnityEngine.Random.Range(0, barks.Length)].Trim(), 1.8f);
+                            break;
+                        }
+                };
+            }
+            foreach (AIActor a in crew)
+                if (a != null && a.EnemyGuid == VetTech.GUID)
+                {
+                    Bubble(a.transform, PastConfig.TechBarkStart, 2f);
+                    break;
+                }
+        }
+
+        private IEnumerator ThoughtLater(PlayerController player, string text, float seconds, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (player != null && !ending) PastTalk.Bubble(this, player.transform, text, seconds, true);
         }
 
         /// <summary>Rex and Grandma Cat react when the ward door slides open (a bubble each, a beat apart).</summary>
@@ -239,8 +312,15 @@ namespace PlutoVetVisit
         {
             if (who == null) yield break;
             who.Play("talk");
-            yield return StartCoroutine(Say(who.talkPoint, text, seconds));
+            yield return StartCoroutine(PastTalk.Say(this, who.transform, text, seconds, false, cutscene));
             who.Play(who.idleClip);
+        }
+
+        /// <summary>Pluto's inner voice: a thought bubble over him.</summary>
+        private IEnumerator Think(PlayerController player, string text, float seconds)
+        {
+            if (player == null) yield break;
+            yield return StartCoroutine(PastTalk.Say(this, player.transform, text, seconds, true, cutscene));
         }
 
         // The waiting room's loose critters: vanilla chick, rabbit and squirrel, harmless, left to wander.
@@ -293,35 +373,83 @@ namespace PlutoVetVisit
         private IEnumerator Reinforce()
         {
             yield return new WaitForSeconds(1.2f);
-            List<AIActor> adds = SpawnWave("reinforcements", "nurse,vet_tech,vet_tech", ClinicLayout.TheatreSpawns);
+            List<AIActor> adds = SpawnWave("reinforcements", PastConfig.Reinforce2, ClinicLayout.TheatreSpawns);
             foreach (AIActor a in adds)
             {
                 if (a == null) continue;
-                bool nurse = a.GetActorName() == "The Nurse" || a.name.Contains("Nurse");
+                bool nurse = a.EnemyGuid == Nurse.GUID;
                 Bubble(a.transform, nurse ? PastConfig.Fight2 : PastConfig.Fight3, 2f);
                 if (nurse && vet != null && !ending) StartCoroutine(BubbleLater(vet.transform, PastConfig.Fight5, 2f, 2.2f));
                 break;   // one arrival line is enough
             }
+            foreach (AIActor a in adds)
+            {
+                if (a == null || a.EnemyGuid != Nurse.GUID || a.healthHaver == null) continue;
+                AIActor nurseActor = a;
+                StartCoroutine(NurseBarks(nurseActor));
+                nurseActor.healthHaver.OnPreDeath += delegate (Vector2 direction)
+                {
+                    if (vet != null && !ending && vet.healthHaver != null && !vet.healthHaver.IsDead) Bubble(vet.transform, PastConfig.NurseDown, 2.6f);
+                };
+            }
+            WatchBarks(adds);
             if (adds.Count > 0) StartCoroutine(Heartbeat("reinforcements", adds));
+        }
+
+        private IEnumerator NurseBarks(AIActor nurse)
+        {
+            string[] barks = (PastConfig.NurseBarks ?? string.Empty).Split('|');
+            int i = 0;
+            while (!ending && barks.Length > 0 && nurse != null && nurse.healthHaver != null && !nurse.healthHaver.IsDead)
+            {
+                yield return new WaitForSeconds(UnityEngine.Random.Range(7f, 10f));
+                if (!ending && nurse != null && nurse.healthHaver != null && !nurse.healthHaver.IsDead) Bubble(nurse.transform, barks[i++ % barks.Length].Trim(), 1.8f);
+            }
+        }
+
+        /// <summary>A phase-change line from the Vet (VetReinforcements calls it at 60 % health).</summary>
+        public void PhaseLine(string text)
+        {
+            if (vet != null && !ending) Bubble(vet.transform, text, 2.2f);
         }
 
         /// <summary>The Vet's last-fifth line (VetReinforcements calls it once).</summary>
         public void LastFifth()
         {
             if (vet != null && !ending) Bubble(vet.transform, PastConfig.Fight4, 2.5f);
+            if (ending || !PastConfig.BossReinforcements || string.IsNullOrEmpty(PastConfig.Reinforce3)) return;
+            List<AIActor> adds = SpawnWave("last reinforcements", PastConfig.Reinforce3, ClinicLayout.TheatreSpawns);
+            if (adds.Count > 0)
+            {
+                StartCoroutine(Heartbeat("last reinforcements", adds));
+                WatchBarks(adds);
+            }
         }
 
         // ------------------------------------------------------------------ waves
 
         // Console names the config accepts without a GUID (vanilla enemies used by the v2 design).
+        // Every GUID below was checked against the prefab's EnemyGuid in the game data and the ETGMod id map (0.11). The
+        // 0.10 "rat" (6ad1cafc...) was the harmless Candle Rat: 5 HP, no brain, shown as "Your own slow reflexes".
         private static readonly Dictionary<string, string> ENEMY_GUIDS = new Dictionary<string, string>
         {
             { "vet_tech", VetTech.GUID },
+            { "syringe_tech", SyringeTech.GUID },
             { "nurse", Nurse.GUID },
-            { "rat", "6ad1cafc268f4214a101dca7af61bc91" },
-            { "parrot", "4b21a913e8c54056bc05cafecf9da880" },
-            { "mutant_bullet_kin", "d4a9836f8ab14f3fadd0f597438b1f1f" },
             { "bullet_kin", "01972dee89fc4404a5c408d50007dad5" },
+            { "veteran_bullet_kin", "70216cae6c1346309d86d4a0b4603045" },
+            { "mutant_bullet_kin", "d4a9836f8ab14f3fadd0f597438b1f1f" },
+            { "mutant_shotgun_kin", "7f665bd7151347e298e4d366f8818284" },
+            { "red_shotgun_kin", "128db2f0781141bcb505d8f00f9e4d47" },
+            { "blue_shotgun_kin", "b54d89f9e802455cbb2b8a96a31e8259" },
+            { "shroomer", "e5cffcfabfae489da61062ea20539887" },
+            { "fungun", "f905765488874846b7ff257ff81d6d0c" },
+            { "poisbulon", "e61cab252cfb435db9172adc96ded75f" },
+            { "shotgrub", "044a9f39712f456597b9762893fbc19c" },
+            { "creech", "37340393f97f41b2822bc02d14654172" },
+            { "misfire_beast", "45192ff6d6cb43ed8f1a874ab6bef316" },
+            { "parrot", "ed37fa13e0fa4fcf8239643957c51293" },
+            // harmless ambient critters: the waiting room only, never a wave
             { "chick", "95ea1a31fc9e4415a5f271b9aedf9b15" },
             { "rabbit", "42432592685e47c9941e339879379d3a" },
             { "squirrel", "4254a93fc3c84c0dbe0a8f0dddf48a5a" },
@@ -343,6 +471,7 @@ namespace PlutoVetVisit
             List<AIActor> alive = SpawnWave(label, list, cells);
             if (alive.Count == 0) yield break;
             StartCoroutine(Heartbeat(label, alive));
+            WatchBarks(alive);
             float waited = 0f;
             while (true)
             {
@@ -372,6 +501,7 @@ namespace PlutoVetVisit
             {
                 AIActor prefab = ResolveEnemy(token);
                 if (prefab == null || cells == null || cells.Length == 0) continue;
+                if (prefab.IsHarmlessEnemy) PastPlugin.Log(label + ": warning: '" + token.Trim() + "' is a harmless critter and will not fight (check the config)");
                 Vector2 cell = cells[i % cells.Length];
                 i++;
                 try
@@ -471,17 +601,7 @@ namespace PlutoVetVisit
         /// <summary>A timed speech bubble that does not block (the fight goes on): shouts, taunts, arrivals.</summary>
         public void Bubble(Transform who, string text, float seconds)
         {
-            if (who == null || string.IsNullOrEmpty(text)) return;
-            StartCoroutine(BubbleCR(who, text, seconds));
-        }
-
-        private IEnumerator BubbleCR(Transform who, string text, float seconds)
-        {
-            Vector3 pos = who.position + new Vector3(0f, 2.0f, 0f);
-            try { TextBoxManager.ShowTextBox(pos, who, seconds, text, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, false, false); }
-            catch (Exception e) { PastPlugin.Log("bubble failed: " + e.Message); yield break; }
-            yield return new WaitForSeconds(seconds + 0.1f);
-            if (who != null) TextBoxManager.ClearTextBox(who);
+            PastTalk.Bubble(this, who, text, seconds, false);
         }
 
         /// <summary>Act 2 greeting: one Tech steps out, hails Pluto, then the wave attacks (vanilla pasts talk before they shoot).</summary>
@@ -510,6 +630,7 @@ namespace PlutoVetVisit
                 yield return StartCoroutine(Say(greeter.transform, PastConfig.Ward1, 2.4f));
                 yield return StartCoroutine(Say(greeter.transform, PastConfig.Ward2, 2.6f));
                 yield return StartCoroutine(Say(player.transform, PastConfig.Ward3, 1.4f));
+                yield return StartCoroutine(PastTalk.PanTo(player.CenterPosition, 0.35f));
             }
             finally
             {
@@ -796,6 +917,7 @@ namespace PlutoVetVisit
             if (vet == null || woken) return;
             woken = true;
             VetBoss.CheckBank(vet, "the Vet");
+            VetBoss.WatchFirstShot(vet);
             Engage(vet);
             StartCoroutine(Heartbeat("the Vet", new List<AIActor> { vet }));
             PastPlugin.Log("fight started");
@@ -839,6 +961,7 @@ namespace PlutoVetVisit
                 yield return StartCoroutine(Say(who, PastConfig.Line1, 2.5f));
                 yield return StartCoroutine(Say(who, PastConfig.Line2, 3.5f));
                 yield return StartCoroutine(Say(player.transform, PastConfig.Line3, 1.5f));
+                yield return StartCoroutine(PastTalk.PanTo(player.CenterPosition, 0.35f));
             }
             finally
             {
@@ -848,18 +971,7 @@ namespace PlutoVetVisit
 
         private IEnumerator Say(Transform who, string text, float seconds)
         {
-            if (string.IsNullOrEmpty(text)) yield break;
-            Vector3 pos = who.position + new Vector3(0f, 2.25f, 0f);
-            TextBoxManager.ShowTextBox(pos, who, -1f, text, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, true, false);
-            float t = 0f;
-            yield return null;
-            while (t < seconds + 0.3f)
-            {
-                t += BraveTime.DeltaTime;
-                if (t > 0.5f && BraveInput.GetInstanceForPlayer(0) != null && BraveInput.GetInstanceForPlayer(0).WasAdvanceDialoguePressed()) break;
-                yield return null;
-            }
-            TextBoxManager.ClearTextBox(who);
+            yield return StartCoroutine(PastTalk.Say(this, who, text, seconds, false, cutscene));
         }
 
         public void OnBossDied()
