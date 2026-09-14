@@ -41,6 +41,7 @@ namespace PlutoVetVisit
         {
             GameObject go = SpriteBuilder.SpriteFromResource(OBJECT_ROOT + "/" + spec.Png + ".png", new GameObject(spec.Name), asm);
             ClinicProp prop = go.AddComponent<ClinicProp>();
+            prop.objectName = spec.Name;
             prop.heightOffGround = spec.HeightOffGround;
             // Standing (perpendicular) is its own flag since 0.10.1: the wall faces and the decor hung on them stand
             // without a collider, or the tileset's standing wall face draws over them.
@@ -158,6 +159,10 @@ namespace PlutoVetVisit
     public class ClinicProp : BraveBehaviour
     {
         public enum Kind { Prop, Floor, WallFace }
+        public static readonly List<ClinicProp> All = new List<ClinicProp>();
+        /// <summary>Props that stay invisible until the story shows them (the operating lamp's light pool, spec A3).</summary>
+        public static readonly HashSet<string> HiddenAtStart = new HashSet<string> { "pluto_lamp_pool" };
+        public string objectName;
         public float heightOffGround;
         public bool perpendicular;
         public Kind kind = Kind.Prop;
@@ -170,11 +175,25 @@ namespace PlutoVetVisit
                 sprite.renderer.enabled = false;
                 return;
             }
+            All.Add(this);
+            if (HiddenAtStart.Contains(objectName)) sprite.renderer.enabled = false;
             sprite.IsPerpendicular = perpendicular;
             sprite.HeightOffGround = heightOffGround;
             sprite.UpdateZDepth();
             if (spriteAnimator != null && spriteAnimator.Library != null && spriteAnimator.Library.clips != null && spriteAnimator.Library.clips.Length > 0)
                 spriteAnimator.Play(spriteAnimator.Library.clips[0].name);
+        }
+
+        public override void OnDestroy()
+        {
+            All.Remove(this);
+            base.OnDestroy();
+        }
+
+        public static void Show(string name)
+        {
+            foreach (ClinicProp p in All)
+                if (p != null && p.objectName == name && p.sprite != null) p.sprite.renderer.enabled = true;
         }
     }
 

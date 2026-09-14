@@ -458,6 +458,7 @@ namespace PlutoVetVisit
         /// <summary>The Vet's last-fifth line (VetReinforcements calls it once).</summary>
         public void LastFifth()
         {
+            if (!ending) TheatreMood.Red(room);
             if (vet != null && !ending) Bubble(vet.transform, PastConfig.Fight4, 2.5f);
             if (ending || !PastConfig.BossReinforcements || string.IsNullOrEmpty(PastConfig.Reinforce3)) return;
             List<AIActor> adds = SpawnWave("last reinforcements", PastConfig.Reinforce3, ClinicLayout.TheatreSpawns);
@@ -985,6 +986,7 @@ namespace PlutoVetVisit
             Engage(vet);
             StartCoroutine(Heartbeat("the Vet", new List<AIActor> { vet }));
             StartCoroutine(MonitorBeeps());
+            TheatreMood.LampOn(this, World(ClinicLayout.Table));
             PastPlugin.Log("fight started");
         }
 
@@ -1052,6 +1054,7 @@ namespace PlutoVetVisit
         {
             if (ending) return;
             ending = true;
+            TheatreMood.Restore(room);
             if (vet != null) ClinicSound.Play("Play_OBJ_glassbottle_shatter_01", vet.gameObject);
             StartCoroutine(EndPast());
         }

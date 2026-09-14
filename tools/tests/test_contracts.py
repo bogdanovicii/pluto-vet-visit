@@ -34,3 +34,13 @@ class ContractTests(unittest.TestCase):
         self.has('CharacterSpecificGungeonFlags.KILLED_PAST', t, 'BreachTrophy.cs')
         self.has('VetProgress.Beaten()', t, 'BreachTrophy.cs')
         self.has('"vet_trophy_here"', src('PastPlugin.cs'), 'PastPlugin.cs')
+
+    def test_theatre_mood_hooks(self):
+        c = src('VetVisitController.cs')
+        self.has('TheatreMood.LampOn(this, World(ClinicLayout.Table));', c, 'VetVisitController.cs')
+        self.has('TheatreMood.Red(room);', c, 'VetVisitController.cs')
+        self.has('TheatreMood.Restore(room);', c, 'VetVisitController.cs')
+        m = src('TheatreMood.cs')
+        self.has('AdditionalBraveLight', m, 'TheatreMood.cs')
+        self.has('lamp.Initialize();', m, 'TheatreMood.cs')
+        self.has('ClinicProp.Show("pluto_lamp_pool")', m, 'TheatreMood.cs')

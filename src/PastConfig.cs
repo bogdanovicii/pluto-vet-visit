@@ -59,6 +59,7 @@ namespace PlutoVetVisit
         public static bool FloorTiles = true;
         public static bool WallFaces = true;
         public static bool ClinicSounds = true;
+        public static float LampIntensity = 2.5f, LampRadius = 6f, MoodRedR = 1f, MoodRedG = 0.55f, MoodRedB = 0.55f;
         public static float TrophyX = 0f, TrophyY = 0f;
         public static bool ForceTrophy = false;
         public static string CommentTrophy = "The Vet's syringe. He won't need it.|Still sharp. Still mine.|No procedure today.";
@@ -207,6 +208,11 @@ namespace PlutoVetVisit
             TrophyY = trophyYEntry.Value;
             ForceTrophy = cfg.Bind("Debug", "ForceTrophy", ForceTrophy, "Show the Breach trophy without beating the past (testing).").Value;
             CommentTrophy = cfg.Bind("Breach", "CommentTrophy", CommentTrophy, "What Pluto thinks when he examines the trophy (one per interaction; separate lines with |).").Value;
+            LampIntensity = cfg.Bind("Mood", "LampIntensity", LampIntensity, "Operating lamp light intensity when the fight starts.").Value;
+            LampRadius = cfg.Bind("Mood", "LampRadius", LampRadius, "Operating lamp light radius in tiles.").Value;
+            MoodRedR = cfg.Bind("Mood", "MoodRedR", MoodRedR, "Theatre ambient in the Vet's last phase (red).").Value;
+            MoodRedG = cfg.Bind("Mood", "MoodRedG", MoodRedG, "Theatre ambient in the Vet's last phase (green).").Value;
+            MoodRedB = cfg.Bind("Mood", "MoodRedB", MoodRedB, "Theatre ambient in the Vet's last phase (blue).").Value;
             ClinicSounds = cfg.Bind("Mood", "ClinicSounds", ClinicSounds, "Play the clinic's built-in sound events (kennel barks, intercom chime, heart monitor, lamp, tray crash, ending).").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
             WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;
