@@ -62,3 +62,14 @@ class ContractTests(unittest.TestCase):
         self.assertLess(c.index('PickUpEnding(p));', e), c.index('Pixelator.Instance.FreezeFrame();', e))
         self.has('if (ending) return;', c[c.index('private void EnsureLoadout('):], 'EnsureLoadout')
         self.has('public void Show(Vector2 at)', src('ClinicNpc.cs'), 'ClinicNpc.cs')
+
+    def test_reset_past_command(self):
+        r = src('PastReset.cs')
+        self.has('CharacterSpecificGungeonFlags.KILLED_PAST, false', r, 'PastReset.cs')
+        self.has('CharacterSpecificGungeonFlags.KILLED_PAST_ALTERNATE_COSTUME, false', r, 'PastReset.cs')
+        self.has('GameStatsManager.Save()', r, 'PastReset.cs')
+        self.has('SwapToAlternateCostume()', r, 'PastReset.cs')
+        self.has('VetProgress.Forget();', r, 'PastReset.cs')
+        self.has('BreachTrophy.Remove();', r, 'PastReset.cs')
+        self.assertLess(r.index('SwapToAlternateCostume()'), r.index('KILLED_PAST, false'))   # leave the costume first
+        self.has('"vet_reset_past"', src('PastPlugin.cs'), 'PastPlugin.cs')

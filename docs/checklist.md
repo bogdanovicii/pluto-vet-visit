@@ -380,3 +380,7 @@ Install with Pluto_The_Cat 2.16.0. Delete `BepInEx/config/bogdan.etg.plutovetvis
 - [ ] Ending: `progress file written`, then Bogdan and Bianca come in from the east side door, Bianca picks Pluto up, `ending: owners in, bianca carries Pluto, credits`; Pluto stays hidden through the credits. Screenshot.
 - [ ] Boss card: the new Gemini-first Vet portrait; win page: the new happy-ending picture. Screenshots.
 - [ ] Breach: before beating the Vet no trophy; after, stand at a free spot and type `vet_trophy_here` (`breach trophy placed at`), leave and come back (it returns once), examine it (three thoughts). `ForceTrophy` in [Debug] shows it without the win.
+
+## 0.14.1 — reset the past
+- [ ] In the Breach as samurai Pluto, open the console and type `vet_reset_past`: Pluto is back in his normal look with the Royal Kibble Sack, the kimono stand and the trophy disappear; the log shows `vet_reset_past: KILLED_PAST cleared ..., saved True`.
+- [ ] Restart the game: still no kimono stand and no trophy. Beat the Vet again: the stand and the trophy come back.

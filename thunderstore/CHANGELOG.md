@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.14.1
+- New console command `vet_reset_past`: the game forgets that Pluto beat his past. Pluto leaves the samurai costume, the past-kill flags are cleared and saved, the progress file is deleted, the Breach trophy is removed and the kimono stand disappears, so the costume and the trophy unlock again only by beating the Vet. Type it in the Breach. If `UnlockSamuraiCostume` is still `true` in Pluto's config, the log warns that it would unlock the costume again on the next launch.
+
 ## 0.14.0
 - A happy ending: after the Vet falls, Bogdan and Bianca run into the theatre, Bianca lifts Pluto into her arms, Bogdan pats him ("Let's go home, buddy."), then the credits.
 - Living kennels: the caged cats and dogs breathe and blink, react when Pluto comes close (dogs jump at the bars and bark, cats puff up and hiss) and rattle their doors when a wave starts.

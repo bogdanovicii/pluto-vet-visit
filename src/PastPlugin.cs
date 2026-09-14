@@ -19,7 +19,7 @@ namespace PlutoVetVisit
     {
         public const string GUID = "bogdan.etg.plutovetvisit";
         public const string NAME = "Pluto The Cat - The Vet Visit";
-        public const string VERSION = "0.14.0";
+        public const string VERSION = "0.14.1";
         public const string PLUTO_GUID = "bogdan.etg.plutothecat";
 
         private Harmony harmony;
@@ -88,6 +88,7 @@ namespace PlutoVetVisit
                 BreachTrophy.Place(p.CenterPosition);
                 Log("Breach trophy position saved: " + p.CenterPosition);
             }));
+            Step("console reset", () => ETGModConsole.Commands.AddUnit("vet_reset_past", args => PastReset.Run()));
             Log("The Vet Visit is ready. Pluto's past: " + PastLevel.SCENE_NAME);
         }
 

@@ -22,6 +22,15 @@ namespace PlutoVetVisit
             catch (Exception e) { PastPlugin.Log("progress file failed: " + e.Message); }
         }
 
+        public static void Forget()
+        {
+            try
+            {
+                if (File.Exists(PathName)) { File.Delete(PathName); PastPlugin.Log("progress file deleted: " + PathName); }
+            }
+            catch (Exception e) { PastPlugin.Log("progress file delete failed: " + e.Message); }
+        }
+
         public static bool Beaten()
         {
             try { return File.Exists(PathName) && File.ReadAllText(PathName).Contains("VetBeaten=true"); }

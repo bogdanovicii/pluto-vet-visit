@@ -21,6 +21,14 @@ namespace PlutoVetVisit
                 && VetProgress.Beaten();
         }
 
+        public static void Remove()
+        {
+            if (placed == null) return;
+            Object.Destroy(placed);
+            placed = null;
+            PastPlugin.Log("breach trophy removed");
+        }
+
         public static IEnumerator PlaceLater()
         {
             yield return null;
