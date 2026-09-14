@@ -1,0 +1,7 @@
+Animation sprite sheet for the video game Enter the Gungeon: a veterinary kennel prop (a steel box with two stacked cages behind dark bars) in the exact style, size and colours of the attached kennel sprite, which is the first frame.
+
+Match the attached reference exactly: identical kennel, bars, cages and blanket pixel for pixel in every frame; ONLY the animal (and in the rattle frames the cage door) changes. Scene: a grey tabby cat curled in the upper cage, the lower cage door swung open to the left with an empty blanket inside.
+
+Subject, 4 frames in ONE horizontal row, all the same size: a slow calm loop: the cat breathes, twitches an ear and flicks its tail.
+
+Rendering rules: crisp small pixel art matching the reference, the same dark outline as the reference, 3 cel-shaded tones, no gradients, no anti-aliasing, no text, frames evenly spaced. Plain flat pure green background (#00FF00) for easy removal.

@@ -111,3 +111,51 @@ class EndingClipTests(unittest.TestCase):
         for who, clips in art_sources.ENDING_CLIPS.items():
             for clip in clips:
                 self.assertTrue('"%s"' % clip in cs, (who, clip))
+
+
+class PatArtTests(unittest.TestCase):
+    """0.14.0: Bogdan's ending pat is his own sprite with the near arm reaching forward (art source bogdan_pat)."""
+
+    def test_three_frames_on_his_canvas_with_known_keys(self):
+        frames = N.bogdan_pat_frames()
+        self.assertEqual(len(frames), 3)
+        for i, f in enumerate(frames):
+            self.assertEqual((len(f[0]), len(f)), N.OWNER_CANVAS, i)
+            V.image(f)
+
+    def test_head_and_legs_unchanged_arm_reaches_out(self):
+        base = N.BOGDAN_BASE
+        for i, f in enumerate(N.bogdan_pat_frames()):
+            self.assertEqual(list(f[:13]), list(base[:13]), i)          # face and hair untouched
+            self.assertEqual(list(f[27:]), list(base[27:]), i)          # legs untouched
+        right = lambda frame: max(x for row in frame[14:22] for x, ch in enumerate(row) if ch != '.')
+        reach = [right(f) for f in N.bogdan_pat_frames()]
+        self.assertGreater(reach[1], right(base) + 4)
+
+
+class BiancaEndingArtTests(unittest.TestCase):
+    """0.14.0: Bianca's ending clips are her own sprite; carry frames hold a small grey-brown Pluto (art sources bianca_*)."""
+
+    def test_clip_counts_match_art_sources(self):
+        import art_sources
+        frames = N.bianca_ending_frames()
+        self.assertEqual(dict((k, len(v)) for k, v in frames.items()), dict(art_sources.ENDING_CLIPS['bianca']))
+
+    def test_frames_on_her_canvas_face_kept(self):
+        for clip, frames in N.bianca_ending_frames().items():
+            for i, f in enumerate(frames):
+                self.assertEqual((len(f[0]), len(f)), N.OWNER_CANVAS, (clip, i))
+                V.image(f)
+                self.assertIn('K', ''.join(f), (clip, i))                  # her eye highlight is still there
+
+    def test_carry_frames_hold_pluto(self):
+        for clip in ('carry', 'carry_walk'):
+            for i, f in enumerate(N.bianca_ending_frames()[clip]):
+                text = ''.join(f)
+                self.assertIn('G', text, (clip, i))                        # Pluto's green eyes
+                self.assertIn(N._TABBY, text, (clip, i))                   # his tabby fur
+
+    def test_feet_stay_on_the_bottom_rows(self):
+        for clip, frames in N.bianca_ending_frames().items():
+            for i, f in enumerate(frames):
+                self.assertTrue(f[-1].strip('.'), (clip, i))

@@ -1,0 +1,11 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "Animation sprite sheet for the video game Enter the Gungeon: an NPC called Bogdan, in the exact style and scale of the attached in-game sprite sheet (the man in the navy hoodie and jeans is Bogdan).\n\nMatch the attached reference exactly: same character, same proportions, same outline and shading, same small pixel size.\n\nSubject, 3 frames in ONE horizontal row, all the same size, Bogdan facing RIGHT, feet on the same ground line, \"pat\": he reaches his hand forward at chest height and gently pats something (a cat held by someone in front of him); frame 1 arm starts to lift, frame 2 hand forward, frame 3 hand pats slightly lower.\n\nRendering rules: crisp small pixel art, bold dark outline, 3 cel-shaded tones per material, no gradients, no anti-aliasing, no text, evenly spaced frames. Plain flat pure green background (#00FF00) for easy removal.\n",
+  "refs": [
+    "PlutoVetVisit/docs/preview/npc-sheet.png"
+  ],
+  "ratio": "16:9",
+  "size": "1K",
+  "seconds": 17.7,
+  "time": "2026-09-14 21:11:35"
+}

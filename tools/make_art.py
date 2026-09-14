@@ -41,6 +41,9 @@ def main():
     for p in projectiles.write(PROJECT):
         print('projectile', p)
     print('preview   ', projectiles.preview(PROJECT))
+    # hand-copied sprite clips (Gemini designs copied onto the cast's own rows) refresh their approved sources first
+    print('art src   ', len(vet_poses.write_mask_art(PROJECT)) + len(npc_poses.write_pat_art(PROJECT))
+          + len(npc_poses.write_ending_art(PROJECT)) + len(clinic_objects.write_kennel_art(PROJECT)), 'frames')
     for p in art_sources.install(PROJECT):   # approved Gemini-first art replaces the drawn stand-ins
         print('art       ', p)
     print('done')

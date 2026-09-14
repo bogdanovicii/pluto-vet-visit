@@ -1,0 +1,12 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "Animation sprite sheet for the video game Enter the Gungeon: an NPC called Bianca, in the exact style and scale of the attached in-game sprite sheet (the woman with long brown hair in a yellow dress is Bianca; the man in the navy hoodie is Bogdan).\n\nMatch the attached references exactly: same character, same proportions, same outline and shading, same small pixel size. The cat she carries is Pluto (see the photo): a grey-brown tabby cat with a white chest and muzzle.\n\nSubject, 11 frames in ONE horizontal row, all the same size, Bianca facing RIGHT, feet on the same ground line:\n- frames 1-3 \"kneel\": she bends down and crouches to pick something up in front of her.\n- frames 4-5 \"carry\": standing, holding Pluto the cat in her arms against her chest, a gentle breathing bob between the two frames.\n- frames 6-11 \"carry walk\": walking to the right while holding Pluto in her arms, a full walk cycle.\n\nRendering rules: crisp small pixel art, bold dark outline, 3 cel-shaded tones per material, no gradients, no anti-aliasing, no text, evenly spaced frames. Plain flat pure green background (#00FF00) for easy removal.\n",
+  "refs": [
+    "PlutoVetVisit/docs/preview/npc-sheet.png",
+    "reference/photos/white_spot_on_head.jpeg"
+  ],
+  "ratio": "21:9",
+  "size": "2K",
+  "seconds": 23.1,
+  "time": "2026-09-14 21:12:01"
+}

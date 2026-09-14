@@ -1,0 +1,12 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "Animation sprite sheet for the video game Enter the Gungeon: a veterinary kennel prop (a steel box with two stacked cages behind dark bars) in the exact style, size and colours of the attached kennel sprite, which is the first frame.\n\nMatch the attached reference exactly: identical kennel, bars, cages and blanket pixel for pixel in every frame; ONLY the animal (and in the rattle frames the cage door) changes. Scene: a sleepy grey tabby cat curled in the upper cage, an empty blanket in the lower cage.\n\nSubject, 4 frames in ONE horizontal row, all the same size: the cat puffs up its fur, arches and hisses with its mouth open, then settles back.\n\nRendering rules: crisp small pixel art matching the reference, the same dark outline as the reference, 3 cel-shaded tones, no gradients, no anti-aliasing, no text, frames evenly spaced. Plain flat pure green background (#00FF00) for easy removal.",
+  "refs": [
+    "PlutoVetVisit/Resources/Objects/kennel_cat.png",
+    "PlutoVetVisit/docs/preview/objects-sheet.png"
+  ],
+  "ratio": "16:9",
+  "size": "1K",
+  "seconds": 18.6,
+  "time": "2026-09-14 21:13:58"
+}

@@ -668,3 +668,29 @@ class KennelClipTests(unittest.TestCase):
         self.assertTrue('public static readonly PropClip[] PROP_CLIPS = {' in cs)
         self.assertTrue('new PropClip("pluto_kennel_dog", "react", 4, 8.0f, false),' in cs)
         self.assertTrue('public class PropClip' in cs)
+
+
+class KennelArtTests(unittest.TestCase):
+    """0.14.0: kennel clips change only the animal and the latch; the cage stays pixel-identical."""
+
+    def test_clip_counts_and_canvas(self):
+        import art_sources
+        for stem in art_sources.KENNEL_STEMS:
+            frames = O.kennel_frames(stem)
+            self.assertEqual(dict((k, len(v)) for k, v in frames.items()), dict(art_sources.KENNEL_CLIPS), stem)
+            size = art_sources.PIECES[stem + '_idle']['canvas']
+            for clip, fs in frames.items():
+                for i, f in enumerate(fs):
+                    self.assertEqual((len(f[0]), len(f)), tuple(size), (stem, clip, i))
+
+    def test_first_idle_frame_is_the_static_kennel(self):
+        import art_sources
+        static = dict((o.png, o.rows) for o in O.OBJECTS if o.png in art_sources.KENNEL_STEMS)
+        for stem in art_sources.KENNEL_STEMS:
+            self.assertEqual(list(O.kennel_frames(stem)['idle'][0]), list(static[stem]), stem)
+
+    def test_frames_animate(self):
+        import art_sources
+        for stem in art_sources.KENNEL_STEMS:
+            for clip, fs in O.kennel_frames(stem).items():
+                self.assertGreater(len(set(tuple(f) for f in fs)), 1, (stem, clip))

@@ -626,7 +626,7 @@ _KW, _KH = 40, 48
 _CAGE_TOPS = (3, 23)                                                           # rail rows; interior rows top+1..top+16
 
 
-def _kennel_unit(upper=None, lower=None, open_lower=False):
+def _kennel_unit(upper=None, lower=None, open_lower=False, latch_dx=(0, 0)):
     """upper/lower: (rows, x) of an occupant in that cage's 34x16 interior (bottom-aligned), 'blanket', or None."""
     rows = ['.' * _KW] * _KH
     rows[0] = 'o' * _KW
@@ -648,7 +648,7 @@ def _kennel_unit(upper=None, lower=None, open_lower=False):
             interior = [''.join('o' if x % 4 == 2 else ch for x, ch in enumerate(r)) for r in interior]
         rows = overlay(rows, interior, 3, top + 1)
         if barred:
-            rows = overlay(rows, ['oo', 'o&', 'o&', 'oo'], 34, top + 7)          # latch
+            rows = overlay(rows, ['oo', 'o&', 'o&', 'oo'], 34 + latch_dx[ci], top + 7)          # latch (rattle jolts it)
         rows[top + 17] = 'o&%' + 'o' * 34 + '%#o'                               # bottom rail
         rows[top + 18] = 'o' + '&' * 38 + 'o'                                   # ledge
         rows[top + 19] = 'o' + '#' * 38 + 'o'
@@ -680,8 +680,8 @@ def _swung_door():
     return [''.join(r) for r in rows]
 
 
-def _kennel_open_r(upper):
-    rows = [r + '.' * 12 for r in _kennel_unit(upper=upper, lower='blanket', open_lower=True)]
+def _kennel_open_r(upper, latch_dx=(0, 0)):
+    rows = [r + '.' * 12 for r in _kennel_unit(upper=upper, lower='blanket', open_lower=True, latch_dx=latch_dx)]
     return overlay(rows, _swung_door(), 40, 24)
 
 
@@ -692,6 +692,99 @@ KENNEL_DOG = R(_kennel_unit(upper='blanket', lower=(DOG_SITTING, 10)))
 KENNEL_CONE = R(_kennel_unit(upper=(PATIENT_CONE, 11), lower='blanket'))
 KENNEL_OPEN_R = R(_kennel_open_r(upper=(DOG_SITTING, 16)))
 KENNEL_OPEN_L = R([r[::-1] for r in _kennel_open_r(upper=(TABBY_CURLED, 6))])
+
+# ------------------------------------------------------------------ 0.14.0 living kennels (spec A2)
+# Motions from the Gemini sheets reference/gemini/kennel_cat_* and kennel_dog_* (the cat curls and breathes, puffs up and hisses,
+# paws at the door; the dog sits, jumps at the bars barking). Copied by hand onto the kennel's own occupants: only the animal
+# and the latch change between frames, the cage stays pixel-identical. Written as approved art sources (reference/art).
+def _blank_rows(art, n):
+    return [row for row in art] + ['.' * len(art[0])] * n          # bottom-aligned occupant: n blank rows lift it n px
+
+
+def _set(art, pixels):
+    g = [list(r) for r in art]
+    for x, y, ch in pixels:
+        if 0 <= y < len(g) and 0 <= x < len(g[y]):
+            g[y][x] = ch
+    return [''.join(r) for r in g]
+
+
+def _spikes(art):
+    """Fur standing up: an outline spike above every other outline pixel of the top edge."""
+    top = next(i for i, r in enumerate(art) if r.strip('.'))
+    row = ''.join('o' if ch == 'o' and x % 2 == 0 else '.' for x, ch in enumerate(art[top]))
+    return [row] + list(art)
+
+
+def _paw(art, x, y):
+    return _set(art, [(x, y, 'o'), (x + 1, y, 'W'), (x + 1, y + 1, 'o'), (x, y + 1, 'o')])
+
+
+_CAT_EYES = [(2, 4), (5, 4)]
+_CAT_MOUTH = [(3, 6), (4, 6)]
+_DOG_EYES = [(4, 3), (9, 3)]
+_DOG_MOUTH = [(6, 7), (7, 7)]
+_CONE_EYES = [(5, 3), (7, 3)]
+_CONE_MOUTH = [(5, 5), (6, 5)]
+
+
+def _animal_clips(kind):
+    """{clip: [(occupant rows, latch_dx)]} for 'cat' (the cone patient shares the cat's moves) or 'dog'."""
+    if kind == 'dog':
+        base, eyes, mouth, lid, fur = DOG_SITTING, _DOG_EYES, _DOG_MOUTH, 'o', '\\'
+    elif kind == 'cone':
+        base, eyes, mouth, lid, fur = PATIENT_CONE, _CONE_EYES, _CONE_MOUTH, 'B', 'B'
+    else:
+        base, eyes, mouth, lid, fur = TABBY_CURLED, _CAT_EYES, _CAT_MOUTH, '?', '?'
+    blink = _set(base, [(x, y, lid) for x, y in eyes])
+    open_mouth = _set(base, [(x, y, 'P') for x, y in mouth])
+    w = len(base[0])
+    if kind == 'dog':
+        react = [_blank_rows(base, 1), _blank_rows(open_mouth, 2), _blank_rows(open_mouth, 1), base]
+        rattle = [_paw(_blank_rows(base, 1), w - 1, 6), _paw(base, w - 1, 7), base]
+    else:
+        react = [_blank_rows(base, 1), _spikes(open_mouth), _blank_rows(_spikes(open_mouth), 1), _blank_rows(base, 1)]
+        rattle = [_paw(base, w - 1, len(base) - 5), _paw(base, w - 1, len(base) - 4), base]
+    return {
+        'idle': [(base, 0), (_blank_rows(base, 1), 0), (base, 0), (blink, 0)],
+        'react': [(f, 0) for f in react],
+        'rattle': [(rattle[0], 1), (rattle[1], 0), (rattle[2], 0)],
+    }
+
+
+def kennel_frames(stem):
+    """{clip: [rows]} for one kennel PNG stem (kennel_cat, kennel_dog, kennel_cone, kennel_open_r, kennel_open_l)."""
+    kind = {'kennel_cat': 'cat', 'kennel_dog': 'dog', 'kennel_cone': 'cone', 'kennel_open_r': 'dog', 'kennel_open_l': 'cat'}[stem]
+    out = {}
+    for clip, frames in _animal_clips(kind).items():
+        rows = []
+        for art, dx in frames:
+            if stem == 'kennel_cat':
+                f = _kennel_unit(upper=(art, 6), lower='blanket', latch_dx=(dx, 0))
+            elif stem == 'kennel_dog':
+                f = _kennel_unit(upper='blanket', lower=(art, 10), latch_dx=(0, dx))
+            elif stem == 'kennel_cone':
+                f = _kennel_unit(upper=(art, 11), lower='blanket', latch_dx=(dx, 0))
+            elif stem == 'kennel_open_r':
+                f = _kennel_open_r(upper=(art, 16), latch_dx=(dx, 0))
+            else:
+                f = [r[::-1] for r in _kennel_open_r(upper=(art, 6), latch_dx=(dx, 0))]
+            rows.append(R(f))
+        out[clip] = rows
+    return out
+
+
+def write_kennel_art(project):
+    paths = []
+    for stem in ('kennel_cat', 'kennel_dog', 'kennel_cone', 'kennel_open_r', 'kennel_open_l'):
+        for clip, frames in kennel_frames(stem).items():
+            for i, f in enumerate(frames, 1):
+                p = os.path.join(project, 'reference', 'art', '%s_%s' % (stem, clip), 'final_%03d.png' % i)
+                os.makedirs(os.path.dirname(p), exist_ok=True)
+                save(f, p)
+                paths.append(p)
+    return paths
+
 
 # ------------------------------------------------------------------ nurse station 96x32 (v0.10): white counter with the treat jar,
 # two food bowls and a clipboard ON it; steel front with a teal stripe and a call bell (props_ward concept)

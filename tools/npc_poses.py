@@ -163,6 +163,56 @@ def _bogdan_walk(carrier):
     return frames
 
 
+# 0.14.0 ending "pat" (spec A1; pose from the Gemini sheet reference/gemini/bogdan_pat): the near arm leaves his side, reaches
+# forward at chest height and pats a little lower. Approved art source (reference/art/bogdan_pat), not a drawn clip in NPCS.
+_BOGDAN_ARM_COLS = range(27, 31)
+
+
+def _bogdan_armless():
+    g = [list(r) for r in BOGDAN_BASE]
+    for y in range(13, 27):
+        for x in _BOGDAN_ARM_COLS:
+            if x < len(g[y]):
+                g[y][x] = '.'
+    for y in range(14, 25):
+        g[y][26] = 'o'                      # the hoodie's right side closes where the arm hung
+    return g
+
+
+def _paste(g, x, y, art):
+    for i, ch in enumerate(art):
+        if ch != ' ' and 0 <= x + i < len(g[y]):
+            g[y][x + i] = ch
+
+
+def bogdan_pat_frames():
+    arms = [
+        [(26, 14, "ooo"), (26, 15, "NNNo"), (26, 16, "DNNNo"), (27, 17, "oNNNo"), (28, 18, "oNNLo"), (28, 19, "o=-o"),
+         (29, 20, "oo")],                                                       # elbow out, hand coming up
+        [(26, 15, "oooooooooo"), (26, 16, "NLLLLLLLNo=o"), (26, 17, "NNNNNNNNNo==o"), (26, 18, "DDDDDDDDDo-o"),
+         (27, 19, "oooooooooo")],                                               # arm straight out, open hand
+        [(26, 16, "oooooooooo"), (26, 17, "NLLLLLLLNoo"), (26, 18, "NNNNNNNNNo=o"), (26, 19, "DDDDDDDDDo==o"),
+         (27, 20, "oooooooooo-o")],                                             # hand pats one row lower
+    ]
+    frames = []
+    for arm in arms:
+        g = _bogdan_armless()
+        for x, y, art in arm:
+            _paste(g, x, y, art)
+        frames.append(R(owner_rows([''.join(r) for r in g])))   # N/D/L arm placeholders -> the hoodie navy keys
+    return frames
+
+
+def write_pat_art(project):
+    paths = []
+    for i, f in enumerate(bogdan_pat_frames(), 1):
+        p = os.path.join(project, 'reference', 'art', 'bogdan_pat', 'final_%03d.png' % i)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        save(f, p)
+        paths.append(p)
+    return paths
+
+
 CLIPS_BOGDAN = OrderedDict([
     ('idle', [BOGDAN_BASE, head_bob(BOGDAN_BASE, BOGDAN_CHIN)]),
     ('walk', _bogdan_walk(True)),                  # carrying Pluto in
@@ -268,6 +318,81 @@ def _bianca_wave(hand_dx):
     f = overlay(f, sleeve, 28, 8)
     f = overlay(f, hand, 27 + hand_dx, 4)
     return R(f)
+
+
+# 0.14.0 ending (spec A1; poses from the Gemini sheet reference/gemini/bianca_ending): Bianca kneels, lifts Pluto and carries
+# him out. Approved art sources (reference/art/bianca_*), copied by hand onto her own rows with a small Pluto in her arms.
+_TABBY = 'B'                                        # vetpixel key nearest Pluto's tabby mid (#8B7A66)
+_PLUTO_HELD = [                                     # 14x15: head up-right, white chest and paws over her arm, ringed tail down
+    "..oo....oo....",
+    ".oPto..otPo...",
+    ".otttttttto...",
+    "otbtbttbtbto..",
+    "otGtttttGtto..",
+    "ottWWPPWWtto..",
+    ".otWWWWWWto...",
+    ".otWWWWWWdo...",
+    "otttWWWWtddo..",
+    "otbtttttbtdo..",
+    ".oWooooooWo...",
+    "......obo.....",
+    "......oLo.....",
+    "......obo.....",
+    "......oo......",
+]
+_CARRY_ARM = ["oA::::::::o", "oA::::::::==o", "ooooooooooooo"]    # sleeve round under Pluto, hand on his side
+
+
+def _held_pluto():
+    return [r.replace('t', _TABBY) for r in _PLUTO_HELD]
+
+
+def _armless(frame):
+    g = [list(r) for r in frame]
+    for x, y, art in _BIANCA_ARM_DOWN:
+        for i in range(len(art)):
+            g[y][x + i] = '.'
+    for y, x in ((21, 27), (22, 28), (23, 28)):
+        g[y][x] = 'o'
+    return [''.join(r) for r in g]
+
+
+def _carrying(frame, dy=0):
+    f = overlay(_armless(frame), _held_pluto(), 26, 13 + dy)
+    f = overlay(f, _CARRY_ARM, 24, 21 + dy)
+    return R(f)
+
+
+def _crouch(k, reach=False):
+    """Upper body k rows lower, the legs k rows shorter (knees bend), shoes on the bottom row."""
+    legs = list(BIANCA_STAND)
+    f = ['.' * OWNER_CANVAS[0]] * k + list(BIANCA_TOP) + legs[:8 - k] + legs[8:]
+    f = f[:OWNER_CANVAS[1]]
+    if reach:                                       # the near hand reaches down and forward to pick him up
+        f = overlay(_armless(f), ["oA:o", "oA::o", ".oA::o", "..o==o", "...oo"], 27, 21 + k)
+    return R(f)
+
+
+def bianca_ending_frames():
+    stride = _bianca(BIANCA_STRIDE)
+    other = swap_legs(stride, BIANCA_LEGS, 23, {'-': '='}, {'=': '-'})
+    walk = [stride, head_bob(stride, BIANCA_CHIN), _bianca(BIANCA_PASS), other, head_bob(other, BIANCA_CHIN), _bianca(BIANCA_PASS)]
+    return OrderedDict([
+        ('kneel', [_crouch(0), _crouch(3), _crouch(5, reach=True)]),
+        ('carry', [_carrying(BIANCA_BASE), _carrying(head_bob(BIANCA_BASE, BIANCA_CHIN), -1)]),
+        ('carry_walk', [_carrying(f, -1 if i in (1, 4) else 0) for i, f in enumerate(walk)]),
+    ])
+
+
+def write_ending_art(project):
+    paths = []
+    for clip, frames in bianca_ending_frames().items():
+        for i, f in enumerate(frames, 1):
+            p = os.path.join(project, 'reference', 'art', 'bianca_' + clip, 'final_%03d.png' % i)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            save(f, p)
+            paths.append(p)
+    return paths
 
 
 CLIPS_BIANCA = OrderedDict([
