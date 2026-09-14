@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.0
+- A happy ending: after the Vet falls, Bogdan and Bianca run into the theatre, Bianca lifts Pluto into her arms, Bogdan pats him ("Let's go home, buddy."), then the credits.
+- Living kennels: the caged cats and dogs breathe and blink, react when Pluto comes close (dogs jump at the bars and bark, cats puff up and hiss) and rattle their doors when a wave starts.
+- Theatre mood: the operating lamp switches on when the fight starts, and the room turns red in the Vet's last quarter.
+- The masked Vet: in his last quarter he snaps on white gloves and a surgical mask; his last-phase attacks and his death use the masked frames.
+- Clinic sounds from the game's own library: an intercom chime, door slides, the heart monitor during the fight, the lamp, a tray crash when the Vet falls, hearts appearing, dog barks and the ending music. Config `ClinicSounds` turns them off.
+- A Breach trophy: once the Vet is beaten, his broken syringe stands on a pedestal in the Breach. Stand where it should go and type `vet_trophy_here` to place it; examine it for Pluto's thoughts. A progress file records the win.
+- Samurai Pluto (Pluto the Cat 2.16.0) keeps his Taiyaki Cannon and katana inside the past; the arrival log lists the costume and the guns.
+- New art made Gemini-first with the pluto-artist skill: the Vet's boss card, the win picture and the trophy are converted generations; the owners' ending, the kennels and the masked Vet copy the Gemini designs onto the cast's own sprites.
+
 ## 0.13.0
 - Pluto's owners: Bogdan (navy hoodie, carries the cat carrier) and Bianca (long brown hair, yellow dress) bring Pluto in. Bogdan answers the receptionist, Bianca adds "He's a good boy. Mostly.", waves "Be good, Pluto. We'll be right back." and they walk out while Pluto thinks "Traitor." Both have examine lines. They replace the generic owner.
 - A new win picture: Pluto waves from the exam table, Bogdan and Bianca come through the door, and the Vet lies knocked out with his syringe broken.

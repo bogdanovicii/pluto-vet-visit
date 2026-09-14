@@ -369,3 +369,14 @@ Harder: `PatternLeadIn = 4`, `RingGapSlots = 2`, `WallGapSlots = 2`. Easier: `Pa
 - [ ] Reception: push Pluto into the counter from the south, west and east: he is always drawn in front, never inside the front panel, and cannot reach the receptionist's space behind it.
 - [ ] Push against chairs, cabinets, the sink, fridge, supply shelf, scrubs rack and the open kennel doors: no striped overlap, no walking into the art.
 - [ ] Win page: the picture shows Pluto on the table, Bogdan and Bianca in the doorway and the knocked-out Vet; screenshot it.
+
+## 0.14.0 — clinic life
+Install with Pluto_The_Cat 2.16.0. Delete `BepInEx/config/bogdan.etg.plutovetvisit.cfg` (new keys) and, for a clean unlock test, `bogdan.etg.plutovetvisit.progress`.
+- [ ] Log: `Loading [Pluto The Cat - The Vet Visit 0.14.0]`, `mask clips loaded`, `kennels: 10 critters, 15 clips`.
+- [ ] Arrival log: `loadout on arrival: costume alt False/True, alt gun ids [...], guns [...]`. As samurai Pluto the guns are the Taiyaki Cannon and the katana; also after a quick restart and a continued run.
+- [ ] Sounds: which `sound Play_...` lines appear and which are actually heard (intercom chime, doors, heart monitor, lamp, tray crash, hearts, dog bark, ending music).
+- [ ] Kennels: walk past them: dogs jump and bark, cats puff up; all cages rattle when a ward wave starts.
+- [ ] Fight start: `mood: lamp on`, the operating lamp's light and floor pool appear. At a quarter health: `mood: last phase red`, the room turns red; `the Vet puts on the mask` and he wears gloves and a mask for the rest of the fight and his death.
+- [ ] Ending: `progress file written`, then Bogdan and Bianca come in from the east side door, Bianca picks Pluto up, `ending: owners in, bianca carries Pluto, credits`; Pluto stays hidden through the credits. Screenshot.
+- [ ] Boss card: the new Gemini-first Vet portrait; win page: the new happy-ending picture. Screenshots.
+- [ ] Breach: before beating the Vet no trophy; after, stand at a free spot and type `vet_trophy_here` (`breach trophy placed at`), leave and come back (it returns once), examine it (three thoughts). `ForceTrophy` in [Debug] shows it without the win.
