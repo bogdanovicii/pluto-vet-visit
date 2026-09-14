@@ -439,6 +439,11 @@ NPCS = OrderedDict([
     ('grandma', {'canvas': GRANDMA_CANVAS, 'clips': CLIPS_GRANDMA}),
 ])
 
+# 0.14.0 ending clips (spec A1): approved art from reference/art, installed by art_sources; write() never draws them.
+# Must equal art_sources.ENDING_CLIPS (a test checks); kept literal so npc_poses does not import the object tables.
+SOURCED = OrderedDict([('bianca', OrderedDict([('kneel', 3), ('carry', 2), ('carry_walk', 6)])),
+                       ('bogdan', OrderedDict([('pat', 3)]))])
+
 
 def write(project):
     paths = []

@@ -63,9 +63,11 @@ def layout_cs():
     for name, who in NPC_OBJECTS.items():
         spec = NP.NPCS[who]
         w, h = spec['canvas']
-        clips = list(spec['clips'])
+        counts = OrderedDict((c, len(frames)) for c, frames in spec['clips'].items())
+        counts.update(NP.SOURCED.get(who, {}))   # 0.14.0 ending clips from approved art
+        clips = list(counts)
         lines.append('            new NpcSpec("%s", "%s", %d, %d, new[] { %s }, new[] { %s }),'
-                     % (name, who, w, h, ', '.join('"%s"' % c for c in clips), ', '.join(str(len(spec['clips'][c])) for c in clips)))
+                     % (name, who, w, h, ', '.join('"%s"' % c for c in clips), ', '.join(str(counts[c]) for c in clips)))
     lines += [
         '        };',
         '    }',

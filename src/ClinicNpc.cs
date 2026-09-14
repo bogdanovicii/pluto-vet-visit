@@ -31,6 +31,13 @@ namespace PlutoVetVisit
             return null;
         }
 
+        /// <summary>Like Find, but also returns a character hidden earlier (the owners leave in the intro and return for the ending).</summary>
+        public static ClinicNpc FindAny(string who)
+        {
+            foreach (ClinicNpc n in All) if (n != null && n.who == who) return n;
+            return null;
+        }
+
         private void Start()
         {
             if (!All.Contains(this)) All.Add(this);
@@ -95,6 +102,15 @@ namespace PlutoVetVisit
             }
             transform.position = new Vector3(target.x, target.y, target.y);
             if (rest) Play(idleClip);
+        }
+
+        public void Show(Vector2 at)
+        {
+            hidden = false;
+            gameObject.SetActive(true);
+            transform.position = new Vector3(at.x, at.y, at.y);
+            if (sprite != null) sprite.UpdateZDepth();
+            Play(idleClip);
         }
 
         public void Face(bool right)
@@ -175,8 +191,11 @@ namespace PlutoVetVisit
                 for (int i = 1; i <= spec.Frames[c]; i++)
                 {
                     string path = CastLayout.NPC_ROOT + "/" + spec.Folder + "/" + clip + "/" + spec.Folder + "_" + clip + "_" + i.ToString("000") + ".png";
-                    ids.Add(clip == rest && i == 1 ? sprite.spriteId : SpriteBuilder.AddSpriteToCollection(path, sprite.Collection, asm));
+                    if (clip == rest && i == 1) { ids.Add(sprite.spriteId); continue; }
+                    if (ResourceExtractor.GetTextureFromResource(path, asm) == null) continue;   // approved ending art not made yet
+                    ids.Add(SpriteBuilder.AddSpriteToCollection(path, sprite.Collection, asm));
                 }
+                if (ids.Count == 0) continue;
                 tk2dSpriteAnimationClip k = new tk2dSpriteAnimationClip { name = spec.Folder + "_" + clip, fps = Fps(clip), wrapMode = tk2dSpriteAnimationClip.WrapMode.Loop };
                 k.frames = new tk2dSpriteAnimationFrame[ids.Count];
                 for (int i = 0; i < ids.Count; i++) k.frames[i] = new tk2dSpriteAnimationFrame { spriteCollection = sprite.Collection, spriteId = ids[i] };
@@ -195,8 +214,8 @@ namespace PlutoVetVisit
         {
             switch (clip)
             {
-                case "walk": case "walk_free": return 8f;
-                case "talk": case "wave": return 6f;
+                case "walk": case "walk_free": case "carry_walk": return 8f;
+                case "talk": case "wave": case "kneel": case "pat": return 6f;
                 case "loaf": return 2f;
                 default: return 4f;
             }

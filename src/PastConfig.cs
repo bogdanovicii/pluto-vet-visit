@@ -59,6 +59,7 @@ namespace PlutoVetVisit
         public static bool FloorTiles = true;
         public static bool WallFaces = true;
         public static bool ClinicSounds = true;
+        public static string EndingBianca = "There you are!", EndingBogdan = "Let's go home, buddy.", EndingThink = "Home.";
         public static float KennelReactRadius = 2.5f;
         public static float LampIntensity = 2.5f, LampRadius = 6f, MoodRedR = 1f, MoodRedG = 0.55f, MoodRedB = 0.55f;
         public static float TrophyX = 0f, TrophyY = 0f;
@@ -215,6 +216,9 @@ namespace PlutoVetVisit
             MoodRedG = cfg.Bind("Mood", "MoodRedG", MoodRedG, "Theatre ambient in the Vet's last phase (green).").Value;
             MoodRedB = cfg.Bind("Mood", "MoodRedB", MoodRedB, "Theatre ambient in the Vet's last phase (blue).").Value;
             KennelReactRadius = cfg.Bind("Mood", "KennelReactRadius", KennelReactRadius, "How close (tiles) Pluto gets before a caged animal reacts.").Value;
+            EndingBianca = cfg.Bind("Story", "EndingBianca", EndingBianca, "Bianca, running into the theatre after the Vet falls.").Value;
+            EndingBogdan = cfg.Bind("Story", "EndingBogdan", EndingBogdan, "Bogdan, patting Pluto in Bianca's arms.").Value;
+            EndingThink = cfg.Bind("Story", "EndingThink", EndingThink, "Pluto's last thought before the credits.").Value;
             ClinicSounds = cfg.Bind("Mood", "ClinicSounds", ClinicSounds, "Play the clinic's built-in sound events (kennel barks, intercom chime, heart monitor, lamp, tray crash, ending).").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
             WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;

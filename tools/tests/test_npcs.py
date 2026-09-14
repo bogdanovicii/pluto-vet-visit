@@ -100,3 +100,14 @@ class NpcTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class EndingClipTests(unittest.TestCase):
+    def test_ending_clips_are_sourced_and_in_the_cast_layout(self):
+        import art_sources
+        import cast_layout
+        self.assertEqual(N.SOURCED, art_sources.ENDING_CLIPS)
+        cs = cast_layout.layout_cs()
+        for who, clips in art_sources.ENDING_CLIPS.items():
+            for clip in clips:
+                self.assertTrue('"%s"' % clip in cs, (who, clip))

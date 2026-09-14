@@ -760,6 +760,7 @@ namespace PlutoVetVisit
         /// a dodge roll, a pit, an item).</summary>
         private void EnsureLoadout(PlayerController p, string when, bool full)
         {
+            if (ending) return;   // the ending hides Pluto in Bianca's arms; never show him again
             if (p == null || p.inventory == null || p.healthHaver == null || p.healthHaver.IsDead) return;
             try
             {
@@ -1063,6 +1064,41 @@ namespace PlutoVetVisit
             StartCoroutine(EndPast());
         }
 
+        /// <summary>Spec A1: Bogdan and Bianca come in through the theatre's side door; Bianca lifts Pluto into her arms.</summary>
+        private IEnumerator PickUpEnding(PlayerController p)
+        {
+            ClinicNpc bianca = ClinicNpc.FindAny("bianca"), bogdan = ClinicNpc.FindAny("bogdan");
+            if (p == null || bianca == null || bogdan == null) { PastPlugin.Log("ending: owners missing, skipped"); yield break; }
+            cutscene = true;
+            ClinicSound.Play("Play_MUS_Ending_State_02", gameObject);
+            Vector2 door = World(ClinicLayout.TheatreSpawns[0]);
+            Vector2 cat = p.CenterPosition;
+            bianca.Show(door + new Vector2(0f, 0.5f));
+            bogdan.Show(door + new Vector2(0f, -0.75f));
+            GameManager.Instance.MainCameraController.OverridePosition = Vector2.Lerp(door, cat, 0.5f);
+            StartCoroutine(bogdan.Walk(cat + new Vector2(1.6f, -0.6f), 5f, "walk_free"));
+            yield return StartCoroutine(bianca.Walk(cat + new Vector2(1.1f, 0f), 5f, "walk"));
+            bianca.Face(false);
+            bogdan.Face(false);
+            GameManager.Instance.MainCameraController.OverridePosition = cat;
+            yield return StartCoroutine(PastTalk.Say(this, bianca.transform, PastConfig.EndingBianca, 1.8f, false, true));
+            bianca.Play("kneel");
+            yield return new WaitForSeconds(0.5f);
+            foreach (PlayerController pl in GameManager.Instance.AllPlayers)
+            {
+                if (pl == null) continue;
+                pl.IsVisible = false;
+                pl.ToggleShadowVisiblity(false);
+            }
+            bianca.Play("carry");
+            bogdan.Play("pat");
+            yield return StartCoroutine(PastTalk.Say(this, bogdan.transform, PastConfig.EndingBogdan, 1.8f, false, true));
+            yield return StartCoroutine(PastTalk.Say(this, bianca.transform, PastConfig.EndingThink, 1.6f, true, true));
+            StartCoroutine(bogdan.Walk((Vector2)bogdan.transform.position + new Vector2(2f, 0f), 3f, "walk_free"));
+            yield return StartCoroutine(bianca.Walk((Vector2)bianca.transform.position + new Vector2(2f, 0f), 3f, "carry_walk"));
+            PastPlugin.Log("ending: owners in, bianca carries Pluto, credits");
+        }
+
         /// <summary>The five things every vanilla past controller does after its boss dies.</summary>
         private IEnumerator EndPast()
         {
@@ -1085,6 +1121,7 @@ namespace PlutoVetVisit
                 yield return new WaitForSeconds(4.8f);
                 TextBoxManager.ClearTextBox(p.transform);
             }
+            yield return StartCoroutine(PickUpEnding(p));
             Pixelator.Instance.FreezeFrame();
             BraveTime.RegisterTimeScaleMultiplier(0f, gameObject);
             float elapsed = 0f;

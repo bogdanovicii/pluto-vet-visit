@@ -54,3 +54,11 @@ class ContractTests(unittest.TestCase):
         self.has('VetMask.Apply(vet);', src('VetVisitController.cs'), 'VetVisitController.cs')
         self.has('masked: VetMask.Available', src('VetBoss.cs'), 'VetBoss.cs')
         self.has('overrideDeathAnimation = "mask_die"', src('VetMask.cs'), 'VetMask.cs')
+
+    def test_pick_up_ending(self):
+        c = src('VetVisitController.cs')
+        e = c.index('private IEnumerator EndPast()')
+        self.has('yield return StartCoroutine(PickUpEnding(p));', c[e:], 'EndPast')
+        self.assertLess(c.index('PickUpEnding(p));', e), c.index('Pixelator.Instance.FreezeFrame();', e))
+        self.has('if (ending) return;', c[c.index('private void EnsureLoadout('):], 'EnsureLoadout')
+        self.has('public void Show(Vector2 at)', src('ClinicNpc.cs'), 'ClinicNpc.cs')
