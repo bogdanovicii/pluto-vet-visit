@@ -47,8 +47,15 @@ NAMED = {
     'WardDoor': (17.0, 16.0),    # lower-left cell of the door gap in the first wall (the door prop stands here)
     'TheatreDoor': (17.0, 38.0), # same for the second wall
     'IntroFocus': (15.0, 7.5),   # camera lock point during the waiting-room intro
-    'OwnerStart': (3.5, 2.5),    # the Owner stands here beside the carrier (sprite lower-left)
-    'OwnerExit': (17.0, -3.5),   # where he walks out (through the south exit, off the map)
+    # Pluto's owners (sprite lower-left; each 48x40 canvas holds a one-cell-wide figure one cell in from its left edge). They stand
+    # right of Pluto's spawn, Bianca nearest him, Bogdan a step further and a little north; they leave along the south wall to the
+    # aisle between the plants, then down through the south exit, a cell and a quarter apart so they never overlap.
+    'BiancaStart': (5.75, 2.0),
+    'BogdanStart': (7.25, 2.75),
+    'BiancaAisle': (16.0, 1.5),
+    'BogdanAisle': (17.25, 1.0),
+    'BiancaExit': (16.0, -3.0),   # off the map, below the south exit
+    'BogdanExit': (17.25, -3.5),
     'Intercom': (17.5, 15.5),    # the speaker above the ward door: the "Pluto?" line comes from here
     'GreeterSpot': (17.5, 22.5),  # the Vet Tech who greets Pluto in the ward, just past the door
 }
@@ -72,7 +79,8 @@ SPOTS = {
 }
 # Bystanders placed by the room (see cast_layout.NPC_OBJECTS for the art behind each name). Sprite lower-left on the cell.
 NPCS = [
-    ('pluto_npc_owner', (3.5, 2.5)),
+    ('pluto_npc_bogdan', NAMED['BogdanStart']),
+    ('pluto_npc_bianca', NAMED['BiancaStart']),
     ('pluto_npc_receptionist', (28.5, 14.3)),  # behind the counter (at x 26, right of its monitor), in front of the back cabinet
     # Rex and Grandma sit on the first and fourth chairs of the north row (chairs at (3.75, 9.75) and (8.25, 9.75), 24 px tall like
     # the sprites): each stands a fifth of a cell SOUTH of its chair so it sorts in front of the seat and the back rest shows above it.
@@ -175,8 +183,21 @@ def layout_cs():
         lines.append('            new ObjectSpec("%s", "%s", ObjectSpec.Layer.%s, %d, %d, %d, %d, %sf, %s, %d, %sf, "%s"),'
                      % (o.name, o.png, layer, ox, oy, w, h, round(o.height_off_ground, 4), 'true' if o.stand else 'false',
                         o.frame_count, round(o.fps, 3), cs_escape(o.comment)))
+    lines.append('        };')
+    # 0.12.1: more collider rectangles (same layer as the prop's main collider) for footprints one rectangle cannot cover
+    lines.append('        public static readonly ColliderRect[] EXTRA_COLLIDERS = {')
+    for o in O.OBJECTS:
+        for ox, oy, w, h in getattr(o, 'extra', []):
+            lines.append('            new ColliderRect("%s", %d, %d, %d, %d),' % (o.name, ox, oy, w, h))
     lines += [
         '        };',
+        '    }',
+        '',
+        '    public class ColliderRect',
+        '    {',
+        '        public string Name;',
+        '        public int OffX, OffY, W, H;',
+        '        public ColliderRect(string name, int offX, int offY, int w, int h) { Name = name; OffX = offX; OffY = offY; W = w; H = h; }',
         '    }',
         '',
         '    public class ObjectSpec',

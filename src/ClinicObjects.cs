@@ -50,6 +50,9 @@ namespace PlutoVetVisit
             {
                 CollisionLayer layer = spec.Collider == ObjectSpec.Layer.High ? CollisionLayer.HighObstacle : CollisionLayer.LowObstacle;
                 AddCollider(go, layer, spec.OffX, spec.OffY, spec.W, spec.H);
+                // 0.12.1: footprints one rectangle cannot cover (the reception counter's ends, a kennel's open door)
+                foreach (ColliderRect r in ClinicLayout.EXTRA_COLLIDERS)
+                    if (r.Name == spec.Name) AddCollider(go, layer, r.OffX, r.OffY, r.W, r.H);
             }
             if (spec.Name == ClinicLayout.DOOR_OBJECT) AddDoor(go, asm);
             if (spec.Frames > 1) AddLoop(go, spec, asm);
@@ -119,8 +122,9 @@ namespace PlutoVetVisit
             body.RecheckTriggers = false;
             body.UpdateCollidersOnRotation = false;
             body.UpdateCollidersOnScale = false;
-            body.PixelColliders = new List<PixelCollider>
-            {
+            // 0.12.1: appends, so a prop can carry several rectangles (ObjectSpec plus ClinicLayout.EXTRA_COLLIDERS)
+            if (body.PixelColliders == null) body.PixelColliders = new List<PixelCollider>();
+            body.PixelColliders.Add(
                 new PixelCollider
                 {
                     ColliderGenerationMode = PixelCollider.PixelColliderGeneration.Manual,
@@ -135,8 +139,7 @@ namespace PlutoVetVisit
                     ManualHeight = h,
                     ManualDiameter = 0,
                     ManualLeftX = 0, ManualLeftY = 0, ManualRightX = 0, ManualRightY = 0,
-                }
-            };
+                });
             return body;
         }
 

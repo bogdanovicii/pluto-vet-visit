@@ -1,4 +1,4 @@
-"""The four clinic NPCs: the owner, the receptionist, Rex the nervous dog and Grandma the ancient cat.
+"""The clinic NPCs: Pluto's owners Bogdan and Bianca, the receptionist, Rex the nervous dog and Grandma the ancient cat.
 
 NPCs are not AIActors, so unlike the Vet they ship WITH their 1-px 'o' outline. Every frame of one
 character shares one canvas, feet on the bottom row, only vetpixel PALETTE keys. Row-strings below use
@@ -7,7 +7,6 @@ character shares one canvas, feet on the bottom row, only vetpixel PALETTE keys.
 import os
 from collections import OrderedDict
 
-import vet_poses as VP
 from vetpixel import R, pad, shift, overlay, erase, save, sheet, lowest_opaque_row
 
 _C = str.maketrans({'c': '\\'})
@@ -27,65 +26,118 @@ def head_bob(frame, chin):
     return frame[1:chin + 1] + [frame[chin]] + frame[chin + 1:]
 
 
-# ================================================================== owner 48x40, facing right
-# The Vet's pose pipeline recoloured: grey hoodie (% base, # shade, hood down behind the neck), blue jeans,
-# white sneakers, brown hair, tired face, no syringe. 36-wide pose at DX=8 like the Vet.
+# ================================================================== the owners 48x40, facing right: Bogdan and Bianca
+# Pluto's people. Both share the old Owner's canvas and scale (figure in columns 14..31, feet on the bottom row, head bob on the
+# idle), so they stand as tall as the Vet and the Receptionist. Placeholders in the rows below: N / D / L are the navy hoodie's
+# mid / shade / light tone (vetpixel 'O', '"', "'" - quote characters are unreadable inside row strings); owner_rows() swaps them.
 OWNER_CANVAS = (48, 40)
-OWNER_POSE = rows([
-    "",
-    "............oooooo",
-    "...........occcccco",
-    "..........occcccccco",
-    "..........occ+ccccco",
-    "..........occc=====o",
-    "..........oc========o",
-    "..........o==+==+==o",
-    "..........o=Kg=Kg==o",
-    "..........o=-==-===o",
-    "..........o===-=-==o",
-    "...........o==oo==o",
-    ".........ooo.oooooo",
-    "........o###o%%%%%%oo",
-    "........o###%%%%W%%%%o",
-    "........o##%%%%W%W%%%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%W%W%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%%%%%%%%%#%%o",
-    "........o#%oooooo%%#%%o",
-    "........o#%o%%%%o%%#%%o",
-    "........o#%o%%%%o%%#%%o",
-    "........o#%oooooo%%o==o",
-    "........o#%%%%%%%%%o==o",
-    "........o##%%%%%%%%%##o",
-    "........o#############o",
-    ".........oooooooooooooo",
-    "..........o|||o.o|||o",
-    "..........o|||o.o|||o",
-    "..........o|||o.o|||o",
-    "..........o|||o.o|||o",
-    "..........o|||o.o|||o",
-    "..........o///o.o///o",
-    ".........oWwwWo.oWwwWo",
-    ".........oooooo.oooooo",
-], 36)
-_JEANS = {'~': '|', '$': '|', '@': 'W'}
+_NAVY = str.maketrans({'N': 'O', 'D': '"', 'L': "'"})
 
 
-def _jeans(legs):
-    out = recolor(legs, _JEANS)
-    out[5] = out[5].replace('|', '/')              # dark cuff row above the sneakers
+def owner_rows(art):
+    return R([r.ljust(OWNER_CANVAS[0], '.').translate(_NAVY) for r in art])
+
+
+def mirror(frame):
+    """Faces the figure the other way inside the same canvas (the figure is centred, so it keeps its columns)."""
+    return [r[::-1] for r in frame]
+
+
+def swap_legs(frame, top, split, left, right):
+    """The other stride of a walk: the left leg takes the near leg's tones and the right leg the far leg's (rows >= top)."""
+    out = list(frame)
+    for y in range(top, len(out)):
+        r = out[y]
+        out[y] = r[:split].translate(str.maketrans(left)) + r[split:].translate(str.maketrans(right))
     return out
 
 
-OWNER_LEGS_A, OWNER_LEGS_B = _jeans(VP.LEGS_A), _jeans(VP.LEGS_B)
-OWNER_BASE = pad(OWNER_POSE, OWNER_CANVAS[0], OWNER_CANVAS[1], VP.DX, 0)
+# ------------------------------------------------------------------ Bogdan: short dark brown hair, light stubble, navy hoodie, jeans
+BOGDAN_TOP = owner_rows([
+    "",
+    "....................ooooooo",
+    "...................oXmmmXXXo",
+    "..................oXmmXXXXXXo",
+    ".................oXXXXXXXXXXXo",
+    ".................oX@XXXXX@X@Xo",
+    ".................o@X@========o",
+    ".................o@X-=@@=@@==o",
+    ".................o@X-=Kg=Kg==o",
+    ".................o@=-======-=o",
+    ".................o@-=====;;==o",
+    "..................o-=-=-=-=-o",
+    "...............ooDDDo-=-oNNoo",
+    "..............oDDDDDoooooLLNNo",
+    "..............oDLLNNLLLLLLNNNo",
+    "..............oDLNNNWNNNWNDNNLo",
+    "..............oDNNNNWNNNWNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNDNNNo",
+    "..............oDNNNNNNNNNNoDDDo",
+    "..............oDDDDDDDDDDDo==-o",
+    "...............oooooooooooo==o",
+    "...............o//|||||||2oooo",
+])
+BOGDAN_LEGS = 27                                    # first leg row (the hip row 26 stays)
+BOGDAN_STAND = owner_rows([
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o//||oo|||2o",
+    "...............o////oo////o",
+    "..............oWWWWwooWWWWwo",
+    "..............o%%%%%oo%%%%%o",
+    "..............oooooooooooooo",
+])
+BOGDAN_STRIDE = owner_rows([                        # far leg back, near leg forward
+    "...............o//|||o|||2o",
+    "..............o///|oo|||2o",
+    "..............o///o.o||||2o",
+    ".............o///o..o||||2o",
+    ".............o///o...o|||2o",
+    "............o///o....o|||2o",
+    "............o///o.....o|||2o",
+    "...........o///o......o|||2o",
+    "...........o///o.......o|||2o",
+    "..........o////o.......o////o",
+    ".........oWWWWwo.......oWWWWwo",
+    ".........o%%%%%o.......o%%%%%o",
+    ".........ooooooo.......ooooooo",
+])
+BOGDAN_PASS = owner_rows([                          # legs passing under the body
+    "...............o//||||||||2o",
+    "...............o///||o|||2o",
+    "................o//|o|||2o",
+    "................o//|o|||2o",
+    "................o///o|||2o",
+    "................o///o|||2o",
+    "................o///o|||2o",
+    "................o///o|||2o",
+    "................o///o|||2o",
+    "................o///o////o",
+    "...............oWWWWoWWWWwo",
+    "...............o%%%%o%%%%%o",
+    "...............ooooooooooo",
+])
 
-# blue plastic cat carrier 14x10, barred door on the right, handle held at knee height
+
+def _bogdan(legs):
+    return R(BOGDAN_TOP + legs)
+
+
+BOGDAN_BASE = _bogdan(BOGDAN_STAND)
+BOGDAN_CHIN = 11
+
+# blue plastic cat carrier 14x10, barred door on the right; Bogdan holds its handle in his near hand
 CARRIER = rows([
     ".....oooo",
     "....oo..oo",
@@ -98,26 +150,133 @@ CARRIER = rows([
     "o////////ooooo",
     ".oooooooooooo",
 ], 14)
-CARRIER_AT = (VP.DX + 15, 29)
+CARRIER_AT = (23, 26)
 
 
-def _owner_bob(f):
-    return head_bob(f, 11)
-
-
-def _owner_walk(carrier):
-    a = VP.with_legs(OWNER_BASE, OWNER_LEGS_A)
-    b = VP.with_legs(OWNER_BASE, OWNER_LEGS_B)
-    frames = [a, _owner_bob(a), OWNER_BASE, b, _owner_bob(b), OWNER_BASE]
+def _bogdan_walk(carrier):
+    a = _bogdan(BOGDAN_STRIDE)
+    b = swap_legs(a, BOGDAN_LEGS, 20, {'|': '/', '2': '/'}, {'/': '|'})
+    p = _bogdan(BOGDAN_PASS)
+    frames = [a, head_bob(a, BOGDAN_CHIN), p, b, head_bob(b, BOGDAN_CHIN), p]
     if carrier:
         frames = [overlay(f, CARRIER, *CARRIER_AT) for f in frames]
     return frames
 
 
-CLIPS_OWNER = OrderedDict([
-    ('idle', [OWNER_BASE, _owner_bob(OWNER_BASE)]),
-    ('walk', _owner_walk(True)),
-    ('walk_free', _owner_walk(False)),
+CLIPS_BOGDAN = OrderedDict([
+    ('idle', [BOGDAN_BASE, head_bob(BOGDAN_BASE, BOGDAN_CHIN)]),
+    ('walk', _bogdan_walk(True)),                  # carrying Pluto in
+    ('walk_free', _bogdan_walk(False)),            # leaving empty-handed
+])
+
+# ------------------------------------------------------------------ Bianca: long brown hair with a highlight, yellow sweater dress
+# Hair: 'm' chestnut, 'M' highlight streak, 'X' shade. Dress: 'A' light, ':' mid, 'a' shade. Light shoes: 'W' / 'w' on a '6' sole.
+BIANCA_TOP = owner_rows([
+    "",
+    "",
+    "",
+    "...................ooooooo",
+    "..................ommMMmmmo",
+    ".................ommMMmmmmmo",
+    "................ommMmmmmmmmmo",
+    "................omMmmmX=====o",
+    "................omMmmX======o",
+    "................omMmmX=Kg=Kgo",
+    "................omMmmX=-===-o",
+    "................omMmmX==pp=o",
+    "................omMmmoo===o",
+    "................omMmmXo=-o",
+    "................omMmXo:::aoo",
+    "...............omMmXoA::::::o",
+    "...............omMmXoA::::a::o",
+    "...............omMmXoA::::a::o",
+    "...............omMmXa::::::a:o",
+    "...............oXmXa:::::::a:o",
+    "................oooa:::::::a:o",
+    "..................oa:::::::oo=o",
+    "..................oa::::::::o=o",
+    "..................oa::::::::ooo",
+    ".................oa::::::::::o",
+    ".................oa::::::::::o",
+    "................oa::::::::::::o",
+    "................oaaaaaaaaaaaaao",
+    ".................oooooooooooooo",
+])
+BIANCA_LEGS = 29
+BIANCA_STAND = owner_rows([
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    "..................o--=o.o-==o",
+    ".................owWWWo.oWWWWo",
+    ".................o6666o.o6666o",
+    ".................oooooo.oooooo",
+])
+BIANCA_STRIDE = owner_rows([
+    "..................o--=o.o-==o",
+    ".................o--=o...o-==o",
+    ".................o--=o...o-==o",
+    "................o--=o.....o-==o",
+    "................o--=o.....o-==o",
+    "...............o--=o.......o-==o",
+    "...............o--=o.......o-==o",
+    "..............o--=o.........o-==o",
+    ".............owWWWo.........oWWWWo",
+    ".............o6666o.........o6666o",
+    ".............oooooo.........oooooo",
+])
+BIANCA_PASS = owner_rows([
+    "..................o--=o.o-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "...................o--=oo-==o",
+    "..................owWWWoWWWWo",
+    "..................o6666o6666o",
+    "..................oooooooooo",
+])
+
+
+def _bianca(legs):
+    return R(BIANCA_TOP + legs)
+
+
+BIANCA_BASE = _bianca(BIANCA_STAND)
+BIANCA_CHIN = 13                                   # the neck row: her hair below it stays attached when the head bobs
+
+# near arm raised to wave: yellow sleeve up beside the face, open hand above the head (two hand positions)
+_BIANCA_ARM_DOWN = [(27, 21, 'oo=o'), (28, 22, 'o=o'), (28, 23, 'ooo')]
+
+
+def _bianca_wave(hand_dx):
+    g = [list(r) for r in BIANCA_BASE]
+    for x, y, art in _BIANCA_ARM_DOWN:              # the hanging hand goes; the dress side closes
+        for i in range(len(art)):
+            g[y][x + i] = '.'
+    for y, x, art in ((21, 27, 'o'), (22, 28, 'o'), (23, 28, 'o')):
+        g[y][x] = art
+    f = [''.join(r) for r in g]
+    hand = ['.oooo.', 'o====o', 'o=-==o', '.o==o.']
+    sleeve = ['.o:o', 'oA:o', 'oA:o', 'oA:o', 'oA:o', 'oA::o', 'oA::o']
+    f = overlay(f, sleeve, 28, 8)
+    f = overlay(f, hand, 27 + hand_dx, 4)
+    return R(f)
+
+
+CLIPS_BIANCA = OrderedDict([
+    ('idle', [BIANCA_BASE, head_bob(BIANCA_BASE, BIANCA_CHIN)]),
+    ('walk', [_bianca(BIANCA_STRIDE), head_bob(_bianca(BIANCA_STRIDE), BIANCA_CHIN), _bianca(BIANCA_PASS),
+              swap_legs(_bianca(BIANCA_STRIDE), BIANCA_LEGS, 23, {'-': '='}, {'=': '-'}),
+              head_bob(swap_legs(_bianca(BIANCA_STRIDE), BIANCA_LEGS, 23, {'-': '='}, {'=': '-'}), BIANCA_CHIN),
+              _bianca(BIANCA_PASS)]),
+    ('wave', [mirror(_bianca_wave(0)), mirror(_bianca_wave(2)), mirror(_bianca_wave(0)), mirror(_bianca_wave(-1))]),
 ])
 
 # ================================================================== receptionist 32x40, side pose facing right
@@ -273,7 +432,8 @@ def _grandma(head_dy):
 CLIPS_GRANDMA = OrderedDict([('loaf', [_grandma(6), _grandma(7)])])
 
 NPCS = OrderedDict([
-    ('owner', {'canvas': OWNER_CANVAS, 'clips': CLIPS_OWNER}),
+    ('bogdan', {'canvas': OWNER_CANVAS, 'clips': CLIPS_BOGDAN}),
+    ('bianca', {'canvas': OWNER_CANVAS, 'clips': CLIPS_BIANCA}),
     ('receptionist', {'canvas': REC_CANVAS, 'clips': CLIPS_REC}),
     ('rex', {'canvas': REX_CANVAS, 'clips': CLIPS_REX}),
     ('grandma', {'canvas': GRANDMA_CANVAS, 'clips': CLIPS_GRANDMA}),

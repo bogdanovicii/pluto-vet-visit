@@ -40,7 +40,7 @@ PlutoVetVisit/
     Boss/vet_bosscard.png                   boss card (427 x 240)
     Objects/*.png                            clinic prop sprites (+ clinic_door_open, the door's open frame)
     Enemies/{tech,nurse}/<clip>/*.png        Vet Tech and Nurse animation frames
-    Npcs/{owner,receptionist,rex,grandma}/<clip>/*.png   bystander animation frames
+    Npcs/{bogdan,bianca,receptionist,rex,grandma}/<clip>/*.png   bystander animation frames
     SpriteRoot/ProjectileCollection/*.png    syringe, droplet and pill projectile sprites
     past_win_pic.png                         win-page picture (115 x 71)
   reference/gemini/            Gemini-generated references, checked in (clinic + Vet sheets, boss card / win pic / icon raws)

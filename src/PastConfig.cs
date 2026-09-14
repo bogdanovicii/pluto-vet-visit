@@ -30,7 +30,8 @@ namespace PlutoVetVisit
         public static string Intro4 = "They said it wouldn't hurt.";
         public static string Intro5 = "It didn't. Not for long.";
         public static string Intro6 = "Pluto?";
-        public static string Intro7 = "Be good.";
+        public static string Intro7 = "Be good, Pluto. We'll be right back.";
+        public static string IntroBianca = "He's a good boy. Mostly.";
         public static string Epilogue = "Pluto was never taken to the vet again. He is still on Sterilised 37.";
         public static string Ward1 = "Pluto? The doctor is through the far door.";
         public static string Ward2 = "First, hold still. Just something to calm you down.";
@@ -102,7 +103,8 @@ namespace PlutoVetVisit
         public static float ScalpelSpeed = 6f;
         public static float ScalpelGapDegrees = 60f;
         public static float StitchSpeed = 9f;
-        public static string CommentOwner = "...";
+        public static string CommentBogdan = "Don't look at me like that. It's for your own good.|We'll get you a treat after.|It was Bianca's idea.";
+        public static string CommentBianca = "Who's a brave boy?|We'll be right back, I promise.|Bogdan, he's giving me the look again.";
         public static string CommentReceptionist = "The doctor will see you now.|Please fill in the form. With your paw.|No, you cannot have a treat.";
         public static string CommentRex = "Don't let them take you in the back.|I went in a dog. I came out a dog. A quieter dog.|Is that a cone? Tell me that's not a cone.";
         public static string CommentGrandma = "Hmph. In my day we bit them.|Nine lives, kitten. I'm on my twelfth.|Zzz...";
@@ -120,7 +122,8 @@ namespace PlutoVetVisit
         {
             switch (who)
             {
-                case "owner": return CommentOwner;
+                case "bogdan": return CommentBogdan;
+                case "bianca": return CommentBianca;
                 case "receptionist": return CommentReceptionist;
                 case "rex": return CommentRex;
                 case "grandma": return CommentGrandma;
@@ -149,12 +152,13 @@ namespace PlutoVetVisit
             NurseHealth = cfg.Bind("Cast", "NurseHealth", NurseHealth, "The Nurse's health.").Value;
             BossReinforcements = cfg.Bind("Cast", "BossReinforcements", BossReinforcements, "Below half health the Vet calls the Nurse and two Techs.").Value;
             Intro1 = cfg.Bind("Story", "Intro1", Intro1, "Receptionist, at the desk.").Value;
-            Intro2 = cfg.Bind("Story", "Intro2", Intro2, "The Owner's answer.").Value;
+            Intro2 = cfg.Bind("Story", "Intro2", Intro2, "Bogdan's answer at the desk (he brought Pluto in).").Value;
+            IntroBianca = cfg.Bind("Story", "IntroBianca", IntroBianca, "Bianca, right after Bogdan checks Pluto in.").Value;
             Intro3 = cfg.Bind("Story", "Intro3", Intro3, "Receptionist.").Value;
             Intro4 = cfg.Bind("Story", "Intro4", Intro4, "Rex, on his chair.").Value;
             Intro5 = cfg.Bind("Story", "Intro5", Intro5, "Grandma Cat.").Value;
             Intro6 = cfg.Bind("Story", "Intro6", Intro6, "The intercom.").Value;
-            Intro7 = cfg.Bind("Story", "Intro7", Intro7, "The Owner, opening the carrier before he leaves.").Value;
+            Intro7 = cfg.Bind("Story", "Intro7", Intro7, "Bianca, waving goodbye to Pluto before she and Bogdan leave.").Value;
             Epilogue = cfg.Bind("Story", "Epilogue", Epilogue, "Shown after the Vet falls, before the credits.").Value;
             Ward1 = cfg.Bind("Story", "Ward1", Ward1, "The Vet Tech who greets Pluto in the ward.").Value;
             Ward2 = cfg.Bind("Story", "Ward2", Ward2, "The Tech's second line, before the wave attacks.").Value;
@@ -174,7 +178,7 @@ namespace PlutoVetVisit
             IntroRex2 = cfg.Bind("Story", "IntroRex2", IntroRex2, "Rex's second line in the intro.").Value;
             IntroThink1 = cfg.Bind("Story", "IntroThink1", IntroThink1, "Pluto's thought after Rex's question.").Value;
             IntroGrandma2 = cfg.Bind("Story", "IntroGrandma2", IntroGrandma2, "Grandma Cat's answer to Pluto's thought.").Value;
-            IntroThink2 = cfg.Bind("Story", "IntroThink2", IntroThink2, "Pluto's thought when the Owner walks out.").Value;
+            IntroThink2 = cfg.Bind("Story", "IntroThink2", IntroThink2, "Pluto's thought as Bogdan and Bianca walk out.").Value;
             WaitingChatter = cfg.Bind("Story", "WaitingChatter", WaitingChatter, "Bystander chatter while Pluto is in the waiting room: who:line|who:line (who = receptionist, rex, grandma).").Value;
             TechBarkStart = cfg.Bind("Story", "TechBarkStart", TechBarkStart, "A Vet Tech when a ward wave or the reinforcements start.").Value;
             TechBarks = cfg.Bind("Story", "TechBarks", TechBarks, "What a surviving Tech sometimes shouts when a crewmate falls (separate lines with |).").Value;
@@ -230,7 +234,8 @@ namespace PlutoVetVisit
             BossHopCooldown = cfg.Bind("Balance", "BossHopCooldown", BossHopCooldown, "Seconds between the Vet's sidestep hops in phase two (phase one x1.35, phase three x0.7).").Value;
             Reinforce2 = cfg.Bind("Waves", "Reinforce2", Reinforce2, "Who comes in when the Vet drops to half health (same names as the waves).").Value;
             Reinforce3 = cfg.Bind("Waves", "Reinforce3", Reinforce3, "Who comes in at a quarter of his health (empty = nobody).").Value;
-            CommentOwner = cfg.Bind("Story", "CommentOwner", CommentOwner, "What the Owner says when Pluto talks to him (he leaves in the intro, so rarely seen).").Value;
+            CommentBogdan = cfg.Bind("Story", "CommentBogdan", CommentBogdan, "Bogdan's lines when Pluto talks to him (one per interaction; separate lines with |; he leaves in the intro, so rarely seen).").Value;
+            CommentBianca = cfg.Bind("Story", "CommentBianca", CommentBianca, "Bianca's lines when Pluto talks to her (one per interaction; separate lines with |; she leaves in the intro, so rarely seen).").Value;
             CommentReceptionist = cfg.Bind("Story", "CommentReceptionist", CommentReceptionist, "Receptionist's lines when Pluto talks to her (one per interaction; separate lines with |).").Value;
             CommentRex = cfg.Bind("Story", "CommentRex", CommentRex, "Rex's lines when Pluto talks to him (one per interaction; separate lines with |).").Value;
             CommentGrandma = cfg.Bind("Story", "CommentGrandma", CommentGrandma, "Grandma Cat's lines when Pluto talks to her (one per interaction; separate lines with |).").Value;

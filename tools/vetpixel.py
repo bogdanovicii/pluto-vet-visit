@@ -78,6 +78,29 @@ PALETTE.update({
     '}': (0x8E, 0x1E, 0x2A, 255),  # medical red dark: pill, dart and stitch shade
     '`': (0xFF, 0x8A, 0x7A, 255),  # medical red light: pill, dart and stitch highlight
 })
+PALETTE.update({
+    # v0.13 the owners, Bogdan and Bianca (npc_poses.py). Letters and '2' are copied verbatim from the main mod's pixel.PALETTE
+    # (test_palette pins shared keys); 'O' and the two quote characters are keys the main palette does not use.
+    'A': (0xF3, 0xDF, 0x8E, 255),  # yellow light (main: gold highlight): lit side of Bianca's sweater dress
+    'a': (0xC9, 0xA8, 0x4C, 255),  # yellow shade (main: gold shade): folds of Bianca's dress (':' is its mid tone)
+    'M': (0x9A, 0x6A, 0x4A, 255),  # brown hair highlight (main: meat): the streak in Bianca's hair
+    'm': (0x6E, 0x44, 0x2C, 255),  # chestnut hair (main: wet food dark): Bianca's hair, Bogdan's hair highlight
+    'X': (0x3C, 0x2E, 0x22, 255),  # dark brown hair (main: bg brown): Bogdan's hair, Bianca's hair shade
+    'p': (0xD4, 0x6A, 0x7A, 255),  # lips (main: tongue / dark pink)
+    '2': (0x86, 0xB6, 0xE6, 255),  # denim light (main: plush blue base): lit edge of Bogdan's jeans ('|' mid, '/' shade)
+    'O': (0x33, 0x45, 0x7A, 255),  # navy: Bogdan's hoodie
+    '"': (0x20, 0x29, 0x4A, 255),  # navy dark: hoodie shade, hood and hem
+    "'": (0x55, 0x6C, 0xA6, 255),  # navy light: hoodie shoulders
+})
+PALETTE.update({
+    # v0.13 win picture (win_pic.py): Pluto's own ramps, copied verbatim from the main mod's pixel.PALETTE
+    'b': (0x3B, 0x2C, 0x24, 255),  # tabby stripe: tail rings, forehead M
+    'L': (0xB4, 0xA1, 0x80, 255),  # tabby light: the tail tip
+    'd': (0x66, 0x52, 0x4A, 255),  # tabby shadow: right side of head and flanks
+    'G': (0x9C, 0xB6, 0x4E, 255),  # eye: hazel green
+    'P': (0xE8, 0xA0, 0xB0, 255),  # pink nose / ear
+    'q': (0xF5, 0xC6, 0xD0, 255),  # pink light: toe bean, Bianca's blush
+})
 
 
 def R(rows):

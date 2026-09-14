@@ -92,9 +92,9 @@ namespace PlutoVetVisit
         /// <summary>Act 1 (walk), act 2 (two waves behind the sealed ward door), act 3 (the Vet).</summary>
         private IEnumerator RunZones(PlayerController player)
         {
-            // Act 1: the waiting room. The Owner checks Pluto in and leaves; the intercom calls; the ward door opens.
+            // Act 1: the waiting room. Bogdan and Bianca check Pluto in and leave; the intercom calls; the ward door opens.
             if (!PastConfig.SkipIntro) yield return StartCoroutine(Intro(player));
-            else HideOwner();
+            else HideOwners();
             SpawnCritters();
             StartCoroutine(WaitingChatter());
             SetDoor(wardDoor, true, "the ward door opens");
@@ -185,19 +185,21 @@ namespace PlutoVetVisit
             return intercom;
         }
 
-        /// <summary>Act 1: the check-in at the desk, the patients' warnings, Pluto's first thoughts, the intercom, the Owner
-        /// leaves. The camera pans to every speaker; any line can be advanced.</summary>
+        /// <summary>Act 1: the check-in at the desk (Bogdan answers, Bianca adds her bit), the patients' warnings, Pluto's first thoughts,
+        /// the intercom, Bianca waves goodbye and both owners walk out. The camera pans to every speaker; any line can be advanced.</summary>
         private IEnumerator Intro(PlayerController player)
         {
-            ClinicNpc owner = ClinicNpc.Find("owner"), desk = ClinicNpc.Find("receptionist"), rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
-            PastPlugin.Log("intro: owner " + (owner != null) + ", receptionist " + (desk != null) + ", rex " + (rex != null) + ", grandma " + (grandma != null));
+            ClinicNpc bogdan = ClinicNpc.Find("bogdan"), bianca = ClinicNpc.Find("bianca"), desk = ClinicNpc.Find("receptionist"),
+                rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
+            PastPlugin.Log("intro: bogdan " + (bogdan != null) + ", bianca " + (bianca != null) + ", receptionist " + (desk != null)
+                + ", rex " + (rex != null) + ", grandma " + (grandma != null));
             BeginCutscene("intro", World(ClinicLayout.IntroFocus));
             try
             {
                 yield return new WaitForSeconds(0.8f);
-                if (owner != null) owner.Face(true);
                 yield return StartCoroutine(Line(desk, PastConfig.Intro1, 1.8f));
-                yield return StartCoroutine(Line(owner, PastConfig.Intro2, 3f));
+                yield return StartCoroutine(Line(bogdan, PastConfig.Intro2, 3f));
+                yield return StartCoroutine(Line(bianca, PastConfig.IntroBianca, 2.2f));
                 yield return StartCoroutine(Line(desk, PastConfig.Intro3, 1.8f));
                 yield return new WaitForSeconds(0.3f);
                 yield return StartCoroutine(Line(rex, PastConfig.Intro4, 2.5f));
@@ -207,19 +209,52 @@ namespace PlutoVetVisit
                 yield return StartCoroutine(Line(grandma, PastConfig.IntroGrandma2, 2f));
                 yield return new WaitForSeconds(0.3f);
                 yield return StartCoroutine(Say(Intercom(), PastConfig.Intro6, 1.6f));
-                yield return StartCoroutine(Line(owner, PastConfig.Intro7, 2f));
-                if (owner != null)
-                {
-                    owner.Face(false);
-                    yield return StartCoroutine(owner.Walk(World(ClinicLayout.OwnerExit), 4.5f, "walk_free"));
-                    owner.Hide();
-                }
-                yield return StartCoroutine(Think(player, PastConfig.IntroThink2, 1.6f));
+                yield return StartCoroutine(Line(bianca, PastConfig.Intro7, 2.4f, "wave"));
+                yield return StartCoroutine(OwnersLeave(player, bogdan, bianca));
                 yield return StartCoroutine(PastTalk.PanTo(player.CenterPosition, 0.35f));   // no snap when the camera unlocks
             }
             finally
             {
                 EndCutscene("intro", player);
+            }
+        }
+
+        /// <summary>Both owners walk out together, Bianca on the left and Bogdan (empty-handed) a cell to her right: along the south wall
+        /// to the aisle, then down through the south exit. Pluto thinks his thought while they go; then both are hidden.</summary>
+        private IEnumerator OwnersLeave(PlayerController player, ClinicNpc bogdan, ClinicNpc bianca)
+        {
+            int walking = 0;
+            if (bianca != null)
+            {
+                walking++;
+                StartCoroutine(WalkOut(bianca, ClinicLayout.BiancaAisle, ClinicLayout.BiancaExit, "walk", delegate { walking--; }));
+            }
+            if (bogdan != null)
+            {
+                walking++;
+                StartCoroutine(WalkOut(bogdan, ClinicLayout.BogdanAisle, ClinicLayout.BogdanExit, "walk_free", delegate { walking--; }));
+            }
+            yield return new WaitForSeconds(0.5f);
+            yield return StartCoroutine(Think(player, PastConfig.IntroThink2, 1.6f));
+            float guard = 8f;                                   // never wait forever on a walk that was cut short
+            while (walking > 0 && guard > 0f)
+            {
+                guard -= BraveTime.DeltaTime;
+                yield return null;
+            }
+            HideOwners();
+        }
+
+        private IEnumerator WalkOut(ClinicNpc who, Vector2 aisle, Vector2 exit, string clip, Action done)
+        {
+            try
+            {
+                yield return StartCoroutine(who.Walk(World(aisle), 4.5f, clip, false));
+                if (who != null) yield return StartCoroutine(who.Walk(World(exit), 4.5f, clip));
+            }
+            finally
+            {
+                done();
             }
         }
 
@@ -301,17 +336,20 @@ namespace PlutoVetVisit
             Bubble(who, text, seconds);
         }
 
-        private void HideOwner()
+        private void HideOwners()
         {
-            ClinicNpc owner = ClinicNpc.Find("owner");
-            if (owner != null) owner.Hide();
+            foreach (string who in new[] { "bogdan", "bianca" })
+            {
+                ClinicNpc owner = ClinicNpc.Find(who);
+                if (owner != null) owner.Hide();
+            }
         }
 
-        /// <summary>A bystander's line: talk clip while the box shows; the box can be advanced with the interact key.</summary>
-        private IEnumerator Line(ClinicNpc who, string text, float seconds)
+        /// <summary>A bystander's line: talk clip (or another, Bianca's wave) while the box shows; the box can be advanced with the interact key.</summary>
+        private IEnumerator Line(ClinicNpc who, string text, float seconds, string clip = "talk")
         {
             if (who == null) yield break;
-            who.Play("talk");
+            who.Play(clip);
             yield return StartCoroutine(PastTalk.Say(this, who.transform, text, seconds, false, cutscene));
             who.Play(who.idleClip);
         }

@@ -9,7 +9,7 @@ using Dungeonator;
 namespace PlutoVetVisit
 {
     /// <summary>
-    /// A placed, animated, talk-to-able bystander (the Owner, the Receptionist, Rex, Grandma Cat). Not an AIActor:
+    /// A placed, animated, talk-to-able bystander (Pluto's owners Bogdan and Bianca, the Receptionist, Rex, Grandma Cat). Not an AIActor:
     /// it has no health, no brain, and its outline is baked into the art. The controller drives the intro
     /// (Play, Say, Walk, Hide); afterwards Pluto can interact for one line. Modelled on the IPlayerInteractable
     /// pattern the research found in OMITB and Modular, on top of the prop pipeline of ClinicObjects.
@@ -18,7 +18,7 @@ namespace PlutoVetVisit
     {
         public static readonly List<ClinicNpc> All = new List<ClinicNpc>();
 
-        public string who;                 // art folder: owner, receptionist, rex, grandma
+        public string who;                 // art folder: bogdan, bianca, receptionist, rex, grandma
         public string idleClip = "idle";   // the first clip of the spec: Grandma rests in "loaf"
         public string comment = string.Empty;
         public Transform talkPoint;
@@ -77,8 +77,9 @@ namespace PlutoVetVisit
             if (spriteAnimator.GetClipByName(name) != null && !spriteAnimator.IsPlaying(name)) spriteAnimator.Play(name);
         }
 
-        /// <summary>Moves at a steady pace to a world point (a plain tween, like the player's Place), playing a clip.</summary>
-        public IEnumerator Walk(Vector2 target, float unitsPerSecond, string clip)
+        /// <summary>Moves at a steady pace to a world point (a plain tween, like the player's Place), playing a clip; back to the rest
+        /// clip at the end unless another leg of the walk follows (rest false).</summary>
+        public IEnumerator Walk(Vector2 target, float unitsPerSecond, string clip, bool rest = true)
         {
             Play(clip);
             Vector2 start = transform.position;
@@ -93,7 +94,7 @@ namespace PlutoVetVisit
                 yield return null;
             }
             transform.position = new Vector3(target.x, target.y, target.y);
-            Play(idleClip);
+            if (rest) Play(idleClip);
         }
 
         public void Face(bool right)
@@ -195,7 +196,7 @@ namespace PlutoVetVisit
             switch (clip)
             {
                 case "walk": case "walk_free": return 8f;
-                case "talk": return 6f;
+                case "talk": case "wave": return 6f;
                 case "loaf": return 2f;
                 default: return 4f;
             }

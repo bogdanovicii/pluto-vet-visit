@@ -125,7 +125,7 @@ class ObjectTests(unittest.TestCase):
         the pool, mats and floors go under everything; the wall faces stand at -0.2."""
         hog = {o.name: o.height_off_ground for o in O.OBJECTS}
         self.assertTrue(spec('pluto_op_lamp').stand)
-        self.assertTrue(0.0 < hog['pluto_op_lamp'] < 0.2)
+        self.assertTrue(0.0 < hog['pluto_op_lamp'] - hog['pluto_exam_table'] < 0.2)
         (lx, ly), = [c for n, c in O.PROPS if n == 'pluto_op_lamp']
         (tx, ty), = [c for n, c in O.PROPS if n == 'pluto_exam_table']
         self.assertEqual(ly, ty)
@@ -579,6 +579,71 @@ class ObjectTests(unittest.TestCase):
         room_names = [n for n, _ in C.PLACEABLES_()]
         for name, _ in O.PROPS:
             self.assertIn(name, room_names)
+
+
+
+class ColliderTests(unittest.TestCase):
+    """0.12.1: Pluto walked into the reception counter from the south (in-game screenshot 19.44.02)."""
+
+    @classmethod
+    def setUpClass(cls):
+        import clinic_colliders as K
+        cls.K = K
+        cls.seen = K.reachable()
+
+    def feet_reachable(self, x, y):
+        W = C.WIDTH * 16
+        return bool(self.seen[int(round(y * 16)) * W + int(round(x * 16))])
+
+    def test_standing_props_sort_like_the_player(self):
+        """A standing prop with a collider stands at STAND_HOG (the player's -0.5); the zone door stays at 0 in its wall."""
+        self.assertEqual(O.STAND_HOG, -0.5)
+        for o in O.OBJECTS:
+            if o.collider is not None and o.stand and o.name not in ('pluto_clinic_door', 'pluto_op_lamp'):
+                self.assertEqual(o.height_off_ground, O.STAND_HOG, o.name)
+        self.assertEqual(spec('pluto_clinic_door').height_off_ground, 0.0)
+        self.assertEqual(self.K.spec_problems(), [])
+
+    def test_the_audit_catches_the_counter_bug_class(self):
+        """The 0.12.0 counter (HeightOffGround 0) ties with the player; a collider that starts above the drawing or is narrower
+        than it is reported too."""
+        rows = ['o' * 32] * 16
+        tie = O.Obj('t_tie', 't', rows, ('high', 0, 0, 32, 8), 0.0)
+        high = O.Obj('t_high', 't', rows, ('high', 0, 6, 32, 8))
+        narrow = O.Obj('t_narrow', 't', rows, ('high', 8, 0, 16, 8))
+        good = O.Obj('t_good', 't', rows, ('high', 0, 0, 32, 8))
+        found = self.K.spec_problems([tie, high, narrow, good])
+        self.assertTrue(any(l.startswith('t_tie:') and 'ties' in l for l in found), found)
+        self.assertTrue(any(l.startswith('t_high:') and 'above' in l for l in found), found)
+        self.assertTrue(any(l.startswith('t_narrow:') and 'outside' in l for l in found), found)
+        self.assertFalse(any(l.startswith('t_good:') for l in found), found)
+
+    def test_reception_counter_is_closed(self):
+        """South of the counter Pluto is in front of it; the strip behind it (the receptionist) is out of reach from every side."""
+        (dx, dy), = [c for n, c in O.PROPS if n == 'pluto_reception_desk']
+        self.assertTrue(self.feet_reachable(29.0, dy - 0.25))                  # pressed against the front
+        for x in (26.25, 27.75, 29.5, 31.25, 32.5):                           # the strip behind, end to end
+            for y in (dy + 1.3, dy + 1.5):
+                self.assertFalse(self.feet_reachable(x, y), (x, y))
+        self.assertEqual(self.K.npc_spots_reachable(self.seen), [])
+        (rx, ry), = [c for n, c in C.NPCS if n == 'pluto_npc_receptionist']
+        for name in ('pluto_reception_desk', 'pluto_back_cabinet'):
+            (px, py), = [c for n, c in O.PROPS if n == name]
+            for layer, ox, oy, w, h in spec(name).colliders:
+                inside = px + ox / 16.0 <= rx < px + (ox + w) / 16.0 and py + oy / 16.0 <= ry < py + (oy + h) / 16.0
+                self.assertFalse(inside, (name, (ox, oy, w, h)))
+
+    def test_no_pockets_behind_furniture(self):
+        self.assertEqual(self.K.hidden_spots(self.seen), {})
+
+    def test_extra_colliders_are_exported(self):
+        cs = C.layout_cs()
+        self.assertIn('public static readonly ColliderRect[] EXTRA_COLLIDERS', cs)
+        for o in O.OBJECTS:
+            for r in o.extra:
+                self.assertIn('new ColliderRect("%s", %d, %d, %d, %d),' % ((o.name,) + r), cs)
+                self.assertLessEqual(r[0] + r[2], o.size[0], o.name)
+                self.assertLessEqual(r[1] + r[3], o.size[1], o.name)
 
 
 if __name__ == '__main__':

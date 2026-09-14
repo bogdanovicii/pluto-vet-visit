@@ -18,7 +18,8 @@ BOSS_ROOT = 'PlutoVetVisit/Resources/Boss'
 
 # Placeable name -> art folder. The room places NPCs by these names (clinic_room.NPCS).
 NPC_OBJECTS = OrderedDict([
-    ('pluto_npc_owner', 'owner'),
+    ('pluto_npc_bogdan', 'bogdan'),
+    ('pluto_npc_bianca', 'bianca'),
     ('pluto_npc_receptionist', 'receptionist'),
     ('pluto_npc_rex', 'rex'),
     ('pluto_npc_grandma', 'grandma'),

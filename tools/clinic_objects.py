@@ -11,19 +11,38 @@ import os
 from vetpixel import R, pad, overlay, save, sheet
 
 
+# 0.12.1: HeightOffGround of a standing prop with a collider. Enter the Gungeon keeps the player's sprite at -0.5 and sorts a standing
+# sprite by 2 * base - HeightOffGround, so a prop at 0 TIED with Pluto pressed against its collider from the south (his feet sit a
+# quarter cell under its base) and the two z-fought: the reception counter's front panel was drawn over him (screenshot 19.44.02).
+# At -0.5 a prop sorts exactly like the player standing on its base row: whoever is further south is in front.
+STAND_HOG = -0.5
+
+
 class Obj:
-    def __init__(self, name, png, rows, collider=None, height_off_ground=0.0, stand=None, frames=None, fps=6.0, comment=''):
+    def __init__(self, name, png, rows, collider=None, height_off_ground=None, stand=None, frames=None, fps=6.0, comment='',
+                 extra=()):
         self.name = name                        # StaticReferences.customObjects key, e.g. pluto_exam_table
         self.png = png                          # file stem under Resources/Objects/
         self.rows = frames[0] if frames else rows   # ASCII map (an animated prop's first frame)
         self.collider = collider                # None or (layer, off_x, off_y, w, h) in pixels; layer 'low'|'high'
-        self.height_off_ground = height_off_ground
+        # 0.12.1: more (off_x, off_y, w, h) rectangles on the same layer, for footprints one rectangle cannot cover
+        self.extra = [tuple(r) for r in extra]
         # standing (perpendicular) sprite; defaults to "has a collider". Wall faces and wall decor stand without one.
         self.stand = (collider is not None) if stand is None else bool(stand)
+        if height_off_ground is None:
+            height_off_ground = STAND_HOG if (collider is not None and self.stand) else 0.0
+        self.height_off_ground = height_off_ground
         # v0.11: None (static) or 2..8 equal-size frames; write() saves frame k >= 2 as <png>_f<k>.png
         self.frames = frames
         self.fps = float(fps)
         self.comment = comment                  # what Pluto thinks when he examines the prop ('' = not examinable)
+
+    @property
+    def colliders(self):
+        """Every collider rectangle (layer, off_x, off_y, w, h): the main one, then the extra ones."""
+        if self.collider is None:
+            return []
+        return [tuple(self.collider)] + [(self.collider[0],) + r for r in self.extra]
 
     @property
     def frame_count(self):
@@ -1887,7 +1906,7 @@ _ol = overlay(_ol, ['.oooooooooo.', 'o&&&&&&&&%%o', 'o%%%%%%%%##o', '.oooooooooo
 _ol[54] = '.oo......oo.' + _ol[54][12:]
 _ol[55] = '.oo......oo.' + _ol[55][12:]
 OP_LAMP = R(_ol)
-OP_LAMP_HOG = 0.05          # stands on the exam table's base row: 0.05 in front of the table at every pixel
+OP_LAMP_HOG = STAND_HOG + 0.05   # stands on the exam table's base row: 0.05 in front of the table at every pixel
 
 
 # Placements (game cells) by zone. The sprite's lower-left corner sits on the cell.
@@ -1983,7 +2002,7 @@ PROP_OBJECTS = [
     Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 4, 0, 72, 28), comment='Straps. That is a hard no from me.'),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
     Obj('pluto_cart', 'cart', CART, ('low', 0, 0, 24, 14)),
-    Obj('pluto_sink', 'sink', SINK, ('high', 0, 0, 32, 20)),
+    Obj('pluto_sink', 'sink', SINK, ('high', 0, 0, 32, 32)),
     Obj('pluto_scale', 'scale', SCALE, None, -1.5),
     Obj('pluto_carrier', 'carrier', CARRIER, ('high', 0, 0, 32, 16), comment='The prison van. I know that door.'),
     Obj('pluto_poster', 'poster', POSTER, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_poster']), stand=True),
@@ -1994,8 +2013,11 @@ PROP_OBJECTS = [
     Obj('pluto_scratch_post', 'scratch_post', SCRATCH_POST, ('low', 2, 0, 12, 8)),
     Obj('pluto_syringe_tray', 'syringe_tray', SYRINGE_TRAY, None, -1.5),
     # v0.4
-    Obj('pluto_reception_desk', 'reception_desk', None, ('high', 0, 0, 112, 16), frames=RECEPTION_DESK_FRAMES, fps=2.0,
-        comment='The bell. I must press the bell.'),
+    # 0.12.1: the counter's collider covers its front and most of the top (20 px); the two end pieces reach up to the back
+    # cabinet's ends, so the strip behind the counter where the receptionist stands (x 27.5..31.5, y 14.25..14.75, under the
+    # cabinet) is closed on every side.
+    Obj('pluto_reception_desk', 'reception_desk', None, ('high', 0, 0, 112, 20), frames=RECEPTION_DESK_FRAMES, fps=2.0,
+        comment='The bell. I must press the bell.', extra=[(0, 20, 24, 20), (88, 20, 24, 20)]),
     Obj('pluto_chair', 'chair', CHAIR, ('low', 2, 0, 20, 8)),
     Obj('pluto_plant', 'plant', PLANT, ('high', 4, 0, 8, 8)),
     Obj('pluto_window', 'window', WINDOW, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_window']), stand=True),
@@ -2013,19 +2035,22 @@ PROP_OBJECTS = [
     Obj('pluto_paw_prints', 'paw_prints', PAW_PRINTS, None, -2.0),
     Obj('pluto_wet_floor_sign', 'wet_floor_sign', WET_FLOOR_SIGN, ('low', 0, 0, 12, 6)),
     # v0.5: the zone door (ClinicDoor.cs swaps in EXTRA_PNGS['clinic_door_open'] and drops the collider), the ward
-    Obj('pluto_clinic_door', 'clinic_door', CLINIC_DOOR, ('high', 0, 0, 32, 32)),
+    # the door is part of the wall: it keeps HeightOffGround 0, a hair in front of the wall face it stands in
+    Obj('pluto_clinic_door', 'clinic_door', CLINIC_DOOR, ('high', 0, 0, 32, 32), 0.0),
     Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 96, 12), comment='Treat jar. Locked. Of course.'),
     # v0.6: theatre kit, wall decor, the side door (v0.11: the monitor cart is redrawn as the animated heart monitor)
     Obj('pluto_prep_sign', 'prep_sign', PREP_SIGN, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_prep_sign']), stand=True),
     Obj('pluto_monitor_cart', 'monitor_cart', None, ('low', 4, 0, 16, 10), frames=HEART_MONITOR_FRAMES, fps=6.0,
         comment='Beep. Still alive. Good.'),
-    Obj('pluto_vaccine_fridge', 'vaccine_fridge', VACCINE_FRIDGE, ('high', 0, 0, 24, 16), comment='Cold needles. Hard pass.'),
+    # 0.12.1: the theatre's north-wall kit (cabinets, sink, fridge) and the ward's shelf and rack get colliders as deep as their
+    # drawings (to the wall), or Pluto vanished in the strip between them and the wall
+    Obj('pluto_vaccine_fridge', 'vaccine_fridge', VACCINE_FRIDGE, ('high', 0, 0, 24, 40), comment='Cold needles. Hard pass.'),
     Obj('pluto_intercom', 'intercom', INTERCOM, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_intercom']), stand=True),
     Obj('pluto_wall_tv', 'wall_tv', WALL_TV, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_wall_tv']), stand=True),
     Obj('pluto_side_door', 'side_door', SIDE_DOOR, None, 0.5),
     # v0.10: the lamp's light pool on the floor, the wide cabinet (0.12.0: the flat head + arm became the standing pluto_op_lamp)
     Obj('pluto_lamp_pool', 'lamp_pool', LAMP_POOL, None, -1.4),
-    Obj('pluto_cabinet_wide', 'cabinet_wide', CABINET_WIDE, ('high', 0, 0, 64, 20)),
+    Obj('pluto_cabinet_wide', 'cabinet_wide', CABINET_WIDE, ('high', 0, 0, 64, 48)),
     # v0.10.1: standing wall faces, the wall shelf, the kennel bank
     Obj('pluto_wall_face', 'wall_face', WALL_FACE, None, WALL_HOG, stand=True),
     Obj('pluto_wall_face_solid', 'wall_face_solid', WALL_FACE_SOLID, None, WALL_HOG, stand=True),
@@ -2033,21 +2058,23 @@ PROP_OBJECTS = [
     Obj('pluto_kennel_cat', 'kennel_cat', KENNEL_CAT, ('high', 0, 0, 40, 48)),
     Obj('pluto_kennel_dog', 'kennel_dog', KENNEL_DOG, ('high', 0, 0, 40, 48)),
     Obj('pluto_kennel_cone', 'kennel_cone', KENNEL_CONE, ('high', 0, 0, 40, 48)),
-    Obj('pluto_kennel_open_r', 'kennel_open_r', KENNEL_OPEN_R, ('high', 0, 0, 40, 48)),
-    Obj('pluto_kennel_open_l', 'kennel_open_l', KENNEL_OPEN_L, ('high', 12, 0, 40, 48)),
+    # 0.12.1: the swung-open door (12 x 24 px beside the unit) blocks too, or Pluto stood inside its drawing
+    Obj('pluto_kennel_open_r', 'kennel_open_r', KENNEL_OPEN_R, ('high', 0, 0, 40, 48), extra=[(40, 0, 12, 24)]),
+    Obj('pluto_kennel_open_l', 'kennel_open_l', KENNEL_OPEN_L, ('high', 12, 0, 40, 48), extra=[(0, 0, 12, 24)]),
     # v0.11: the structured clinic
     Obj('pluto_rug', 'rug', RUG, None, -3.0),
     Obj('pluto_coffee_table', 'coffee_table', COFFEE_TABLE, ('low', 2, 0, 44, 8), comment='Dog magazines. How rude.'),
     Obj('pluto_carrier_open', 'carrier_open', CARRIER_OPEN, ('high', 0, 0, 32, 16), comment='Someone escaped. Respect.'),
-    Obj('pluto_back_cabinet', 'back_cabinet', BACK_CABINET, ('high', 0, 0, 64, 12)),
+    # 0.12.1: 20 px deep, flush with the wall (base 14.75 + 1.25 = 16): nothing gets in behind the receptionist
+    Obj('pluto_back_cabinet', 'back_cabinet', BACK_CABINET, ('high', 0, 0, 64, 20)),
     Obj('pluto_water_cooler', 'water_cooler', WATER_COOLER, ('high', 1, 0, 14, 8), comment='Big water bottle. It burps.'),
     Obj('pluto_notice_board', 'notice_board', NOTICE_BOARD, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_notice_board']),
         stand=True, comment='LOST CAT. I know him. He is fine.'),
     Obj('pluto_sign_waiting', 'sign_waiting', SIGN_WAITING, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_sign_waiting']), stand=True),
     Obj('pluto_sign_ward', 'sign_ward', SIGN_WARD, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_sign_ward']), stand=True),
     Obj('pluto_sign_surgery', 'sign_surgery', SIGN_SURGERY, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_sign_surgery']), stand=True),
-    Obj('pluto_supply_shelf', 'supply_shelf', SUPPLY_SHELF, ('high', 0, 0, 48, 12), comment='Boxes. I must sit in every box.'),
-    Obj('pluto_scrubs_rack', 'scrubs_rack', SCRUBS_RACK, ('high', 0, 0, 48, 12), comment='Tiny blue pyjamas for villains.'),
+    Obj('pluto_supply_shelf', 'supply_shelf', SUPPLY_SHELF, ('high', 0, 0, 48, 32), comment='Boxes. I must sit in every box.'),
+    Obj('pluto_scrubs_rack', 'scrubs_rack', SCRUBS_RACK, ('high', 0, 0, 48, 32), comment='Tiny blue pyjamas for villains.'),
     Obj('pluto_med_trolley', 'med_trolley', MED_TROLLEY, ('low', 0, 0, 24, 8), comment='Pills in cheese. Nice try.'),
     Obj('pluto_stool', 'stool', STOOL, ('low', 2, 0, 8, 4)),
     Obj('pluto_anaesthesia_machine', 'anaesthesia_machine', None, ('low', 0, 0, 32, 16), frames=ANAESTHESIA_FRAMES, fps=2.0,

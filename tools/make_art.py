@@ -23,6 +23,11 @@ import cast_layout  # noqa: E402
 
 def main():
     print('icon      ', icon.write(PROJECT))
+    # cast first: the room preview renders the NPC and enemy PNGs, so a renamed sprite must exist before it
+    print('tech      ', len(tech_poses.write(PROJECT)), 'frames', tech_poses.preview(PROJECT))
+    print('nurse     ', len(nurse_poses.write(PROJECT)), 'frames', nurse_poses.preview(PROJECT))
+    print('npcs      ', len(npc_poses.write(PROJECT)), 'frames', npc_poses.preview(PROJECT))
+    print('cast      ', cast_layout.write(PROJECT))
     for p in clinic_objects.write(PROJECT):
         print('object    ', p)
     print('preview   ', clinic_objects.preview(PROJECT))
@@ -35,10 +40,6 @@ def main():
     for p in projectiles.write(PROJECT):
         print('projectile', p)
     print('preview   ', projectiles.preview(PROJECT))
-    print('tech      ', len(tech_poses.write(PROJECT)), 'frames', tech_poses.preview(PROJECT))
-    print('nurse     ', len(nurse_poses.write(PROJECT)), 'frames', nurse_poses.preview(PROJECT))
-    print('npcs      ', len(npc_poses.write(PROJECT)), 'frames', npc_poses.preview(PROJECT))
-    print('cast      ', cast_layout.write(PROJECT))
     print('done')
 
 

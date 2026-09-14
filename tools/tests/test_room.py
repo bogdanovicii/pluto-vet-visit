@@ -82,8 +82,8 @@ class RoomTests(unittest.TestCase):
 
     def test_named_cells_on_floor(self):
         for name, (x, y) in C.NAMED.items():
-            if name == 'OwnerExit':
-                continue                                     # deliberately outside: the Owner leaves the room
+            if name.endswith('Exit'):
+                continue                                     # deliberately outside: the owners leave the room
             self.assertTrue(C.is_floor(x, y), name)
 
     def test_zone_walls_and_door_gaps(self):
@@ -114,7 +114,7 @@ class RoomTests(unittest.TestCase):
 
     def test_npcs_wait_in_the_waiting_room(self):
         names = [n for n, _ in C.NPCS]
-        self.assertEqual(names, ['pluto_npc_owner', 'pluto_npc_receptionist', 'pluto_npc_rex', 'pluto_npc_grandma'])
+        self.assertEqual(names, ['pluto_npc_bogdan', 'pluto_npc_bianca', 'pluto_npc_receptionist', 'pluto_npc_rex', 'pluto_npc_grandma'])
         for name, (x, y) in C.NPCS:
             self.assertTrue(C.is_floor(x, y), name)
             self.assertLess(y, 16, name)
@@ -122,8 +122,37 @@ class RoomTests(unittest.TestCase):
         for who in ('pluto_npc_rex', 'pluto_npc_grandma'):
             x, y = dict(C.NPCS)[who]
             self.assertIn((x, round(y + 0.2, 2)), seats, who)         # sits a fifth of a cell in front of a chair
-        self.assertLess(C.NAMED['OwnerExit'][1], 0)          # he walks off the map through the south exit
-        self.assertTrue(C.is_floor(*C.NAMED['OwnerStart']))
+        self.assertTrue(C.is_floor(*C.NAMED['IntroFocus']))
+
+    def test_owners_stand_beside_pluto_and_leave_apart(self):
+        import npc_poses
+        placed = dict(C.NPCS)
+        rects = {}
+        for who in ('Bogdan', 'Bianca'):
+            start, aisle, exit_ = C.NAMED[who + 'Start'], C.NAMED[who + 'Aisle'], C.NAMED[who + 'Exit']
+            self.assertEqual(placed['pluto_npc_' + who.lower()], start)
+            self.assertTrue(C.is_floor(*start) and C.is_floor(*aisle), who)
+            self.assertLess(exit_[1], 0, who)                                # off the map through the south exit
+            self.assertEqual(aisle[0], exit_[0], who)                        # straight down from the aisle
+            frame = npc_poses.NPCS[who.lower()]['clips']['idle'][0]
+            cols = [x for r in frame for x, ch in enumerate(r) if ch != '.']
+            top = next(y for y, r in enumerate(frame) if r.strip('.'))
+            rects[who] = (start[0] + min(cols) / 16.0, start[1], start[0] + (max(cols) + 1) / 16.0, start[1] + (len(frame) - top) / 16.0)
+        self.assertGreaterEqual(abs(C.NAMED['BogdanExit'][0] - C.NAMED['BiancaExit'][0]), 1.0)
+        self.assertGreaterEqual(abs(C.NAMED['BogdanAisle'][0] - C.NAMED['BiancaAisle'][0]), 1.0)
+        overlap = lambda a, b: a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+        self.assertFalse(overlap(rects['Bogdan'], rects['Bianca']))
+        sx, sy = C.NAMED['Spawn']
+        pluto = (sx, sy, sx + 1.5, sy + 1.625)                              # Pluto's 24x26 canvas at his spawn
+        sizes = {o.name: (o.size, o.collider) for o in C.O.OBJECTS}
+        for who, r in rects.items():
+            self.assertFalse(overlap(r, pluto), who)
+            self.assertLess(r[3], 16, who)                                   # inside the waiting room
+            for name, (x, y) in C.O.PROPS:
+                (w, h), collider = sizes[name]
+                if collider is None or y >= 16:
+                    continue
+                self.assertFalse(overlap(r, (x, y, x + w / 16.0, y + h / 16.0)), (who, name, (x, y)))
         self.assertTrue(C.is_floor(*C.NAMED['IntroFocus']))
 
     def test_layout_cs_has_zones_and_spawns(self):

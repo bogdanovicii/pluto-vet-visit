@@ -265,7 +265,19 @@ def check_dll(man):
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_boss, check_cast, check_projectiles]
+def check_colliders():
+    """0.12.1: Pluto walked into the reception counter (screenshot 19.44.02). Every standing prop with a collider covers its drawing's
+    footprint and sorts like the player (no depth tie from the south); nobody can vanish in a pocket behind furniture or reach the
+    receptionist behind her counter. See tools/clinic_colliders.py."""
+    import clinic_colliders
+    found = clinic_colliders.problems()
+    for line in found:
+        err('collider: ' + line)
+    if not found:
+        ok('colliders cover their drawings; no pockets behind furniture; the receptionist is out of reach')
+
+
+CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_colliders, check_boss, check_cast, check_projectiles]
 
 
 def main():

@@ -25,14 +25,15 @@ class CastLayoutTests(unittest.TestCase):
             self.assertIn('%s_SHOOT_X = %d' % (prefix, mod.SHOOT_POINT[0]), cs)
             for clip in mod.CLIPS:
                 self.assertIn('"%s"' % clip, cs)
-        self.assertIn('new NpcSpec("pluto_npc_owner", "owner"', cs)
+        self.assertIn('new NpcSpec("pluto_npc_bogdan", "bogdan", 48, 40', cs)
+        self.assertIn('new NpcSpec("pluto_npc_bianca", "bianca", 48, 40', cs)
 
     def test_enemies_have_the_clips_the_brain_plays(self):
         for mod in (T, N):
             for clip in ('idle', 'move', 'tell', 'fire', 'die'):
                 self.assertIn(clip, mod.CLIPS)
         self.assertIn('net', N.CLIPS)                        # the Nurse's net throw is her FireAnimation
-        for who, clips in (('owner', ('idle', 'walk', 'walk_free')), ('receptionist', ('idle', 'talk')), ('rex', ('idle',)), ('grandma', ('loaf',))):
+        for who, clips in (('bogdan', ('idle', 'walk_free')), ('bianca', ('idle', 'walk', 'wave')), ('receptionist', ('idle', 'talk')), ('rex', ('idle',)), ('grandma', ('loaf',))):
             for clip in clips:
                 self.assertIn(clip, NP.NPCS[who]['clips'], who)
 

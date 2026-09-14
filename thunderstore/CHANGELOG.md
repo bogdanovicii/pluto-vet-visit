@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.0
+- Pluto's owners: Bogdan (navy hoodie, carries the cat carrier) and Bianca (long brown hair, yellow dress) bring Pluto in. Bogdan answers the receptionist, Bianca adds "He's a good boy. Mostly.", waves "Be good, Pluto. We'll be right back." and they walk out while Pluto thinks "Traitor." Both have examine lines. They replace the generic owner.
+- A new win picture: Pluto waves from the exam table, Bogdan and Bianca come through the door, and the Vet lies knocked out with his syringe broken.
+- Pluto can no longer walk into the reception counter or get behind it. Standing props now sort like the player, so pushing against furniture from the south never draws Pluto inside it, and the counter, back cabinet, theatre cabinets, sink, fridge, supply shelf, scrubs rack and open kennel doors have colliders that match their art.
+
 ## 0.12.0
 - Readable bullets. Every attack family has its own hand-drawn bullet: syringes, tranquilizer darts, vaccine orbs, teal droplets, green tranquilizer bubbles, red-and-white pills that burst into tablets, scalpels, red stitches, the Nurse's net and anesthesia clouds. Long bullets point where they fly, and each hitbox matches its sprite.
 - Fairer hard patterns. Dense patterns start after a short tell, rings and walls always leave a gap, the Syringe Tech no longer fires point-blank as it lands from a lunge, and fans fill their gaps with a slower second volley. New `[Patterns]` config knobs set every speed, spread and gap.

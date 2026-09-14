@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 import vetpixel as V
 import vet_card as VC
 import vet_poses as P
+import win_pic as WP
 
 CARD = (427, 240)
 WIN = (115, 71)
@@ -23,24 +24,9 @@ def boss_card(project):
 
 
 def win_pic(project):
-    """Hand-drawn only (0.11): Pluto on the exam table, the Vet lying on the tiles."""
-    im = Image.new('RGBA', WIN, V.PALETTE['_'])
-    d = ImageDraw.Draw(im)
-    for y in range(0, WIN[1], 8):                      # tile grid
-        d.line((0, y, WIN[0], y), fill=V.PALETTE['0'])
-    for x in range(0, WIN[0], 8):
-        d.line((x, 0, x, WIN[1]), fill=V.PALETTE['0'])
-    lying = V.image(P.CLIPS['die'][-1])
-    im.paste(lying, (8, WIN[1] - lying.height), lying)
-    d.rectangle((60, 12, 106, 40), fill=V.PALETTE['&'], outline=V.PALETTE['o'])  # exam table
-    try:
-        import character_anims as A                     # the main mod's Pluto, read-only
-        cat = V.image(A.IDLE_SIDE[0])
-        im.paste(cat, (72, 12 - cat.height + 2), cat)
-    except (ImportError, AttributeError, KeyError, IndexError):
-        d.ellipse((74, 0, 96, 14), fill=(0x8E, 0x71, 0x50, 255), outline=V.PALETTE['o'])
-    d.rectangle((2, 2, 12, 12), fill=V.PALETTE['!'])
-    return im
+    """Hand-drawn only (0.13): the happy ending drawn in tools/win_pic.py (Pluto on the exam table, the Vet knocked out,
+    Bogdan and Bianca coming in through the lit doorway)."""
+    return WP.image()
 
 
 def _font(size):
@@ -88,4 +74,6 @@ def write(project):
     boss_card(project).save(card)
     win_pic(project).save(win)
     bosscard_preview(project).save(preview)
-    return card, win, preview
+    win_preview = os.path.join(project, 'docs', 'preview', 'win-pic-preview.png')
+    WP.preview().save(win_preview)
+    return card, win, preview, win_preview

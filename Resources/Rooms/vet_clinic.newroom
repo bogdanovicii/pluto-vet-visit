@@ -31,8 +31,12 @@
    "y": 38.0
   },
   {
-   "x": 3.5,
-   "y": 2.5
+   "x": 7.25,
+   "y": 2.75
+  },
+  {
+   "x": 5.75,
+   "y": 2.0
   },
   {
    "x": 28.5,
@@ -451,7 +455,8 @@
   "pluto_past_controller",
   "pluto_clinic_door",
   "pluto_clinic_door",
-  "pluto_npc_owner",
+  "pluto_npc_bogdan",
+  "pluto_npc_bianca",
   "pluto_npc_receptionist",
   "pluto_npc_rex",
   "pluto_npc_grandma",
@@ -557,6 +562,7 @@
   "pluto_scratch_post"
  ],
  "placeableAttributes": [
+  "",
   "",
   "",
   "",

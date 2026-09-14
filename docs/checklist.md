@@ -87,9 +87,10 @@ Set `DebugEndAfterSeconds = 0`. Log lines to look for: `doors found: 2`, `the wa
 ## Milestones 6-8 — cast, story, dressing (Pluto_Vet_Visit-0.8.0.zip)
 
 Set `DebugEndAfterSeconds = 0`, `SkipIntro = false`, `SkipWaves = false`. Log lines: `Vet Tech built`, `The Nurse built`, `registered 4x custom objects`,
-`intro: owner True, receptionist True, rex True, grandma True`, `wave 1: 3 enemies`, `hearts on the nurse station`, `the Vet calls the Nurse`.
-1. `vet_visit`: letterboxed intro in the waiting room. The Receptionist asks the name, the Owner answers, Rex and Grandma Cat speak, the
-   intercom says "Pluto?", the Owner says "Be good." and walks down off the screen. Interact advances a line early. Then control returns,
+`intro: bogdan True, bianca True, receptionist True, rex True, grandma True`, `wave 1: 3 enemies`, `hearts on the nurse station`, `the Vet calls the Nurse`.
+1. `vet_visit`: letterboxed intro in the waiting room. The Receptionist asks the name, Bogdan (navy hoodie) answers, Bianca (yellow dress) adds
+   "He's a good boy. Mostly.", Rex and Grandma Cat speak, the intercom says "Pluto?", Bianca waves "Be good, Pluto. We'll be right back.",
+   and both walk down off the screen side by side while Pluto thinks "Traitor.". Interact advances a line early. Then control returns,
    a chick, a rabbit and a squirrel run around, and the ward door opens.
 2. Talk to the Receptionist, Rex and Grandma Cat (interact): one line each. Rex trembles; Grandma breathes.
 3. Ward: three Vet Techs come from the side walls (teal scrubs, syringe pistols, aimed syringes). Kill them: two more Techs plus a rat, a
@@ -98,7 +99,7 @@ Set `DebugEndAfterSeconds = 0`, `SkipIntro = false`, `SkipWaves = false`. Log li
    half health the Nurse (big, white cap, shotgun syringe, net on her back) and two Techs come in from the right. Her fans are seven droplets,
    her net is one big slow projectile. Kill everyone; the Vet's death still ends the past. Epilogue line, then the credits.
 5. `spawn pluto:vet_tech` and `spawn pluto:nurse` in a normal room: they fight; report whether their outline, shadow and death look right.
-6. Report: are Tech/Nurse hitboxes fair, is the intro readable, does any NPC draw over Pluto, does the Owner leave cleanly.
+6. Report: are Tech/Nurse hitboxes fair, is the intro readable, does any NPC draw over Pluto, do Bogdan and Bianca leave cleanly without overlapping.
 
 **Result:** pending
 
@@ -360,3 +361,11 @@ Harder: `PatternLeadIn = 4`, `RingGapSlots = 2`, `WallGapSlots = 2`. Easier: `Pa
 - [ ] Log: `clinic room 36x63`, the Vet spawns at (29.0, 62.0) world with origin (11, 11).
 - [ ] Walls: X-ray, anatomy poster, vaccination chart, weight chart, flea poster, cork board, diplomas, whiteboard hang on the north walls and give thoughts when examined.
 - [ ] Room feels roomier: doors centred, Rex and Grandma on chairs, receptionist behind the counter, kennels on both ward walls, waves spawn off the kennels.
+
+## 0.13.0 — owners, win picture, counter
+- [ ] Log: `Loading [Pluto The Cat - The Vet Visit 0.13.0]`, `[VetVisit] intro: bogdan True, bianca True, receptionist True, rex True, grandma True`.
+- [ ] Intro: Bogdan (navy hoodie, carrier) and Bianca (long brown hair, yellow dress) stand beside Pluto; Bogdan answers "Pluto. Here for the... procedure.", Bianca says "He's a good boy. Mostly." and waves goodbye; both walk out through the south exit without overlapping.
+- [ ] Examine Bogdan and Bianca before they leave (if possible) or check their lines in the config.
+- [ ] Reception: push Pluto into the counter from the south, west and east: he is always drawn in front, never inside the front panel, and cannot reach the receptionist's space behind it.
+- [ ] Push against chairs, cabinets, the sink, fridge, supply shelf, scrubs rack and the open kennel doors: no striped overlap, no walking into the art.
+- [ ] Win page: the picture shows Pluto on the table, Bogdan and Bianca in the doorway and the knocked-out Vet; screenshot it.
