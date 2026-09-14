@@ -44,3 +44,8 @@ class ContractTests(unittest.TestCase):
         self.has('AdditionalBraveLight', m, 'TheatreMood.cs')
         self.has('lamp.Initialize();', m, 'TheatreMood.cs')
         self.has('ClinicProp.Show("pluto_lamp_pool")', m, 'TheatreMood.cs')
+
+    def test_kennels_rattle_in_waves(self):
+        c = src('VetVisitController.cs')
+        self.assertGreaterEqual(c.count('KennelCritter.RattleAll();'), 2)
+        self.has('go.AddComponent<KennelCritter>()', src('ClinicObjects.cs'), 'ClinicObjects.cs')

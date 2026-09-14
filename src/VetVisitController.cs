@@ -79,6 +79,7 @@ namespace PlutoVetVisit
             if (doors.Count >= 1) wardDoor = doors[0];
             if (doors.Count >= 2) theatreDoor = doors[1];
             PastPlugin.Log("doors found: " + doors.Count + " (expected 2)");
+            PastPlugin.Log("kennels: " + KennelCritter.All.Count + " critters, " + ClinicLayout.PROP_CLIPS.Length + " clips");
         }
 
         private static void SetDoor(ClinicDoor door, bool open, string what)
@@ -415,6 +416,7 @@ namespace PlutoVetVisit
         private IEnumerator Reinforce()
         {
             yield return new WaitForSeconds(1.2f);
+            KennelCritter.RattleAll();
             List<AIActor> adds = SpawnWave("reinforcements", PastConfig.Reinforce2, ClinicLayout.TheatreSpawns);
             foreach (AIActor a in adds)
             {
@@ -513,6 +515,7 @@ namespace PlutoVetVisit
         {
             List<AIActor> alive = SpawnWave(label, list, cells);
             if (alive.Count == 0) yield break;
+            KennelCritter.RattleAll();
             StartCoroutine(Heartbeat(label, alive));
             WatchBarks(alive);
             float waited = 0f;

@@ -20,7 +20,7 @@ STAND_HOG = -0.5
 
 class Obj:
     def __init__(self, name, png, rows, collider=None, height_off_ground=None, stand=None, frames=None, fps=6.0, comment='',
-                 extra=()):
+                 extra=(), clips=None):
         self.name = name                        # StaticReferences.customObjects key, e.g. pluto_exam_table
         self.png = png                          # file stem under Resources/Objects/
         self.rows = frames[0] if frames else rows   # ASCII map (an animated prop's first frame)
@@ -36,6 +36,8 @@ class Obj:
         self.frames = frames
         self.fps = float(fps)
         self.comment = comment                  # what Pluto thinks when he examines the prop ('' = not examinable)
+        # 0.14.0: named clips {clip: (frames, fps, loop)}; the frames are approved art from reference/art (art_sources)
+        self.clips = dict(clips or {})
 
     @property
     def colliders(self):
@@ -683,6 +685,8 @@ def _kennel_open_r(upper):
     return overlay(rows, _swung_door(), 40, 24)
 
 
+# 0.14.0 living kennels: idle loop, react once, rattle once. Frame counts must match art_sources.KENNEL_CLIPS (a test checks).
+KENNEL_CLIPS = {'idle': (4, 4.0, True), 'react': (4, 8.0, False), 'rattle': (3, 10.0, False)}
 KENNEL_CAT = R(_kennel_unit(upper=(TABBY_CURLED, 6), lower='blanket'))
 KENNEL_DOG = R(_kennel_unit(upper='blanket', lower=(DOG_SITTING, 10)))
 KENNEL_CONE = R(_kennel_unit(upper=(PATIENT_CONE, 11), lower='blanket'))
@@ -2055,12 +2059,12 @@ PROP_OBJECTS = [
     Obj('pluto_wall_face', 'wall_face', WALL_FACE, None, WALL_HOG, stand=True),
     Obj('pluto_wall_face_solid', 'wall_face_solid', WALL_FACE_SOLID, None, WALL_HOG, stand=True),
     Obj('pluto_wall_shelf', 'wall_shelf', WALL_SHELF, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_wall_shelf']), stand=True),
-    Obj('pluto_kennel_cat', 'kennel_cat', KENNEL_CAT, ('high', 0, 0, 40, 48)),
-    Obj('pluto_kennel_dog', 'kennel_dog', KENNEL_DOG, ('high', 0, 0, 40, 48)),
-    Obj('pluto_kennel_cone', 'kennel_cone', KENNEL_CONE, ('high', 0, 0, 40, 48)),
+    Obj('pluto_kennel_cat', 'kennel_cat', KENNEL_CAT, ('high', 0, 0, 40, 48), clips=KENNEL_CLIPS),
+    Obj('pluto_kennel_dog', 'kennel_dog', KENNEL_DOG, ('high', 0, 0, 40, 48), clips=KENNEL_CLIPS),
+    Obj('pluto_kennel_cone', 'kennel_cone', KENNEL_CONE, ('high', 0, 0, 40, 48), clips=KENNEL_CLIPS),
     # 0.12.1: the swung-open door (12 x 24 px beside the unit) blocks too, or Pluto stood inside its drawing
-    Obj('pluto_kennel_open_r', 'kennel_open_r', KENNEL_OPEN_R, ('high', 0, 0, 40, 48), extra=[(40, 0, 12, 24)]),
-    Obj('pluto_kennel_open_l', 'kennel_open_l', KENNEL_OPEN_L, ('high', 12, 0, 40, 48), extra=[(0, 0, 12, 24)]),
+    Obj('pluto_kennel_open_r', 'kennel_open_r', KENNEL_OPEN_R, ('high', 0, 0, 40, 48), extra=[(40, 0, 12, 24)], clips=KENNEL_CLIPS),
+    Obj('pluto_kennel_open_l', 'kennel_open_l', KENNEL_OPEN_L, ('high', 12, 0, 40, 48), extra=[(0, 0, 12, 24)], clips=KENNEL_CLIPS),
     # v0.11: the structured clinic
     Obj('pluto_rug', 'rug', RUG, None, -3.0),
     Obj('pluto_coffee_table', 'coffee_table', COFFEE_TABLE, ('low', 2, 0, 44, 8), comment='Dog magazines. How rude.'),

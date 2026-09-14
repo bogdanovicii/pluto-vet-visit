@@ -57,6 +57,7 @@ namespace PlutoVetVisit
             }
             if (spec.Name == ClinicLayout.DOOR_OBJECT) AddDoor(go, asm);
             if (spec.Frames > 1) AddLoop(go, spec, asm);
+            AddClips(go, spec, asm);
             if (!string.IsNullOrEmpty(PastConfig.PropComment(spec.Name))) go.AddComponent<ClinicExaminable>().propName = spec.Name;
             return go;
         }
@@ -92,6 +93,49 @@ namespace PlutoVetVisit
                 clip.frames[i] = new tk2dSpriteAnimationFrame { spriteCollection = sprite.Collection, spriteId = ids[i] };
             animator.Library.clips = new[] { clip };
             animator.playAutomatically = false;   // ClinicProp.Start plays it once the clone is placed
+        }
+
+        /// <summary>Named clips for a prop (spec A2) from `png_clip_f1.png` ...; the first clip (idle) plays at Start. A prop with
+        /// clips gets a KennelCritter even before its art exists (it jitters instead of animating).</summary>
+        private static void AddClips(GameObject go, ObjectSpec spec, Assembly asm)
+        {
+            bool anyClip = false;
+            foreach (PropClip pc in ClinicLayout.PROP_CLIPS) if (pc.Name == spec.Name) anyClip = true;
+            if (!anyClip) return;
+            tk2dSprite sprite = go.GetComponent<tk2dSprite>();
+            List<tk2dSpriteAnimationClip> clips = new List<tk2dSpriteAnimationClip>();
+            foreach (PropClip pc in ClinicLayout.PROP_CLIPS)
+            {
+                if (pc.Name != spec.Name) continue;
+                List<int> ids = new List<int>();
+                for (int k = 1; k <= pc.Frames; k++)
+                {
+                    string path = OBJECT_ROOT + "/" + spec.Png + "_" + pc.Clip + "_f" + k + ".png";
+                    if (ResourceExtractor.GetTextureFromResource(path, asm) == null) continue;
+                    ids.Add(SpriteBuilder.AddSpriteToCollection(path, sprite.Collection, asm));
+                }
+                if (ids.Count == 0) continue;
+                tk2dSpriteAnimationClip c = new tk2dSpriteAnimationClip
+                {
+                    name = spec.Png + "_" + pc.Clip,
+                    fps = pc.Fps,
+                    wrapMode = pc.Loop ? tk2dSpriteAnimationClip.WrapMode.Loop : tk2dSpriteAnimationClip.WrapMode.Once,
+                    frames = new tk2dSpriteAnimationFrame[ids.Count],
+                };
+                for (int i = 0; i < ids.Count; i++) c.frames[i] = new tk2dSpriteAnimationFrame { spriteCollection = sprite.Collection, spriteId = ids[i] };
+                clips.Add(c);
+            }
+            if (clips.Count > 0)
+            {
+                tk2dSpriteAnimator animator = go.GetComponent<tk2dSpriteAnimator>();
+                if (animator == null) animator = go.AddComponent<tk2dSpriteAnimator>();
+                if (animator.Library == null) animator.Library = go.AddComponent<tk2dSpriteAnimation>();
+                animator.Library.clips = clips.ToArray();
+                animator.playAutomatically = false;
+            }
+            KennelCritter critter = go.AddComponent<KennelCritter>();
+            critter.stem = spec.Png;
+            critter.dog = spec.Png == "kennel_dog" || spec.Png == "kennel_open_r";
         }
 
         /// <summary>The zone door: the open frame joins the closed sprite's collection so ClinicDoor can swap them.</summary>

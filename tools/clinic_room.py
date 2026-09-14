@@ -189,8 +189,23 @@ def layout_cs():
     for o in O.OBJECTS:
         for ox, oy, w, h in getattr(o, 'extra', []):
             lines.append('            new ColliderRect("%s", %d, %d, %d, %d),' % (o.name, ox, oy, w, h))
+    lines.append('        };')
+    # 0.14.0: named prop clips (living kennels); frames are <Png>_<clip>_f<k>.png from approved art
+    lines.append('        public static readonly PropClip[] PROP_CLIPS = {')
+    for o in O.OBJECTS:
+        for clip, (frames, fps, loop) in getattr(o, 'clips', {}).items():
+            lines.append('            new PropClip("%s", "%s", %d, %.1ff, %s),' % (o.name, clip, frames, fps, 'true' if loop else 'false'))
     lines += [
         '        };',
+        '    }',
+        '',
+        '    public class PropClip',
+        '    {',
+        '        public string Name, Clip;',
+        '        public int Frames;',
+        '        public float Fps;',
+        '        public bool Loop;',
+        '        public PropClip(string name, string clip, int frames, float fps, bool loop) { Name = name; Clip = clip; Frames = frames; Fps = fps; Loop = loop; }',
         '    }',
         '',
         '    public class ColliderRect',

@@ -118,6 +118,32 @@ namespace PlutoVetVisit
             new ColliderRect("pluto_kennel_open_r", 40, 0, 12, 24),
             new ColliderRect("pluto_kennel_open_l", 0, 0, 12, 24),
         };
+        public static readonly PropClip[] PROP_CLIPS = {
+            new PropClip("pluto_kennel_cat", "idle", 4, 4.0f, true),
+            new PropClip("pluto_kennel_cat", "react", 4, 8.0f, false),
+            new PropClip("pluto_kennel_cat", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_dog", "idle", 4, 4.0f, true),
+            new PropClip("pluto_kennel_dog", "react", 4, 8.0f, false),
+            new PropClip("pluto_kennel_dog", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_cone", "idle", 4, 4.0f, true),
+            new PropClip("pluto_kennel_cone", "react", 4, 8.0f, false),
+            new PropClip("pluto_kennel_cone", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_open_r", "idle", 4, 4.0f, true),
+            new PropClip("pluto_kennel_open_r", "react", 4, 8.0f, false),
+            new PropClip("pluto_kennel_open_r", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_open_l", "idle", 4, 4.0f, true),
+            new PropClip("pluto_kennel_open_l", "react", 4, 8.0f, false),
+            new PropClip("pluto_kennel_open_l", "rattle", 3, 10.0f, false),
+        };
+    }
+
+    public class PropClip
+    {
+        public string Name, Clip;
+        public int Frames;
+        public float Fps;
+        public bool Loop;
+        public PropClip(string name, string clip, int frames, float fps, bool loop) { Name = name; Clip = clip; Frames = frames; Fps = fps; Loop = loop; }
     }
 
     public class ColliderRect

@@ -648,3 +648,23 @@ class ColliderTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class KennelClipTests(unittest.TestCase):
+    def test_every_kennel_has_the_three_clips(self):
+        import art_sources
+        import clinic_objects as O
+        kennels = [o for o in O.OBJECTS if o.png in art_sources.KENNEL_STEMS]
+        self.assertEqual(sorted(set(o.png for o in kennels)), sorted(art_sources.KENNEL_STEMS))
+        for o in kennels:
+            self.assertEqual(list(o.clips), ['idle', 'react', 'rattle'], o.name)
+            for clip, (frames, fps, loop) in o.clips.items():
+                self.assertEqual(frames, art_sources.KENNEL_CLIPS[clip], (o.name, clip))
+            self.assertTrue(o.clips['idle'][2] and not o.clips['react'][2] and not o.clips['rattle'][2])
+
+    def test_layout_emits_prop_clips(self):
+        import clinic_room
+        cs = clinic_room.layout_cs()
+        self.assertTrue('public static readonly PropClip[] PROP_CLIPS = {' in cs)
+        self.assertTrue('new PropClip("pluto_kennel_dog", "react", 4, 8.0f, false),' in cs)
+        self.assertTrue('public class PropClip' in cs)
