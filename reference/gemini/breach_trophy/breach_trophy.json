@@ -1,0 +1,11 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "A small trophy prop for the video game Enter the Gungeon, placed in the Breach (the hub) after the player beats a boss called The Vet.\n\nMatch the attached references exactly: the first image shows The Vet's blue syringe pistol from his sprite sheet; copy that syringe. The style is Enter the Gungeon props and pickups.\n\nSubject: The Vet's syringe pistol snapped in two (glowing blue glass barrel cracked, steel plunger ring, bent needle), lying on top of a small dark wooden pedestal with a tiny brass plaque on its front. Viewed from the front, slightly from above, like Enter the Gungeon Breach trophies.\n\nComposition: one object centred, portrait orientation 4:5, the pedestal base touching the bottom of the frame, plenty of empty margin on the sides.\n\nRendering rules: crisp pixel art, bold near-black outline, 3 cel-shaded tones per material, light from the top-left, no gradients, no anti-aliasing, no text. Plain flat pure green background (#00FF00) for easy removal.\n",
+  "refs": [
+    "PlutoVetVisit/docs/preview/vet-sheet.png"
+  ],
+  "ratio": "4:5",
+  "size": "1K",
+  "seconds": 17.9,
+  "time": "2026-09-14 21:11:29"
+}

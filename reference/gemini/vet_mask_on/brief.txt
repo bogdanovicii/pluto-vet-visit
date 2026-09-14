@@ -1,0 +1,7 @@
+Animation sprite sheet for the video game Enter the Gungeon: the boss The Vet, in the exact style, size and proportions of the attached in-game sprite sheet (dark brown quiff, round glasses, white lab coat, teal scrubs, stethoscope, big blue syringe pistol).
+
+Match the attached reference exactly: same character, same small pixel size, same proportions, same shading. NEW in these frames: he wears white surgical gloves on both hands and a pale blue surgical face mask over his nose and mouth (glasses stay visible above it).
+
+Subject, 5 frames in ONE horizontal row, all the same size: "mask on": frame 1 standing like his idle pose without mask or gloves, frame 2 he snaps a white glove onto his left hand, frame 3 the glove is on, frame 4 he pulls the blue surgical mask up over his nose and mouth, frame 5 masked and gloved, syringe pistol ready.
+
+Rendering rules: crisp small pixel art matching the reference sprites, NO dark outline around the silhouette (the game adds it), 3 cel-shaded tones per material, light from the top-left, no gradients, no anti-aliasing, no text, frames evenly spaced in one row with the feet on the same ground line, facing RIGHT. Plain flat pure green background (#00FF00) for easy removal.

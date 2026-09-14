@@ -1,0 +1,11 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "Animation sprite sheet for the video game Enter the Gungeon: the boss The Vet, in the exact style, size and proportions of the attached in-game sprite sheet (dark brown quiff, round glasses, white lab coat, teal scrubs, stethoscope, big blue syringe pistol).\n\nMatch the attached reference exactly: same character, same small pixel size, same proportions, same shading. NEW in these frames: he wears white surgical gloves on both hands and a pale blue surgical face mask over his nose and mouth (glasses stay visible above it).\n\nSubject, 4 frames in ONE horizontal row, all the same size: \"fire\": masked and gloved, firing the syringe pistol to the right with a small star-shaped muzzle flash at the needle tip and recoil, like the fire frames in the reference.\n\nRendering rules: crisp small pixel art matching the reference sprites, NO dark outline around the silhouette (the game adds it), 3 cel-shaded tones per material, light from the top-left, no gradients, no anti-aliasing, no text, frames evenly spaced in one row with the feet on the same ground line, facing RIGHT. Plain flat pure green background (#00FF00) for easy removal.",
+  "refs": [
+    "PlutoVetVisit/docs/preview/vet-sheet.png"
+  ],
+  "ratio": "16:9",
+  "size": "2K",
+  "seconds": 23.2,
+  "time": "2026-09-14 21:12:55"
+}

@@ -167,3 +167,30 @@ class VetTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class MaskClipArtTests(unittest.TestCase):
+    """0.14.0: the masked last-phase clips are the Vet's own frames with gloves and a surgical mask (art_sources pieces)."""
+
+    def test_mask_clip_set_matches_art_sources(self):
+        import art_sources
+        self.assertEqual(dict((k, len(v)) for k, v in P.MASK_CLIPS.items()), dict(art_sources.MASK_CLIPS))
+
+    def test_masked_clips_follow_the_unmasked_frames(self):
+        pairs = (('mask_idle', 'idle'), ('mask_move', 'move'), ('mask_tell', 'tell'), ('mask_fire', 'fire'), ('mask_die', 'die'))
+        for masked, plain in pairs:
+            for i, (m, f) in enumerate(zip(P.MASK_CLIPS[masked], P.CLIPS[plain])):
+                self.assertEqual((len(m[0]), len(m)), (len(f[0]), len(f)), (masked, i))
+                self.assertEqual([r.rstrip('.') == '' for r in m], [r.rstrip('.') == '' for r in f], (masked, i))
+
+    def test_mask_and_gloves_are_visible(self):
+        for clip in ('mask_idle', 'mask_fire'):
+            for i, frame in enumerate(P.MASK_CLIPS[clip]):
+                text = ''.join(frame)
+                self.assertIn('>', text, (clip, i))
+                self.assertLess(sum(text.count(k) for k in '=8'), sum(''.join(P.CLIPS[clip[5:]][i]).count(k) for k in '=8'), (clip, i))
+
+    def test_mask_on_goes_from_bare_to_masked(self):
+        frames = [''.join(f) for f in P.MASK_CLIPS['mask_on']]
+        self.assertNotIn('>', frames[0].replace(''.join(P.CLIPS['idle'][0]), ''))
+        self.assertLess(frames[2].count('>'), frames[3].count('>'))

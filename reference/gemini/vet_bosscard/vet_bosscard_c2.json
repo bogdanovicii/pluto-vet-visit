@@ -1,0 +1,13 @@
+{
+  "model": "gemini-3-pro-image",
+  "prompt": "Boss intro card art for the video game Enter the Gungeon: the boss \"The Vet\". The picture is the boss portrait that slides onto the vanilla boss intro card, like the Beholster in the first attached image.\n\nMatch the attached references exactly: the first image is the art style to copy (Enter the Gungeon boss card: bold dark outline, cel shading, chunky pixel art at card resolution). The second image is the in-game sprite sheet of The Vet: copy his exact look.\n\nSubject: The Vet, a menacing veterinarian. Slicked dark brown quiff, round wire glasses with white glints, angry eyebrows, a toothy one-sided grin. Long white lab coat with lapels, a breast pocket with a red pen, teal-green scrubs underneath, a steel stethoscope around his neck, teal scrub trousers and dark shoes. In his right hand a big syringe pistol: glowing blue glass barrel with measure marks, a steel plunger ring, a long needle with a blue drop falling from the tip. In his left hand, raised beside his head, a steel scalpel.\n\nPose and composition: full body, three-quarter view, lunging toward the LEFT of the picture, aiming the syringe pistol to the left, coat tails flaring. The whole figure sits in the RIGHT 55 percent of a wide 16:9 frame and is closed by its own outline; nothing is cut by the frame edges. The LEFT 45 percent of the frame is completely empty plain background.\n\nRendering rules: crisp pixel art, bold near-black outline around the silhouette, 3 to 4 cel-shaded tones per material, light from the top-left, no gradients, no anti-aliasing, no text, no speed lines, no card frame. Plain flat pure green background (#00FF00) everywhere around the figure for easy removal.\n",
+  "refs": [
+    "boss card example.jpg",
+    "PlutoVetVisit/docs/preview/vet-sheet.png",
+    "PlutoVetVisit/docs/preview/bosscard-preview.png"
+  ],
+  "ratio": "16:9",
+  "size": "2K",
+  "seconds": 25.5,
+  "time": "2026-09-14 21:11:52"
+}

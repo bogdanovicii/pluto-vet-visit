@@ -1,0 +1,13 @@
+Victory picture for the video game Enter the Gungeon: the small photo shown on the "YOU WON" page after Pluto the cat defeats his past, a vet clinic.
+
+Match the attached references exactly: the first image is the current composition to keep (Pluto on an exam table, owners in a doorway, the knocked-out vet). Copy the characters' looks from the other images: Pluto the cat (photos), the owners Bogdan and Bianca and The Vet (in-game sprite sheets).
+
+Subjects:
+- Pluto, a chubby adult cat with GREY-BROWN tabby fur (cool taupe brown with near-black mackerel stripes, NOT orange, NOT ginger), a forehead M marking, a white blaze between the eyes running down to a white muzzle, white chest and white paws, a small white oval spot on top of his head between the ears, big ears with pink inner ears, hazel-green eyes, a pink nose, a long raccoon-ringed tail. He stands proudly on a steel exam table in the centre, one front paw raised, mouth open in a happy meow, tail up.
+- The Vet (dark quiff, round glasses, white lab coat, teal scrubs) knocked out lying on the floor tiles at the right, with yellow dizzy stars over his head, his blue syringe pistol dropped and a broken syringe with a blue puddle.
+- Bogdan, a young man with short dark brown hair and light stubble, navy blue hoodie, blue jeans, smiling; and Bianca, a young woman with long brown hair past her shoulders, a bright yellow dress, arms open wide. Both stand in a warmly lit wooden doorway at the left with small pink hearts floating toward Pluto.
+- A clean clinic: pale blue-white wall tiles, a teal wainscot stripe, white floor tiles, a framed paw-print poster.
+
+Composition: a wide landscape picture filled edge to edge (no empty background), happy and uncluttered, the figures large and readable, the four corners calm (they get covered by tape).
+
+Rendering rules: crisp pixel art in the Enter the Gungeon style, bold near-black outlines, 3 cel-shaded tones per material, light from the top-left, no gradients, no anti-aliasing, no text.

@@ -246,18 +246,44 @@ LEGS_KNEEL = plate([                              # body down five rows: far shi
 
 
 # ------------------------------------------------------------------ composition
+# 0.14.0 masked last phase (design from the Gemini sheets in reference/gemini/vet_mask_*): white surgical gloves on every hand
+# and a pale blue surgical mask over the grin. 0 = none, 1 = gloves, 2 = gloves + mask pulled half up, 3 = gloves + full mask.
+_MASK_LEVEL = 0
+_SKIN = '=8-;'
+
+
+def gloved(rows):
+    """Skin on a hand part becomes a white glove ('W' light, '0' shade)."""
+    return [r.replace('=', 'W').replace('8', 'W').replace('-', '0').replace(';', '0') for r in rows]
+
+
+def masked_head(head, level):
+    """The face below the glasses becomes a surgical mask: '>' pale blue, '*' fold shade on the right edge, lenses kept."""
+    rows = [list(r) for r in head]
+    first = 11 if level >= 3 else 12
+    for y in range(first, 14):
+        xs = [x for x in range(3, 15) if rows[y][x] in _SKIN + 'W@']
+        for x in xs:
+            rows[y][x] = '>'
+        if xs:
+            rows[y][max(xs)] = '*'
+    return [''.join(r) for r in rows]
+
+
 def compose(head=HEAD, gun=GUN, legs=LEGS_STAND, body=(0, 0), head_off=(0, 0), gun_off=(0, 0), extras=()):
     """Legs, then coat + back arm moved by body, head moved by body + head_off, then the gun (GUN at GUN_AT + body +
-    gun_off, GUN_UP / plates moved by body + gun_off, EMPTY_HAND at GUN_AT). extras: (part, x, y) on top."""
+    gun_off, GUN_UP / plates moved by body + gun_off, EMPTY_HAND at GUN_AT). extras: (part, x, y) on top.
+    With _MASK_LEVEL > 0 the hands are gloved and (level >= 2) the head wears the surgical mask."""
     bx, by = body
+    lvl = _MASK_LEVEL
     f = legs
     f = overlay(f, shift(BODY, bx, by))
-    f = overlay(f, BACK_ARM, BACK_AT[0] + bx, BACK_AT[1] + by)
-    f = overlay(f, head, HEAD_AT[0] + bx + head_off[0], HEAD_AT[1] + by + head_off[1])
+    f = overlay(f, gloved(BACK_ARM) if lvl else BACK_ARM, BACK_AT[0] + bx, BACK_AT[1] + by)
+    f = overlay(f, masked_head(head, lvl) if lvl >= 2 else head, HEAD_AT[0] + bx + head_off[0], HEAD_AT[1] + by + head_off[1])
     if gun is GUN or gun is EMPTY_HAND:
-        f = overlay(f, gun, GUN_AT[0] + bx + gun_off[0], GUN_AT[1] + by + gun_off[1])
+        f = overlay(f, gloved(gun) if lvl else gun, GUN_AT[0] + bx + gun_off[0], GUN_AT[1] + by + gun_off[1])
     elif gun is not None:
-        f = overlay(f, shift(gun, bx + gun_off[0], by + gun_off[1]))
+        f = overlay(f, shift(gloved(gun) if lvl else gun, bx + gun_off[0], by + gun_off[1]))
     for piece, x, y in extras:
         f = overlay(f, piece, x, y)
     return R(f)
@@ -289,71 +315,111 @@ def centre_x(rows, left=2):
     return shift(rows, left - min(xs), 0)
 
 
-# idle, 6 fps loop: breathe (head sinks into the collar, the gun hand follows a beat later), glasses glint to close
-IDLE = [
-    BASE,
-    compose(head_off=(0, 1)),
-    compose(head_off=(0, 1), gun_off=(0, 1)),
-    compose(gun_off=(0, 1)),
-    compose(head=HEAD_GLINT),
-]
+def _clips():
+    """Every clip, composed at the current _MASK_LEVEL."""
+    # idle, 6 fps loop: breathe (head sinks into the collar, the gun hand follows a beat later), glasses glint to close
+    IDLE = [
+        compose(),
+        compose(head_off=(0, 1)),
+        compose(head_off=(0, 1), gun_off=(0, 1)),
+        compose(gun_off=(0, 1)),
+        compose(head=HEAD_GLINT),
+    ]
 
-# move, 8 fps loop: contact, pass (up a row, gun hand lags down), contact, pass
-MOVE = [                      # on the pass the coat rises a row while the head stays put (sinks into the collar)
-    compose(legs=LEGS_STRIDE_R),
-    compose(legs=LEGS_PASS_R, body=(0, -1), head_off=(0, 1), gun_off=(0, 1)),
-    compose(legs=LEGS_PASS_R, body=(0, -1), head_off=(0, 1)),
-    compose(legs=LEGS_STRIDE_L),
-    compose(legs=LEGS_PASS_L, body=(0, -1), head_off=(0, 1), gun_off=(0, 1)),
-    compose(legs=LEGS_PASS_L, body=(0, -1), head_off=(0, 1)),
-]
+    # move, 8 fps loop: contact, pass (up a row, gun hand lags down), contact, pass
+    MOVE = [                      # on the pass the coat rises a row while the head stays put (sinks into the collar)
+        compose(legs=LEGS_STRIDE_R),
+        compose(legs=LEGS_PASS_R, body=(0, -1), head_off=(0, 1), gun_off=(0, 1)),
+        compose(legs=LEGS_PASS_R, body=(0, -1), head_off=(0, 1)),
+        compose(legs=LEGS_STRIDE_L),
+        compose(legs=LEGS_PASS_L, body=(0, -1), head_off=(0, 1), gun_off=(0, 1)),
+        compose(legs=LEGS_PASS_L, body=(0, -1), head_off=(0, 1)),
+    ]
 
-# tell, 8 fps once: crouch and pull the gun back, whip it up beside the grinning head, lean back with a glint, snap level
-TELL = [
-    compose(legs=LEGS_WIDE, body=(0, 2), gun_off=(-3, 1)),          # deep crouch, gun pulled back: the anticipation
-    compose(head=HEAD_GLINT, legs=LEGS_WIDE, gun=GUN_UP, body=(-1, 0)),
-    compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun=GUN_UP, body=(-2, 0), head_off=(-1, 0)),
-    compose(head=HEAD_SMUG, legs=LEGS_WIDE, body=(1, 0)),           # snap forward (needle tip x 46, one column spare)
-]
+    # tell, 8 fps once: crouch and pull the gun back, whip it up beside the grinning head, lean back with a glint, snap level
+    TELL = [
+        compose(legs=LEGS_WIDE, body=(0, 2), gun_off=(-3, 1)),          # deep crouch, gun pulled back: the anticipation
+        compose(head=HEAD_GLINT, legs=LEGS_WIDE, gun=GUN_UP, body=(-1, 0)),
+        compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun=GUN_UP, body=(-2, 0), head_off=(-1, 0)),
+        compose(head=HEAD_SMUG, legs=LEGS_WIDE, body=(1, 0)),           # snap forward (needle tip x 46, one column spare)
+    ]
 
-# fire, 12 fps once: recoil back with a big flash on the needle, a smaller flash, settle
-FIRE = [
-    compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun_off=(-3, 0), body=(-1, 0), head_off=(-1, 0),
-            extras=[flash(FLASH_BIG, (-3, 0), 2, (-1, 0))]),
-    compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun_off=(-2, 0), body=(-1, 0), extras=[flash(FLASH_SMALL, (-2, 0), 1, (-1, 0))]),
-    compose(legs=LEGS_WIDE, gun_off=(-1, 0)),
-    compose(legs=LEGS_WIDE),
-]
+    # fire, 12 fps once: recoil back with a big flash on the needle, a smaller flash, settle
+    FIRE = [
+        compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun_off=(-3, 0), body=(-1, 0), head_off=(-1, 0),
+                extras=[flash(FLASH_BIG, (-3, 0), 2, (-1, 0))]),
+        compose(head=HEAD_SMUG, legs=LEGS_WIDE, gun_off=(-2, 0), body=(-1, 0), extras=[flash(FLASH_SMALL, (-2, 0), 1, (-1, 0))]),
+        compose(legs=LEGS_WIDE, gun_off=(-1, 0)),
+        compose(legs=LEGS_WIDE),
+    ]
 
-# intro, 8 fps once: raise the syringe, flick a drop of vaccine off the needle, glint, grin, level it at the player
-INTRO = [
-    BASE,
-    compose(body=(0, 1), gun_off=(-2, 1)),
-    compose(gun=GUN_UP),
-    compose(gun=GUN_UP, head=HEAD_GLINT, extras=[(DROP, 36, 1)]),
-    compose(gun=GUN_UP, head=HEAD_SMUG, extras=[(DROP, 38, 2)]),
-    compose(gun=GUN_UP, head=HEAD_SMUG, extras=[(DROP, 40, 4)]),
-    compose(head=HEAD_SMUG, gun_off=(1, 0)),
-    compose(head=HEAD_GLINT),
-]
+    # intro, 8 fps once: raise the syringe, flick a drop of vaccine off the needle, glint, grin, level it at the player
+    INTRO = [
+        compose(),
+        compose(body=(0, 1), gun_off=(-2, 1)),
+        compose(gun=GUN_UP),
+        compose(gun=GUN_UP, head=HEAD_GLINT, extras=[(DROP, 36, 1)]),
+        compose(gun=GUN_UP, head=HEAD_SMUG, extras=[(DROP, 38, 2)]),
+        compose(gun=GUN_UP, head=HEAD_SMUG, extras=[(DROP, 40, 4)]),
+        compose(head=HEAD_SMUG, gun_off=(1, 0)),
+        compose(head=HEAD_GLINT),
+    ]
 
-# die, 8 fps once: hit, drop the gun, kneel, topple backwards, flat on his back
-_floor_gun = (SYRINGE_FLOOR, 29, 36)
-_kneel = compose(head=HEAD_OUCH, gun=EMPTY_HAND, legs=LEGS_KNEEL, body=(0, 5))
-_lying = centre_x(rotate_lying(compose(head=HEAD_KO, gun=EMPTY_HAND, legs=LEGS_STAND), 90))
-DIE = [
-    compose(head=HEAD_OUCH, body=(-1, 0), gun_off=(0, -1)),
-    compose(head=HEAD_OUCH, gun=EMPTY_HAND, body=(-2, 0), extras=[_floor_gun]),
-    overlay(_kneel, SYRINGE_FLOOR, *_floor_gun[1:]),
-    overlay(overlay(EMPTY, SYRINGE_FLOOR, *_floor_gun[1:]), rotate_lying(_kneel, 35)),
-    overlay(overlay(EMPTY, SYRINGE_FLOOR, 30, 36), centre_x(rotate_lying(_kneel, 65))),   # keep the head off column 0
-    overlay(_lying, SYRINGE_FLOOR, 29, 36),       # the dropped syringe rocks 29 / 30 (x 30 puts its tip on column 46)
-    overlay(_lying, SYRINGE_FLOOR, 30, 36),
-    overlay(_lying, SYRINGE_FLOOR, 30, 36),
-]
-DIE[-1] = overlay(DIE[-1], DROP, 47 - 1, 38)   # a last drop leaks out of the needle on the hold frame
+    # die, 8 fps once: hit, drop the gun, kneel, topple backwards, flat on his back
+    _floor_gun = (SYRINGE_FLOOR, 29, 36)
+    _kneel = compose(head=HEAD_OUCH, gun=EMPTY_HAND, legs=LEGS_KNEEL, body=(0, 5))
+    _lying = centre_x(rotate_lying(compose(head=HEAD_KO, gun=EMPTY_HAND, legs=LEGS_STAND), 90))
+    DIE = [
+        compose(head=HEAD_OUCH, body=(-1, 0), gun_off=(0, -1)),
+        compose(head=HEAD_OUCH, gun=EMPTY_HAND, body=(-2, 0), extras=[_floor_gun]),
+        overlay(_kneel, SYRINGE_FLOOR, *_floor_gun[1:]),
+        overlay(overlay(EMPTY, SYRINGE_FLOOR, *_floor_gun[1:]), rotate_lying(_kneel, 35)),
+        overlay(overlay(EMPTY, SYRINGE_FLOOR, 30, 36), centre_x(rotate_lying(_kneel, 65))),   # keep the head off column 0
+        overlay(_lying, SYRINGE_FLOOR, 29, 36),       # the dropped syringe rocks 29 / 30 (x 30 puts its tip on column 46)
+        overlay(_lying, SYRINGE_FLOOR, 30, 36),
+        overlay(_lying, SYRINGE_FLOOR, 30, 36),
+    ]
+    DIE[-1] = overlay(DIE[-1], DROP, 47 - 1, 38)   # a last drop leaks out of the needle on the hold frame
+    return OrderedDict([('idle', IDLE), ('move', MOVE), ('tell', TELL), ('fire', FIRE), ('intro', INTRO), ('die', DIE)])
 
-CLIPS = OrderedDict([('idle', IDLE), ('move', MOVE), ('tell', TELL), ('fire', FIRE), ('intro', INTRO), ('die', DIE)])
+CLIPS = _clips()
+IDLE, MOVE, TELL, FIRE, INTRO, DIE = (CLIPS[k] for k in ('idle', 'move', 'tell', 'fire', 'intro', 'die'))
+
+
+def _at_level(level, fn):
+    global _MASK_LEVEL
+    _MASK_LEVEL = level
+    try:
+        return fn()
+    finally:
+        _MASK_LEVEL = 0
+
+
+def _mask_clips():
+    masked = _at_level(3, _clips)
+    mask_on = [compose(),                                                    # bare hands, bare face
+               _at_level(1, lambda: compose(gun_off=(0, 1))),                 # gloves snapped on
+               _at_level(2, lambda: compose(head_off=(0, 1))),                # mask pulled half up
+               _at_level(3, lambda: compose(head_off=(0, 1))),                # mask up
+               _at_level(3, lambda: compose(head=HEAD_GLINT))]                # ready, glasses glint
+    return OrderedDict([('mask_on', mask_on), ('mask_idle', masked['idle']), ('mask_move', masked['move']),
+                        ('mask_tell', masked['tell']), ('mask_fire', masked['fire']), ('mask_die', masked['die'])])
+
+
+MASK_CLIPS = _mask_clips()
+
+
+def write_mask_art(project):
+    """The masked clips as approved art sources (reference/art/vet_<clip>/final_NNN.png), installed by art_sources."""
+    import os
+    paths = []
+    for clip, frames in MASK_CLIPS.items():
+        for i, f in enumerate(frames, 1):
+            p = os.path.join(project, 'reference', 'art', 'vet_' + clip, 'final_%03d.png' % i)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            save(f, p)
+            paths.append(p)
+    return paths
 
 # ------------------------------------------------------------------ legacy parts (the Owner NPC in npc_poses.py reuses them)
 DX = 8
