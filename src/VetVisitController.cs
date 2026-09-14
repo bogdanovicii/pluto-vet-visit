@@ -1061,6 +1061,7 @@ namespace PlutoVetVisit
         {
             // Flag first: the credits tube shows the "past complete" panel only if it is already set.
             GameStatsManager.Instance.SetCharacterSpecificFlag(PlutoLink.Identity, CharacterSpecificGungeonFlags.KILLED_PAST, true);
+            VetProgress.MarkBeaten();
             GameStatsManager.Instance.RegisterStatChange(TrackedStats.TIMES_KILLED_PAST, 1f);
             PastPlugin.Log("past killed: KILLED_PAST set for identity " + (int)PlutoLink.Identity);
             if (vet != null && vet.healthHaver != null) vet.healthHaver.PreventAllDamage = true;

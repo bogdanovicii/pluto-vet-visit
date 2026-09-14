@@ -59,6 +59,10 @@ namespace PlutoVetVisit
         public static bool FloorTiles = true;
         public static bool WallFaces = true;
         public static bool ClinicSounds = true;
+        public static float TrophyX = 0f, TrophyY = 0f;
+        public static bool ForceTrophy = false;
+        public static string CommentTrophy = "The Vet's syringe. He won't need it.|Still sharp. Still mine.|No procedure today.";
+        private static ConfigEntry<float> trophyXEntry, trophyYEntry;
         public static float AmbientR = 0.96f, AmbientG = 0.84f, AmbientB = 0.84f;
         // Balance knobs (tune without a rebuild). Speeds in tiles per second; scales multiply the values in the code.
         public static float BulletSpeedScale = 1f;
@@ -113,8 +117,17 @@ namespace PlutoVetVisit
         // What Pluto thinks when he examines a prop; defaults come from the generated ClinicLayout (tools/clinic_objects.py).
         private static readonly Dictionary<string, string> propComments = new Dictionary<string, string>();
 
+        public static void SaveTrophyPosition(UnityEngine.Vector2 at)
+        {
+            TrophyX = at.x;
+            TrophyY = at.y;
+            if (trophyXEntry != null) trophyXEntry.Value = at.x;
+            if (trophyYEntry != null) trophyYEntry.Value = at.y;
+        }
+
         public static string PropComment(string propName)
         {
+            if (propName == BreachTrophy.OBJECT) return CommentTrophy;
             string text;
             return propName != null && propComments.TryGetValue(propName, out text) ? text : string.Empty;
         }
@@ -188,6 +201,12 @@ namespace PlutoVetVisit
                 if (!string.IsNullOrEmpty(spec.Comment))
                     propComments[spec.Name] = cfg.Bind("Props", "Comment_" + spec.Name.Replace("pluto_", string.Empty), spec.Comment,
                         "What Pluto thinks when he examines this prop (empty = not examinable).").Value;
+            trophyXEntry = cfg.Bind("Breach", "TrophyX", TrophyX, "Breach trophy position (world x). 0,0 = not set: stand where it should go and type vet_trophy_here.");
+            trophyYEntry = cfg.Bind("Breach", "TrophyY", TrophyY, "Breach trophy position (world y).");
+            TrophyX = trophyXEntry.Value;
+            TrophyY = trophyYEntry.Value;
+            ForceTrophy = cfg.Bind("Debug", "ForceTrophy", ForceTrophy, "Show the Breach trophy without beating the past (testing).").Value;
+            CommentTrophy = cfg.Bind("Breach", "CommentTrophy", CommentTrophy, "What Pluto thinks when he examines the trophy (one per interaction; separate lines with |).").Value;
             ClinicSounds = cfg.Bind("Mood", "ClinicSounds", ClinicSounds, "Play the clinic's built-in sound events (kennel barks, intercom chime, heart monitor, lamp, tray crash, ending).").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
             WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;

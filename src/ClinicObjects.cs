@@ -187,6 +187,7 @@ namespace PlutoVetVisit
         public string propName;
         private RoomHandler room;
         private bool busy;
+        private int timesExamined;
 
         private IEnumerator Start()
         {
@@ -225,6 +226,11 @@ namespace PlutoVetVisit
         public void Interact(PlayerController interactor)
         {
             string text = PastConfig.PropComment(propName);
+            if (!string.IsNullOrEmpty(text) && text.IndexOf('|') >= 0)
+            {
+                string[] lines = text.Split('|');
+                text = lines[timesExamined++ % lines.Length].Trim();   // one line per interaction, like the bystanders
+            }
             if (busy || interactor == null || string.IsNullOrEmpty(text) || TextBoxManager.HasTextBox(interactor.transform)) return;
             StartCoroutine(Think(interactor, text));
         }

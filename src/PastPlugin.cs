@@ -80,6 +80,14 @@ namespace PlutoVetVisit
                 Log("loading " + PastLevel.SCENE_NAME + " from the console");
                 GameManager.Instance.LoadCustomLevel(PastLevel.SCENE_NAME);
             }));
+            Step("console trophy", () => ETGModConsole.Commands.AddUnit("vet_trophy_here", args =>
+            {
+                PlayerController p = GameManager.Instance.PrimaryPlayer;
+                if (p == null) return;
+                PastConfig.SaveTrophyPosition(p.CenterPosition);
+                BreachTrophy.Place(p.CenterPosition);
+                Log("Breach trophy position saved: " + p.CenterPosition);
+            }));
             Log("The Vet Visit is ready. Pluto's past: " + PastLevel.SCENE_NAME);
         }
 

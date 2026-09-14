@@ -20,3 +20,17 @@ class ContractTests(unittest.TestCase):
         self.has('foreach (int id in p.startingAlternateGunIds) GiveGunById(p, id);', c, 'VetVisitController.cs')
         self.has('LoadoutChoice.Describe(p)', c, 'VetVisitController.cs')
         self.has('p.IsUsingAlternateCostume', src('LoadoutChoice.cs'), 'LoadoutChoice.cs')
+
+    def test_past_kill_writes_the_progress_file(self):
+        c = src('VetVisitController.cs')
+        i = c.index('CharacterSpecificGungeonFlags.KILLED_PAST, true);')
+        self.has('VetProgress.MarkBeaten();', c[i:i + 400], 'EndPast')
+        self.has('bogdan.etg.plutovetvisit.progress', src('VetProgress.cs'), 'VetProgress.cs')
+        self.has('VetBeaten=true', src('VetProgress.cs'), 'VetProgress.cs')
+
+    def test_trophy_needs_both_flags_and_hooks_the_breach(self):
+        t = src('BreachTrophy.cs')
+        self.has('[HarmonyPatch(typeof(Foyer), "Awake")]', t, 'BreachTrophy.cs')
+        self.has('CharacterSpecificGungeonFlags.KILLED_PAST', t, 'BreachTrophy.cs')
+        self.has('VetProgress.Beaten()', t, 'BreachTrophy.cs')
+        self.has('"vet_trophy_here"', src('PastPlugin.cs'), 'PastPlugin.cs')
