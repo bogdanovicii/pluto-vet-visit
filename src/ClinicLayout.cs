@@ -20,6 +20,7 @@ namespace PlutoVetVisit
         public static readonly Vector2 OwnerStart = new Vector2(3.5f, 2.5f);
         public static readonly Vector2 OwnerExit = new Vector2(13.0f, -3.5f);
         public static readonly Vector2 Intercom = new Vector2(14.5f, 12.5f);
+        public static readonly Vector2 GreeterSpot = new Vector2(14.5f, 19.5f);
         public const float WARD_MIN_Y = 15.0f;
         public const float THEATRE_MIN_Y = 34.0f;
         public static readonly Vector2[] Wave1Spawns = { new Vector2(2.0f, 23.5f), new Vector2(27.0f, 23.5f), new Vector2(2.0f, 19.5f), new Vector2(27.0f, 27.5f) };
@@ -66,6 +67,8 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_intercom", "intercom", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
             new ObjectSpec("pluto_wall_tv", "wall_tv", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
             new ObjectSpec("pluto_side_door", "side_door", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_floor_strip", "floor_strip", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f),
+            new ObjectSpec("pluto_floor_strip_1", "floor_strip_1", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f),
             new ObjectSpec("pluto_strap_table_pad", "strap_pad", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
         };
     }

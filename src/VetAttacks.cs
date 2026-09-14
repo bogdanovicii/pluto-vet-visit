@@ -24,11 +24,16 @@ namespace PlutoVetVisit
     /// <summary>Vet Tech: one aimed syringe with a little lead, like a Bullet Kin's shot but slower.</summary>
     public class TechShotScript : Script
     {
+        // Three-round burst, five frames apart, like the Hegemony soldiers of the Convict's past; the first
+        // shot leads Pluto, the others go where he is, so a strafe dodges some but not all.
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
-            float aim = GetAimDirection(0.4f, 9f) + UnityEngine.Random.Range(-4f, 4f);
-            Fire(new Direction(aim, DirectionType.Absolute), new Speed(9f, SpeedType.Absolute), new SyringeBullet());
-            yield break;
+            for (int i = 0; i < 3; i++)
+            {
+                float aim = GetAimDirection(i == 0 ? 0.5f : 0f, 9f) + UnityEngine.Random.Range(-3f, 3f);
+                Fire(new Direction(aim, DirectionType.Absolute), new Speed(9f, SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(5);
+            }
         }
     }
 
@@ -65,8 +70,8 @@ namespace PlutoVetVisit
         {
             for (int i = 0; i < 3; i++)
             {
-                float aim = GetAimDirection(i == 1 ? 0f : 0.7f, 11f) + UnityEngine.Random.Range(-3f, 3f);
-                Fire(new Direction(aim, DirectionType.Absolute), new Speed(11f, SpeedType.Absolute), new SyringeBullet());
+                float aim = GetAimDirection(i == 1 ? 0f : 0.7f, 10f) + UnityEngine.Random.Range(-3f, 3f);
+                Fire(new Direction(aim, DirectionType.Absolute), new Speed(10f, SpeedType.Absolute), new SyringeBullet());
                 yield return Wait(6);
             }
         }

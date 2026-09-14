@@ -86,6 +86,7 @@ NAMED = {
     'OwnerStart': (3.5, 2.5),    # the Owner stands here beside the carrier (sprite lower-left)
     'OwnerExit': (13.0, -3.5),   # where he walks out (through the south exit, off the map)
     'Intercom': (14.5, 12.5),    # the speaker above the ward door: the "Pluto?" line comes from here
+    'GreeterSpot': (14.5, 19.5),  # the Vet Tech who greets Pluto in the ward, just past the door
 }
 # Zone thresholds (cell y): Pluto is "in" a zone once his y passes it. The controller seals the door behind him then.
 ZONES = {

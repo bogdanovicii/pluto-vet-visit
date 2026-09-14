@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+- Pluto arrives armed, for real this time: the loadout is checked on arrival and again at 1, 3, 6, 10, 20, 40 and 60 s; the sack is given through the game's own inventory call first and the loot engine second; every step is logged; `vet_loadout` in the console re-runs it.
+- The staff fight now: every spawned Tech, patient, the Nurse and the Vet is explicitly engaged (state, brain, damage) the moment it appears, and anyone without a target after 2 s is pointed at Pluto. A heartbeat line in the log shows each actor's state at 2 s and 8 s.
+- Vet Techs fire three-round syringe bursts like the Hegemony soldiers of the Convict's past, with a longer cooldown and a keep-your-distance stance.
+- Character interactions: a Tech greets Pluto at the ward door ("Pluto? This way. Hold still...") before the first wave; the intercom calls the ward and then sends Pluto to the doctor; the Vet dialogue in the theatre stays; mid-fight lines: the Vet at half health, the Nurse arriving, the Vet at a fifth of his health. All lines are in the config.
+- Balance: Vet 1000 HP, Techs 18, Nurse 150, wave 2 trimmed to five, syringes a touch slower, phase-one cooldowns a touch longer.
+- Look: white clinic floor tiles laid over the past tileset in all three zones (config `FloorTiles` turns them off if they ever draw over Pluto).
+
 ## 0.8.0
 - Dressing: PREP sign, surgical lamp over the table, monitor cart, vaccine fridge, intercom speaker over the ward door, a wall TV in the waiting room, side doors in the ward, leather straps on the exam table.
 - Two hearts appear on the nurse station once the ward is clear. Doors play the door sound. Tech and Nurse health in the config (`[Cast]`).

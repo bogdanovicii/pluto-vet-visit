@@ -636,6 +636,27 @@ _sp = overlay(_sp, _strap, 8, 0)
 _sp = overlay(_sp, _strap, 26, 0)
 STRAP_PAD = R(_sp)
 
+# ------------------------------------------------------------------ v0.9: white clinic floor tiles (the past tileset is not white)
+def floor_strip(cells_high):
+    rows = []
+    for y in range(cells_high * 16):
+        row = []
+        for x in range(30 * 16):
+            tile_x, tile_y = x // 16, y // 16
+            edge = (x % 16 == 0) or (y % 16 == 0)
+            if edge:
+                row.append('0')
+            elif (tile_x + tile_y) % 2 == 0 and (x % 16 in (1, 2)) and (y % 16 in (1, 2)):
+                row.append('K')                      # a small highlight in the corner of every other tile
+            else:
+                row.append('_')
+        rows.append(''.join(row))
+    return R(rows)
+
+
+FLOOR_STRIP = floor_strip(2)
+FLOOR_STRIP_1 = floor_strip(1)
+
 OBJECTS = [
     Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 2, 0, 44, 16)),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
@@ -680,6 +701,8 @@ OBJECTS = [
     Obj('pluto_intercom', 'intercom', INTERCOM, None, 0.5),
     Obj('pluto_wall_tv', 'wall_tv', WALL_TV, None, 0.5),
     Obj('pluto_side_door', 'side_door', SIDE_DOOR, None, 0.5),
+    Obj('pluto_floor_strip', 'floor_strip', FLOOR_STRIP, None, -4.0),
+    Obj('pluto_floor_strip_1', 'floor_strip_1', FLOOR_STRIP_1, None, -4.0),
     Obj('pluto_strap_table_pad', 'strap_pad', STRAP_PAD, None, -1.5),
 ]
 
@@ -690,7 +713,10 @@ EXTRA_PNGS = {'clinic_door_open': CLINIC_DOOR_OPEN}
 # Waiting room y 1..12: carrier and spawn bottom-left, chairs along the west wall, reception on the east.
 # Ward y 15..31: kennels along both long walls, nurse station in the middle, medical kit along the north wall.
 # Theatre y 34..50: the old clinic dressing moved up (cabinets along the north edge, the table in the middle).
-PROPS = [
+FLOOR = [('pluto_floor_strip', (0.0, float(y))) for y in (0, 2, 4, 6, 8, 10, 15, 17, 19, 21, 23, 25, 27, 29, 34, 36, 38, 40, 42, 44, 46, 48, 50)] + \
+        [('pluto_floor_strip_1', (0.0, float(y))) for y in (12, 31)]
+
+PROPS = FLOOR + [
     # --- waiting room
     ('pluto_carrier', (2.0, 1.5)),
     ('pluto_floor_mat', (0.5, 4.0)),

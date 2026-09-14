@@ -8,6 +8,7 @@ import clinic_room as C  # noqa: E402
 import vetpixel as V  # noqa: E402
 
 EXPECTED_SIZES = {
+    'pluto_floor_strip': (480, 32), 'pluto_floor_strip_1': (480, 16),
     'pluto_exam_table': (48, 32), 'pluto_cabinet': (32, 40), 'pluto_cart': (24, 24), 'pluto_sink': (32, 32),
     'pluto_scale': (16, 16), 'pluto_carrier': (32, 24), 'pluto_poster': (16, 24), 'pluto_cone': (12, 10),
     'pluto_toy_mouse': (10, 6), 'pluto_toy_ball': (6, 6), 'pluto_feather_wand': (14, 10),

@@ -101,3 +101,20 @@ Set `DebugEndAfterSeconds = 0`, `SkipIntro = false`, `SkipWaves = false`. Log li
 6. Report: are Tech/Nurse hitboxes fair, is the intro readable, does any NPC draw over Pluto, does the Owner leave cleanly.
 
 **Result:** pending
+
+## Milestone 9 — armed, engaged, talking (Pluto_Vet_Visit-0.9.0.zip)
+
+Log lines: `loadout on arrival: N gun(s), current ...` (and `loadout at 1 s: ...` if anything changed), `wave 1: 3 enemies`,
+`wave 1 Vet Tech: state Normal, brain True, engaged True, target True`, `the Vet calls the Nurse`, `fight started`.
+1. Pluto has the Royal Kibble Sack in hand in the waiting room and can shoot. If not: run `vet_loadout` in the console and send the
+   `loadout ...` lines.
+2. The floor is white clinic tile in all three zones. If the tiles draw on top of Pluto or the props, set `[Room] FloorTiles = false` and say so.
+3. Ward: a Tech steps up and speaks two lines (skippable), Pluto hisses, then wave 1 attacks: Techs keep their distance and fire
+   three-syringe bursts. Report whether they move and shoot within a few seconds. If a `no target after 2 s, forcing Pluto` line
+   appears, say so.
+4. Intercom after wave 1; wave 2 (two Techs, a mutant kin, a rat, a parrot); intercom "The doctor will see you now."; theatre door opens.
+5. Theatre: the Vet's lines, the hiss, boss card, fight. At half health: "Nurse! Hold him down!", the Nurse and two Techs arrive with
+   a line. At a fifth: "Just... a little... snip!".
+6. Difficulty: how many hearts did the whole past cost? Time to kill the Vet? (Target: a real fight, no wipe.)
+
+**Result:** pending

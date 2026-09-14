@@ -210,8 +210,8 @@ namespace PlutoVetVisit
             return new List<AttackBehaviorGroup.AttackGroupItem>
             {
                 // Phase 1 (above half health)
-                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f, 0.5f, 1f, minRange: 4f)),
-                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.0f, 0.5f, 1f, range: 8f)),
+                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.9f, 0.5f, 1f, minRange: 4f)),
+                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f, 0.5f, 1f, range: 8f)),
                 Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.0f, 0.5f, 1f)),
                 // Phase 2 (half to a fifth): quicker, plus the droplet wall, the vaccination spiral and the Cone of Shame
                 Item("booster shot 2", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f, 0.2f, 0.5f, minRange: 4f)),
@@ -281,7 +281,7 @@ namespace PlutoVetVisit
     /// <summary>Below half health the Vet calls the Nurse and two Techs, once (v2 design, act 3).</summary>
     public class VetReinforcements : BraveBehaviour
     {
-        private bool called;
+        private bool called, lastFifth;
 
         private void Start()
         {
@@ -290,10 +290,18 @@ namespace PlutoVetVisit
 
         private void OnDamaged(float resultValue, float maxValue, CoreDamageTypes damageTypes, DamageCategory damageCategory, Vector2 damageDirection)
         {
-            if (called || !PastConfig.BossReinforcements || maxValue <= 0f || resultValue > maxValue * 0.5f) return;
-            called = true;
-            healthHaver.OnDamaged -= OnDamaged;
-            if (VetVisitController.Instance != null) VetVisitController.Instance.CallReinforcements();
+            if (maxValue <= 0f || VetVisitController.Instance == null) return;
+            if (!called && PastConfig.BossReinforcements && resultValue <= maxValue * 0.5f)
+            {
+                called = true;
+                VetVisitController.Instance.CallReinforcements();
+            }
+            if (!lastFifth && resultValue <= maxValue * 0.2f)
+            {
+                lastFifth = true;
+                VetVisitController.Instance.LastFifth();
+                healthHaver.OnDamaged -= OnDamaged;
+            }
         }
     }
 

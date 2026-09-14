@@ -19,7 +19,7 @@ namespace PlutoVetVisit
     {
         public const string GUID = "bogdan.etg.plutovetvisit";
         public const string NAME = "Pluto The Cat - The Vet Visit";
-        public const string VERSION = "0.8.0";
+        public const string VERSION = "0.9.0";
         public const string PLUTO_GUID = "bogdan.etg.plutothecat";
 
         private Harmony harmony;
@@ -69,6 +69,11 @@ namespace PlutoVetVisit
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
             Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME,
                 ResourceExtractor.GetTextureFromResource("PlutoVetVisit/Resources/past_win_pic.png", typeof(PastPlugin).Assembly)));
+            Step("console loadout", () => ETGModConsole.Commands.AddUnit("vet_loadout", args =>
+            {
+                if (VetVisitController.Instance != null) VetVisitController.Instance.ConsoleLoadout();
+                else Log("not in the past");
+            }));
             Step("console", () => ETGModConsole.Commands.AddUnit("vet_visit", args =>
             {
                 Log("loading " + PastLevel.SCENE_NAME + " from the console");

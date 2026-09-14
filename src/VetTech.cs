@@ -43,7 +43,7 @@ namespace PlutoVetVisit
             Brain(bs, 7f);
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
-                VetBoss.Shoot(typeof(TechShotScript), shootPoint, 1.6f, 0f, 1f, 0f, 14f)
+                VetBoss.Shoot(typeof(TechShotScript), shootPoint, 2.2f, 0f, 1f, 0f, 14f)
             };
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
             PastPlugin.Log("Vet Tech built: " + PastConfig.TechHealth + " HP, console id " + CONSOLE_ID);
