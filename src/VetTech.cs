@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -31,7 +32,7 @@ namespace PlutoVetVisit
             if (Prefab == null) throw new Exception("EnemyBuilder.BuildPrefab returned null for the Vet Tech");
             AIActor actor = Prefab.GetComponent<AIActor>();
             ETGMod.Databases.Strings.Enemies.Set(NAME_KEY, "Vet Tech");
-            Body(actor, PastConfig.TechHealth, 4.5f, 60f, NAME_KEY, CastLayout.TECH_HIT_X, CastLayout.TECH_HIT_Y, CastLayout.TECH_HIT_W, CastLayout.TECH_HIT_H);
+            Body(actor, PastConfig.TechHealth, PastConfig.TechSpeed, 60f, NAME_KEY, CastLayout.TECH_HIT_X, CastLayout.TECH_HIT_Y, CastLayout.TECH_HIT_W, CastLayout.TECH_HIT_H);
             Clips(actor.aiAnimator, "tech", CastLayout.TECH_ROOT, CastLayout.TECH_CLIPS, asm);
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
@@ -41,10 +42,12 @@ namespace PlutoVetVisit
             GameObject shootPoint = ShootPoint(Prefab, actor, CastLayout.TECH_SHOOT_X, CastLayout.TECH_SHOOT_Y, CastLayout.TECH_W, CastLayout.TECH_H, "syringe_tip");
             BehaviorSpeculator bs = Prefab.GetComponent<BehaviorSpeculator>();
             Brain(bs, 7f);
-            bs.AttackBehaviors = new List<AttackBehaviorBase>
-            {
-                VetBoss.Shoot(typeof(TechShotScript), shootPoint, 2.2f, 0f, 1f, 0f, 14f)
-            };
+            // Range 20 (Bullet Kin 16) so a Tech that cannot path still fires; the Hegemony soldier's burst cadence.
+            ShootBehavior burst = VetBoss.Shoot(typeof(TechShotScript), shootPoint, PastConfig.TechCooldown, 0f, 1f, 0f, 20f, 0.3f, 0.5f);
+            burst.RequiresLineOfSight = true;   // Bullet Kin and Hegemony soldiers need LOS: no firing through the ward furniture
+            burst.StopDuring = ShootBehavior.StopType.Tell;
+            bs.AttackBehaviors = new List<AttackBehaviorBase> { burst };
+            Prefab.AddComponent<SelfEngage>();
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
             PastPlugin.Log("Vet Tech built: " + PastConfig.TechHealth + " HP, console id " + CONSOLE_ID);
         }
@@ -130,7 +133,33 @@ namespace PlutoVetVisit
             bs.RemoveDelayOnReinforce = false;
             bs.OverrideStartingFacingDirection = false;
             bs.StartingFacingDirection = -90f;
-            bs.SkipTimingDifferentiator = false;
+            // Several same-GUID actors get a random 0-4 s first-attack hold-off (the TimingDifferentiator); a
+            // three-Tech wave reads as idle with it, so skip it, like bosses do.
+            bs.SkipTimingDifferentiator = true;
+        }
+    }
+
+    /// <summary>
+    /// EnemyBuilder strips the ObjectVisibilityManager that wakes a vanilla enemy when its room becomes visible,
+    /// so a clone of ours is born AIActor.State Inactive and its BehaviorSpeculator never ticks (0.8.0's
+    /// "staff do nothing"). This wakes the actor itself a moment after it appears unless the controller asked
+    /// it to hold (the greeter talks before it fights). Makes `spawn pluto:vet_tech` in a normal room fight too.
+    /// The same idea as Once More Into The Breach's EngageLate.
+    /// </summary>
+    public class SelfEngage : BraveBehaviour
+    {
+        public bool hold;
+
+        private IEnumerator Start()
+        {
+            yield return null;
+            yield return new WaitForSeconds(0.15f);
+            if (hold || aiActor == null) yield break;
+            if (!aiActor.HasBeenAwoken)
+            {
+                VetVisitController.Engage(aiActor);
+                PastPlugin.Log(aiActor.GetActorName() + " engaged itself (state was Inactive)");
+            }
         }
     }
 
@@ -155,8 +184,9 @@ namespace PlutoVetVisit
             if (Prefab == null) throw new Exception("EnemyBuilder.BuildPrefab returned null for the Nurse");
             AIActor actor = Prefab.GetComponent<AIActor>();
             ETGMod.Databases.Strings.Enemies.Set(NAME_KEY, "The Nurse");
-            VetTech.Body(actor, PastConfig.NurseHealth, 3.2f, 150f, NAME_KEY, CastLayout.NURSE_HIT_X, CastLayout.NURSE_HIT_Y, CastLayout.NURSE_HIT_W, CastLayout.NURSE_HIT_H);
+            VetTech.Body(actor, PastConfig.NurseHealth, PastConfig.NurseSpeed, 150f, NAME_KEY, CastLayout.NURSE_HIT_X, CastLayout.NURSE_HIT_Y, CastLayout.NURSE_HIT_W, CastLayout.NURSE_HIT_H);
             VetTech.Clips(actor.aiAnimator, "nurse", CastLayout.NURSE_ROOT, CastLayout.NURSE_CLIPS, asm);
+            actor.CollisionDamage = 0.5f;   // a mini-boss bumps for half a heart (Gun Nut), only floor bosses do a full one
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(VetTech.BULLET_KIN).bulletBank.GetBullet("default");
@@ -166,7 +196,7 @@ namespace PlutoVetVisit
             GameObject shootPoint = VetTech.ShootPoint(Prefab, actor, CastLayout.NURSE_SHOOT_X, CastLayout.NURSE_SHOOT_Y, CastLayout.NURSE_W, CastLayout.NURSE_H, "syringe_tip");
             BehaviorSpeculator bs = Prefab.GetComponent<BehaviorSpeculator>();
             VetTech.Brain(bs, 6f);
-            ShootBehavior net = VetBoss.Shoot(typeof(NetThrowScript), shootPoint, 4.5f, 0f, 1f, 0f, 7f);
+            ShootBehavior net = VetBoss.Shoot(typeof(NetThrowScript), shootPoint, PastConfig.NurseNetCooldown, 0f, 1f, 0f, 7f, 0.6f, 2f);
             net.TellAnimation = string.Empty;
             net.FireAnimation = "net";
             bs.AttackBehaviors = new List<AttackBehaviorBase>
@@ -176,11 +206,12 @@ namespace PlutoVetVisit
                     ShareCooldowns = false,
                     AttackBehaviors = new List<AttackBehaviorGroup.AttackGroupItem>
                     {
-                        VetBoss.Item("droplet fan", 1.2f, VetBoss.Shoot(typeof(NurseFanScript), shootPoint, 2.2f, 0f, 1f, 0f, 12f)),
+                        VetBoss.Item("droplet fan", 1.2f, VetBoss.Shoot(typeof(NurseFanScript), shootPoint, PastConfig.NurseFanCooldown, 0f, 1f, 0f, 12f, 0.5f, 1f)),
                         VetBoss.Item("net throw", 0.8f, net),
                     }
                 }
             };
+            Prefab.AddComponent<SelfEngage>();
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
             PastPlugin.Log("The Nurse built: " + PastConfig.NurseHealth + " HP, console id " + CONSOLE_ID);
         }

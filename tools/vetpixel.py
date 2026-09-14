@@ -53,6 +53,10 @@ PALETTE.update({
     '+': (0x7A, 0x5A, 0x3A, 255),  # wood dark
     '_': (0xF4, 0xF6, 0xF8, 255),  # tile white
     '0': (0xDC, 0xE0, 0xE6, 255),  # tile white shade
+    # v0.10 (digits: keys the main mod's pixel.PALETTE does not use, see test_palette.py)
+    '7': (0xC2, 0x5F, 0x16, 255),  # plastic orange shade: the waiting-room chairs' seat crease and legs' shadow
+    '8': (0xFB, 0xF1, 0xC4, 255),  # lamp light: the pale pool the surgical lamp throws on the floor
+    '6': (0xB6, 0xB0, 0xA8, 255),  # warm grey: leather-strap buckles, drain grate, the kennel blanket fold
 })
 
 

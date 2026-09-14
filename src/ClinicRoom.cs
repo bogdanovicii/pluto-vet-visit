@@ -19,6 +19,9 @@ namespace PlutoVetVisit
             Room = data.room;
             Room.category = PrototypeDungeonRoom.RoomCategory.ENTRANCE; // the flow's first node must be an entrance (set in code, per the guide)
             Room.name = "pluto_vet_clinic";
+            // The lab template's ambient is Primerdyne pink-red (0.91, 0.64, 0.64); the clinic wants it paler (config).
+            Room.usesCustomAmbientLight = true;
+            Room.customAmbientLight = new UnityEngine.Color(PastConfig.AmbientR, PastConfig.AmbientG, PastConfig.AmbientB, 1f);
             if (PastConfig.RoomVisualSubtype >= 0)
             {
                 Room.overrideRoomVisualType = PastConfig.RoomVisualSubtype;

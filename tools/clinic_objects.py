@@ -37,17 +37,29 @@ def box(w, h, fill, edge='o', top=None, bottom=None):
     return rows
 
 
-# ------------------------------------------------------------------ exam table 48x32: steel slab on two legs
-_slab = box(48, 16, '&', top='K', bottom='K')
-_slab[13] = 'o' + '%' * 46 + 'o'
-_slab[14] = 'o' + '#' * 46 + 'o'
-_legs = []
-for i in range(11):
-    _legs.append('...o##o' + '.' * 34 + 'o##o...')
-_legs[0] = '...o%%o' + '.' * 34 + 'o%%o...'
-_legs[1] = '...o%%o' + '.' * 34 + 'o%%o...'
-_feet = ['..o%%%%o' + '.' * 32 + 'o%%%%o..', '..oooooo' + '.' * 32 + 'oooooo..']
-EXAM_TABLE = R(_slab + _legs + _feet + ['.' * 48] * 3)
+# ------------------------------------------------------------------ exam table 80x40 (v0.10): steel slab, three leather straps,
+# a steel pedestal and a wheeled base. Seen from the south-front like the props_theatre concept; the slab's far edge is the
+# 'K' highlight, the near edge steps down through '%' to '#'.
+_slab = box(80, 18, '&', top='K')
+_slab[2] = 'o' + 'K' * 78 + 'o'
+_slab[15] = 'o' + '%' * 78 + 'o'
+_slab[16] = 'o' + '#' * 78 + 'o'
+_strap = ['oooooo'] + ['o\\\\\\\\+o'] * 16 + ['oooooo']
+_strap = overlay(_strap, ['oooo', 'o66o', 'o66o', 'oooo'], 1, 7)                # buckle
+for sx in (16, 37, 58):
+    _slab = overlay(_slab, _strap, sx, 0)
+_ped = box(24, 14, '%', top='&')                                                # pedestal rows 18..31
+for y in range(1, 13):
+    _ped[y] = 'o&' + _ped[y][2:22] + '#o'
+_base = box(48, 6, '#', top='%')                                                # wheeled base rows 32..37
+_base = overlay(_base, ['%' * 10], 19, 2)
+_wheels = ['.oo.' + '.' * 40 + '.oo.', 'o##o' + '.' * 40 + 'o##o', '.oo.' + '.' * 40 + '.oo.']
+_et = ['.' * 80] * 40
+_et = overlay(_et, _slab, 0, 0)
+_et = overlay(_et, _ped, 28, 18)
+_et = overlay(_et, _base, 16, 31)
+_et = overlay(_et, _wheels, 16, 37)
+EXAM_TABLE = R(_et)
 
 # ------------------------------------------------------------------ cabinet 32x40: glass doors with jars and syringe boxes
 _cab = box(32, 40, '&', top='K')
@@ -195,39 +207,68 @@ def hbox(w, h, fill, top=None, bottom=None):
     return box(w, h, fill, top=top, bottom=bottom)
 
 
-# ------------------------------------------------------------------ reception desk 48x28: white counter, wood front, monitor, papers
-_desk = ['.' * 48] * 28
-_desk = overlay(_desk, box(48, 12, '_', top='0', bottom='0'), 0, 6)          # counter top
-_desk = overlay(_desk, box(48, 12, '\\', top='+', bottom='+'), 0, 16)        # wood front
-_desk[27] = 'o' * 48
-_desk = overlay(_desk, ['..oooo..', '.o++++o.', '.o++++o.', '..oooo..'], 20, 19)  # drawer handle plate
-_desk = overlay(_desk, ['oooooooooo', 'o########o', 'o#**%***#o', 'o#*%%%**#o', 'o########o', 'oooooooooo', '....oo....', '...oooo...'], 6, 0)  # monitor
-_desk = overlay(_desk, ['ooooooooo', 'oKKKKKKKo', 'oK..K..Ko', 'oKKKKKKKo', 'oK..K..Ko', 'ooooooooo'], 30, 2)   # papers
-_desk = overlay(_desk, ['oo', 'o!', 'oo'], 42, 4)                              # red stamp
+# ------------------------------------------------------------------ treat jar 8x10 (also drawn on the desk and the nurse station)
+TREAT_JAR = R([
+    "..oooo..",
+    ".o++++o.",
+    "oooooooo",
+    "o^^^^^^o",
+    "o^BB^BBo",
+    "o^BBBB^o",
+    "oBB^^BBo",
+    "o^BB^B^o",
+    "o^^^^^^o",
+    ".oooooo.",
+])
+
+# ------------------------------------------------------------------ reception desk 112x40 (v0.10): wood top on a steel front with a
+# teal back panel; a monitor, the bell, a paper tray, a red stamp and the treat jar stand on the top (props_waiting_room concept).
+_desk = ['.' * 112] * 40
+_desk = overlay(_desk, box(112, 10, '\\', top='\\', bottom='+'), 0, 12)       # wood top rows 12..21
+_desk[13] = 'o' + 'K' * 110 + 'o'                                               # far-edge highlight
+_desk = overlay(_desk, box(112, 18, '&', top='%', bottom='%'), 0, 22)           # steel front rows 22..39
+_desk = overlay(_desk, ['$' * 110, '$' * 110, '~' * 110], 1, 25)                # teal panel strip
+for x in (28, 76):
+    _desk = overlay(_desk, ['oooooooo', 'o######o', 'o#%%%%#o', 'oooooooo'], x, 32)   # drawer plates
+_mon = box(18, 13, '#', top='%')                                                # monitor
+_mon = overlay(_mon, box(14, 9, '*', edge='*'), 2, 2)
+_mon = overlay(_mon, ['KKK', 'K..'], 3, 3)
+_mon = overlay(_mon, ['*%%%%%%*'], 4, 8)
+_desk = overlay(_desk, _mon, 12, 0)
+_desk = overlay(_desk, ['....oo....', '..oooooo..'], 16, 13)                    # monitor foot
+_desk = overlay(_desk, ['..o..', '.o:o.', 'o:::o', 'ooooo'], 50, 9)              # bell
+_desk = overlay(_desk, ['ooooooooooo', 'oKKKKKKKKKo', 'oK..K..K.Ko', 'oKKKKKKKKKo', 'ooooooooooo'], 64, 8)   # paper tray
+_desk = overlay(_desk, ['oo', 'o!', 'oo'], 80, 10)                              # red stamp
+_desk = overlay(_desk, TREAT_JAR, 92, 3)
 RECEPTION_DESK = R(_desk)
 
-# ------------------------------------------------------------------ waiting chair 16x20: blue plastic seat on steel legs
+# ------------------------------------------------------------------ waiting chair 24x24 (v0.10): orange moulded seat facing south,
+# a hole in the back rest, steel legs. '7' is the darker orange for the crease and the seat's front lip.
 CHAIR = R([
-    "....oooooooo....",
-    "...o||||||||o...",
-    "...o|//////|o...",
-    "...o||||||||o...",
-    "...o||||||||o...",
-    "...o||||||||o...",
-    "...o||||||||o...",
-    ".oooooooooooooo.",
-    "o||||||||||||||o",
-    "o|////////////|o",
-    "o||||||||||||||o",
-    ".oooooooooooooo.",
-    "..o%o......o%o..",
-    "..o%o......o%o..",
-    "..o%o......o%o..",
-    "..o%o......o%o..",
-    "..o%o......o%o..",
-    ".o%%o......o%%o.",
-    ".oooo......oooo.",
-    "................",
+    "......oooooooooooo......",
+    ".....o????????????o.....",
+    "....o??????????????o....",
+    "....o??????????????o....",
+    "....o???oooooooo???o....",
+    "....o???o......o???o....",
+    "....o???oooooooo???o....",
+    "....o??????????????o....",
+    "....o??????????????o....",
+    "...o7777777777777777o...",
+    "..o??????????????????o..",
+    ".o????????????????????o.",
+    "o??????????????????????o",
+    "o??????????????????????o",
+    "o7777777777777777777777o",
+    ".oooooooooooooooooooooo.",
+    "..o%o..............o%o..",
+    "..o%o..............o%o..",
+    "..o%o..............o%o..",
+    "..o%o..............o%o..",
+    "..o%o..............o%o..",
+    "..o%o..............o%o..",
+    ".o%%o..............o%%o.",
+    ".oooo..............oooo.",
 ])
 
 # ------------------------------------------------------------------ potted plant 16x28
@@ -327,7 +368,14 @@ _tank = overlay(_tank, ['^' * 3] * 17, 2, 3)                                    
 _tank = overlay(_tank, ['..o?o..', '.o???o.', 'o??g??oo', '.o???o.', '..o?o..'], 12, 8)  # fish
 _tank = overlay(_tank, ['..$..', '.$$$.', '.$e$.', '$$$$$', '.$$$.', '..$..'], 23, 12)   # plant
 _tank = overlay(_tank, ['%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%', '::%%::%%::%%::%%::%%::%%::%%::'], 1, 19)  # gravel
-FISH_TANK = R(_tank)
+# v0.10: the tank stands on a steel frame (rows 24..39), like the props_waiting_room concept
+_stand = ['.' * 32] * 16
+_stand = overlay(_stand, ['o' * 32, 'o' + '%' * 30 + 'o', 'o' * 32], 0, 0)                  # top rail
+for y in range(3, 15):
+    _stand = overlay(_stand, ['o##o' + '.' * 24 + 'o##o'], 0, y)                             # legs
+_stand = overlay(_stand, ['o' * 28, '%' * 28, 'o' * 28], 2, 8)                              # cross bar
+_stand[15] = 'oooo' + '.' * 24 + 'oooo'
+FISH_TANK = R(_tank + _stand)
 
 # ------------------------------------------------------------------ sharps bin 12x14: yellow with a red lid and label
 SHARPS_BIN = R([
@@ -381,20 +429,6 @@ IV_STAND = R([
     "o#o#o###o#o#",
     ".ooo.ooo.ooo",
     "............",
-])
-
-# ------------------------------------------------------------------ treat jar 8x10
-TREAT_JAR = R([
-    "..oooo..",
-    ".o++++o.",
-    "oooooooo",
-    "o^^^^^^o",
-    "o^BB^BBo",
-    "o^BBBB^o",
-    "oBB^^BBo",
-    "o^BB^B^o",
-    "o^^^^^^o",
-    ".oooooo.",
 ])
 
 # ------------------------------------------------------------------ Royal Canin bowls 20x8: red kibble bowl, blue water bowl
@@ -494,48 +528,76 @@ _do = overlay(_do, ['~~', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', '$$', 
 _do[39] = 'oooo' + '0' * 24 + 'oooo'                                          # sill
 CLINIC_DOOR_OPEN = R(_do)
 
-# ------------------------------------------------------------------ kennel cage 32x32: steel box, barred door, tray
-def _kennel(open_door):
-    rows = box(32, 32, '#', top='&', bottom='%')
-    rows[1] = 'o' + '&' * 30 + 'o'
-    rows[2] = 'o' + '%' * 30 + 'o'
-    # dark interior with a blue blanket
-    rows = overlay(rows, box(28, 24, '#', top='#'), 2, 4)
-    rows = overlay(rows, ['|' * 22, '/' * 22], 5, 24)
+# ------------------------------------------------------------------ kennel cage 32x40 (v0.10): steel box, lit interior with a blue
+# blanket, 'o' wire bars every 4 px, a '#' tray lip and base. Open: the box is 26 wide and the wire door is swung out to the
+# right as a thin barred panel. Cone: a closed kennel with a small patient wearing the cone of shame (props_ward concept).
+PATIENT_CONE = R([
+    "..oWWWWWWo..",
+    ".oWwWWWWwWo.",
+    ".oWwBBBBwWo.",
+    ".oWwBgBgwWo.",
+    ".oWwBBBBwWo.",
+    "..oWwBBwWo..",
+    "...oWWWWo...",
+    "...oBBBBo...",
+    "..oBBBBBBo..",
+    "..oBBBBBBo..",
+    "..oBoBBoBo..",
+    "..oo.oo.oo..",
+])
+
+
+def _kennel(open_door=False, patient=None):
+    w = 26 if open_door else 32
+    rows = ['.' * 32] * 40
+    body = box(w, 40, '#', top='&')
+    body[1] = 'o' + '&' * (w - 2) + 'o'
+    body[2] = 'o' + '%' * (w - 2) + 'o'
+    inner = box(w - 4, 28, '_', edge='0')                                      # lit interior rows 3..30
+    for y in range(1, 27):
+        inner[y] = '00' + inner[y][2:]
+    inner = overlay(inner, ['|' * (w - 6)] * 5 + ['/' * (w - 6)], 1, 21)        # blanket
+    inner = overlay(inner, ['6' * (w - 6)], 1, 23)                              # blanket fold
+    body = overlay(body, inner, 2, 3)
+    if patient is not None:
+        body = overlay(body, patient, (w - 12) // 2, 12)
+    body[31] = 'o' + '%' * (w - 2) + 'o'                                        # tray lip rows 31..33
+    body[32] = 'o' + '#' * (w - 2) + 'o'
+    body[33] = 'o' + '#' * (w - 2) + 'o'
+    body[34] = 'o' * w
+    body = overlay(body, ['%' * (w - 4)], 2, 36)                                # base vent
     if not open_door:
         bars = []
-        for y in range(22):
-            bars.append(''.join('%' if x % 4 == 1 else ('&' if x % 4 == 2 else '.') for x in range(26)))
-        rows = overlay(rows, bars, 3, 5)
-        rows = overlay(rows, ['o' * 26], 3, 5)
-        rows = overlay(rows, ['o' * 26], 3, 26)
-        rows = overlay(rows, ['oo', 'o&', 'oo'], 27, 14)                     # latch
-    else:
-        # door swung outward to the right: a short barred strip at the right edge, interior in full view
-        strip = []
-        for y in range(22):
-            strip.append(''.join('%' if x % 3 == 0 else ('&' if x % 3 == 1 else '.') for x in range(5)))
-        rows = overlay(rows, strip, 26, 5)
-        rows = overlay(rows, ['o' * 5], 26, 5)
-        rows = overlay(rows, ['o' * 5], 26, 26)
-        rows = overlay(rows, ['o' * 26], 3, 5)
-        rows = overlay(rows, ['o' * 26], 3, 26)
-    rows[29] = 'o' + '%' * 30 + 'o'                                          # tray lip
-    rows[30] = 'o' + '#' * 30 + 'o'
+        for y in range(27):
+            bars.append(''.join('o' if x % 4 == 0 else '.' for x in range(w - 6)))
+        body = overlay(body, bars, 3, 4)
+        body = overlay(body, ['o' * (w - 6)], 3, 4)
+        body = overlay(body, ['o' * (w - 6)], 3, 30)
+        body = overlay(body, ['oo', 'o&', 'oo'], w - 5, 16)                     # latch
+    rows = overlay(rows, body, 0, 0)
+    if open_door:
+        door = ['o' * 6] + ['o.o.oo'] * 25 + ['o' * 6]                          # the wire door, edge-on, swung out right
+        door = overlay(door, ['&'] * 25, 5, 1)
+        rows = overlay(rows, door, 26, 4)
+        rows = overlay(rows, ['o' * (w - 6)], 3, 4)
+        rows = overlay(rows, ['o' * (w - 6)], 3, 30)
     return rows
 
 
-KENNEL = R(_kennel(False))
-KENNEL_OPEN = R(_kennel(True))
+KENNEL = R(_kennel())
+KENNEL_OPEN = R(_kennel(open_door=True))
+KENNEL_CONE = R(_kennel(patient=PATIENT_CONE))
 
-# ------------------------------------------------------------------ nurse station 48x24: white counter, steel front, teal stripe, clipboard
-_ns = ['.' * 48] * 24
-_ns = overlay(_ns, box(48, 10, '_', top='0', bottom='0'), 0, 4)               # counter top
-_ns = overlay(_ns, box(48, 12, '&', top='%', bottom='%'), 0, 12)             # steel front
-_ns = overlay(_ns, ['$' * 46], 1, 15)                                        # teal stripe
-_ns[23] = 'o' * 48
-_ns = overlay(_ns, ['oooooooo', 'o&&&&&&o', 'o&oooo&o', 'o&&&&&&o', 'o&oooo&o', 'oooooooo'], 32, 0)   # clipboard
-_ns = overlay(_ns, ['..o..', '.o%o.', 'o%%%o', 'ooooo'], 8, 0)               # call bell
+# ------------------------------------------------------------------ nurse station 96x32 (v0.10): white counter with the treat jar,
+# two food bowls and a clipboard ON it; steel front with a teal stripe and a call bell (props_ward concept)
+_ns = ['.' * 96] * 32
+_ns = overlay(_ns, box(96, 10, '_', top='0', bottom='0'), 0, 6)               # counter top rows 6..15
+_ns = overlay(_ns, box(96, 16, '&', top='%', bottom='%'), 0, 16)             # steel front rows 16..31
+_ns = overlay(_ns, ['$' * 94, '~' * 94], 1, 19)                              # teal stripe
+_ns = overlay(_ns, TREAT_JAR, 12, 3)
+_ns = overlay(_ns, FOOD_BOWLS, 40, 6)
+_ns = overlay(_ns, ['oooooooooo', 'o&&&&&&&&o', 'o&oooooo&o', 'o&&&&&&&&o', 'o&oooooo&o', 'oooooooooo'], 72, 7)   # clipboard
+_ns = overlay(_ns, ['..o..', '.o%o.', 'o%%%o', 'ooooo'], 26, 10)             # call bell
 NURSE_STATION = R(_ns)
 
 # ================================================================== v0.6 props: theatre kit, wall decor, side door
@@ -548,30 +610,65 @@ for y in range(1, 9):
 _ps = overlay(_ps, ['.!!.', '!!!!', '!!!!', '.!!.'], 6, 3)
 PREP_SIGN = R(_ps)
 
-# ------------------------------------------------------------------ surgical lamp 32x32: round steel head, three bulbs, jointed arm up-right
-_lamp_head = [
-    "....oooooo....",
-    "..oo%%%%%%oo..",
-    ".o%%&&&&&&%%o.",
-    ".o%&&&&&&&&%o.",
-    "o%&oo&&&&oo&%o",
-    "o%oKKo&&oKKo%o",
-    "o%oKKo&&oKKo%o",
-    "o%&oooooooo&%o",
-    "o%&&&oKKo&&&%o",
-    "o%&&&oKKo&&&%o",
-    "o%&&&&oo&&&&%o",
-    ".o%%&&&&&&%%o.",
-    "..oo%%%%%%oo..",
-    "....oooooo....",
-]
-_sl = ['.' * 32] * 32
-_sl = overlay(_sl, box(6, 9, '#', top='%'), 26, 1)                  # wall mount plate
-_sl = overlay(_sl, ['o' * 12, '&' * 12, '%' * 12, 'o' * 12], 14, 3)  # horizontal arm
-_sl = overlay(_sl, ['oooooo', 'o%&&%o', 'o%&&%o', 'oooooo'], 9, 3)  # joint knob
-_sl = overlay(_sl, ['o&%o'] * 12, 10, 7)                            # vertical arm down to the head
-_sl = overlay(_sl, _lamp_head, 0, 18)
-SURGICAL_LAMP = R(_sl)
+# ------------------------------------------------------------------ surgical lamp (v0.10): three flat pieces.
+# pluto_lamp_head 48x40 hangs OVER the actors (height off ground +2): a round steel dish seen from below-front, five 'K' bulbs
+# behind '^' glass, a stem at the top where the arm joins. pluto_lamp_arm 48x40 (+0.5) runs from a wall mount at its top-left
+# down-right to the head's stem. pluto_lamp_pool 64x24 (-1.4) is the pale light pool on the floor, dithered so it reads translucent.
+def _ellipse(w, h, cx, cy, rx, ry, rings):
+    """rings: [(max_d, key), ...] from the outside in; d = normalised squared distance from the centre."""
+    rows = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            d = ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2
+            key = '.'
+            if d <= 1.0:
+                for max_d, k in rings:
+                    if d > max_d:
+                        key = k
+                        break
+                else:
+                    key = rings[-1][1]
+            row.append(key)
+        rows.append(''.join(row))
+    return rows
+
+
+_lh = ['.' * 48] * 40
+_dish = _ellipse(48, 40, 24.0, 22.0, 22.5, 16.5, [(0.86, 'o'), (0.62, '%'), (0.50, '&'), (0.0, '^')])
+for bx, by in ((24, 22), (15, 17), (33, 17), (15, 27), (33, 27)):
+    _dish = overlay(_dish, _ellipse(9, 9, 4.5, 4.5, 4.4, 4.4, [(0.5, '&'), (0.0, 'K')]), bx - 4, by - 4)
+_lh = overlay(_lh, _dish, 0, 0)
+_lh = overlay(_lh, ['..oooo..', '.o%%%%o.', 'o%&&&&%o', 'o%&&&&%o', 'o%%%%%%o', '.oooooo.'], 20, 0)   # stem / handle
+LAMP_HEAD = R(_lh)
+
+_la = ['.' * 48] * 40
+_la = overlay(_la, box(10, 10, '#', top='%'), 0, 0)                   # wall mount plate (top-left)
+_la = overlay(_la, ['o%o', 'o%o'], 3, 2)                               # screw
+_la = overlay(_la, ['oooo', 'o%&o', 'o%&o', 'o%&o', 'oooo'], 8, 3)    # first joint
+# upper arm: 12 px across, 4 px thick, sloping down to the elbow
+for i in range(13):
+    _la = overlay(_la, ['o', '&', '%', 'o'], 11 + i, 5 + (i * 4) // 12)
+_la = overlay(_la, ['oooooo', 'o%&&%o', 'o%&&%o', 'o%&&%o', 'oooooo'], 22, 7)   # elbow knob
+# lower arm: from the elbow down-right to the head's stem at the bottom-right corner
+for i in range(24):
+    _la = overlay(_la, ['o&%o'], 26 + (i * 18) // 24, 11 + i)
+_la = overlay(_la, ['oooo', 'o&%o', 'oooo'], 44, 35)                  # pin into the stem
+LAMP_ARM = R(_la)
+
+_lp = ['.' * 64] * 24
+_pool = _ellipse(64, 24, 32.0, 12.0, 31.5, 11.5, [(0.0, '8')])
+for y in range(24):
+    row = list(_pool[y])
+    for x in range(64):
+        d = ((x + 0.5 - 32.0) / 31.5) ** 2 + ((y + 0.5 - 12.0) / 11.5) ** 2
+        if row[x] == '8' and d > 0.62 and (x + y) % 2 == 0:
+            row[x] = '.'                                                # dithered rim = soft edge
+        elif row[x] == '8' and d < 0.2 and (x + y) % 2 == 0:
+            row[x] = 'K'                                                # hot centre
+    _pool[y] = ''.join(row)
+_lp = overlay(_lp, _pool, 0, 0)
+LAMP_POOL = R(_lp)
 
 # ------------------------------------------------------------------ monitor cart 24x32: heartbeat monitor on a steel cart, keyboard shelf, wheels
 _mc = ['.' * 24] * 32
@@ -628,37 +725,111 @@ _sd = overlay(_sd, ['ooooo', 'o###o', 'ooooo'], 9, 16)               # handle
 _sd = overlay(_sd, ['%' * 12], 2, 24)                                # kick plate seam
 SIDE_DOOR = R(_sd)
 
-# ------------------------------------------------------------------ strap pad 40x8: two leather straps with buckles across a thin steel strip
-_sp = ['.' * 40] * 8
-_sp = overlay(_sp, box(40, 4, '&', top='K'), 0, 2)
-_strap = ['oooooo', 'o\\\\\\\\o', 'o\\\\\\\\o', 'o\\++\\o', 'o\\++\\o', 'o\\\\\\\\o', 'o\\\\\\\\o', 'oooooo']
-_sp = overlay(_sp, _strap, 8, 0)
-_sp = overlay(_sp, _strap, 26, 0)
-STRAP_PAD = R(_sp)
+# ================================================================== v0.10: the concept pass (reference/gemini/past_concepts)
+# ------------------------------------------------------------------ double glass cabinet 64x56: two '^' doors, three shelves each
+# of jars ('?', '!', '*', ':') and syringe boxes, '&' body with a 'K' top and a '%'/'#' plinth
+def _jar(w, h, colour):
+    return ['.' + 'o' * (w - 2) + '.'] + ['o' + colour * (w - 2) + 'o'] * (h - 2) + ['o' * w]
 
-# ------------------------------------------------------------------ v0.9: white clinic floor tiles (the past tileset is not white)
-def floor_strip(cells_high):
+
+def _syringe_box(w, h):
+    rows = box(w, h, '_', top='0')
+    rows = overlay(rows, ['**' * ((w - 4) // 2)], 2, h // 2)
+    return rows
+
+
+def _shelf(items):
+    """One 26x13 shelf: items (x, rows) stand on the 'o' shelf line at the bottom."""
+    rows = ['^' * 26] * 12 + ['o' * 26]
+    for x, item in items:
+        rows = overlay(rows, item, x, 12 - len(item))
+    return rows
+
+
+_SHELVES = [
+    [(1, _jar(5, 7, '?')), (7, _jar(5, 8, '!')), (13, _syringe_box(12, 6))],
+    [(1, _jar(6, 8, '*')), (8, _jar(4, 6, ':')), (13, _jar(5, 7, '!')), (19, _jar(6, 8, '?'))],
+    [(1, _syringe_box(10, 5)), (12, _jar(5, 8, ':')), (18, _jar(7, 7, '*'))],
+]
+_cw = box(64, 56, '&', top='K')
+_cw[1] = 'o' + 'K' * 62 + 'o'
+for dx in (3, 33):
+    door = ['o' * 28] + ['o' + r + 'o' for shelf in _SHELVES for r in _shelf(shelf)] + ['o' * 28]
+    _cw = overlay(_cw, door, dx, 3)
+_cw = overlay(_cw, ['o&o', 'o&o', 'o&o', 'o&o'], 28, 24)                      # handles
+_cw = overlay(_cw, ['o&o', 'o&o', 'o&o', 'o&o'], 33, 24)
+_cw[51] = 'o' + '%' * 62 + 'o'
+_cw[52] = 'o' + '%' * 62 + 'o'
+_cw[53] = 'o' + '#' * 62 + 'o'
+_cw[54] = 'o' + '#' * 62 + 'o'
+CABINET_WIDE = R(_cw)
+
+# ------------------------------------------------------------------ wall face 480x32: the south face of a zone wall (tiles_and_walls
+# concept): dark top strip with a '%' highlight, white tile panel with '0' grout, teal skirting with a '~' shadow. The gapped
+# variant is transparent at px 224..255 (cells 14..15) where the door stands.
+def wall_face(door_gap):
     rows = []
-    for y in range(cells_high * 16):
+    for y in range(32):
         row = []
-        for x in range(30 * 16):
-            tile_x, tile_y = x // 16, y // 16
-            edge = (x % 16 == 0) or (y % 16 == 0)
-            if edge:
-                row.append('0')
-            elif (tile_x + tile_y) % 2 == 0 and (x % 16 in (1, 2)) and (y % 16 in (1, 2)):
-                row.append('K')                      # a small highlight in the corner of every other tile
+        for x in range(480):
+            if door_gap and 224 <= x < 256:
+                row.append('.')
+            elif y == 0:
+                row.append('o')
+            elif y == 1:
+                row.append('%')
+            elif y in (2, 3):
+                row.append('#')
+            elif y == 4:
+                row.append('o')
+            elif 5 <= y < 25:
+                row.append('0' if (x % 16 == 15 or y == 15) else '_')
+            elif y == 25:
+                row.append('o')
+            elif y < 30:
+                row.append('$')
+            elif y == 30:
+                row.append('~')
             else:
-                row.append('_')
+                row.append('o')
         rows.append(''.join(row))
     return R(rows)
 
 
-FLOOR_STRIP = floor_strip(2)
-FLOOR_STRIP_1 = floor_strip(1)
+WALL_FACE = wall_face(True)
+WALL_FACE_SOLID = wall_face(False)
+
+# ------------------------------------------------------------------ zone floors: 16x16 white tiles with a '0' grout line right and
+# bottom; about one tile in thirty is a variant (paw print, hairline crack, rarely a drain grate), scattered by a seeded
+# generator so the PNG is reproducible (one in twelve, as first tried, made the floor look dirty). The top two rows are a '0' shadow band under the wall to the north.
+_TILE = ['_' * 15 + '0'] * 15 + ['0' * 16]
+_TILE_DRAIN = overlay(_TILE, ['oooooooo', 'o666666o', 'o6#6#6#o', 'o66#6#6o', 'o6#6#6#o', 'o66#6#6o', 'o666666o', 'oooooooo'], 4, 4)
+_TILE_PAW = overlay(_TILE, ['.BB.BB.', 'BBBBBBB', '.BBBBB.', '..BBB..'], 4, 5)
+_TILE_CRACK = overlay(_TILE, ['0....', '.0...', '.00..', '..000', '..0..', '.0...'], 5, 4)
+
+
+def floor(cells_wide, cells_high, seed):
+    import random
+    rnd = random.Random(seed)
+    rows = ['.' * (cells_wide * 16)] * (cells_high * 16)
+    for ty in range(cells_high):
+        for tx in range(cells_wide):
+            roll = rnd.randrange(30)
+            tile = _TILE
+            if roll == 0:
+                tile = rnd.choice((_TILE_DRAIN, _TILE_PAW, _TILE_CRACK, _TILE_PAW, _TILE_CRACK, _TILE_CRACK))
+            rows = overlay(rows, tile, tx * 16, ty * 16)
+    rows[0] = '0' * (cells_wide * 16)
+    rows[1] = '0' * (cells_wide * 16)
+    return R(rows)
+
+
+FLOOR_WAITING = floor(30, 13, seed=1)    # y 0..12
+FLOOR_WARD = floor(30, 17, seed=2)       # y 15..31
+FLOOR_THEATRE = floor(30, 18, seed=3)    # y 34..51
 
 OBJECTS = [
-    Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 2, 0, 44, 16)),
+    Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 4, 0, 72, 16)),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
     Obj('pluto_cart', 'cart', CART, ('low', 0, 0, 24, 14)),
     Obj('pluto_sink', 'sink', SINK, ('high', 0, 0, 32, 20)),
@@ -672,14 +843,14 @@ OBJECTS = [
     Obj('pluto_scratch_post', 'scratch_post', SCRATCH_POST, ('low', 2, 0, 12, 8)),
     Obj('pluto_syringe_tray', 'syringe_tray', SYRINGE_TRAY, None, -1.5),
     # v0.4
-    Obj('pluto_reception_desk', 'reception_desk', RECEPTION_DESK, ('high', 0, 0, 48, 14)),
-    Obj('pluto_chair', 'chair', CHAIR, ('low', 1, 0, 14, 8)),
+    Obj('pluto_reception_desk', 'reception_desk', RECEPTION_DESK, ('high', 0, 0, 112, 16)),
+    Obj('pluto_chair', 'chair', CHAIR, ('low', 2, 0, 20, 8)),
     Obj('pluto_plant', 'plant', PLANT, ('high', 4, 0, 8, 8)),
     Obj('pluto_window', 'window', WINDOW, None, 0.5),
     Obj('pluto_xray_box', 'xray_box', XRAY_BOX, None, 0.5),
     Obj('pluto_med_shelf', 'med_shelf', MED_SHELF, ('high', 0, 0, 32, 16)),
     Obj('pluto_clock', 'clock', CLOCK, None, 0.5),
-    Obj('pluto_fish_tank', 'fish_tank', FISH_TANK, ('high', 0, 0, 32, 14)),
+    Obj('pluto_fish_tank', 'fish_tank', FISH_TANK, ('high', 0, 0, 32, 12)),
     Obj('pluto_sharps_bin', 'sharps_bin', SHARPS_BIN, ('low', 0, 0, 12, 6)),
     Obj('pluto_iv_stand', 'iv_stand', IV_STAND, ('low', 0, 0, 12, 6)),
     Obj('pluto_treat_jar', 'treat_jar', TREAT_JAR, None, -1.5),
@@ -692,74 +863,79 @@ OBJECTS = [
     Obj('pluto_clinic_door', 'clinic_door', CLINIC_DOOR, ('high', 0, 0, 32, 32)),
     Obj('pluto_kennel', 'kennel', KENNEL, ('high', 0, 0, 32, 16)),
     Obj('pluto_kennel_open', 'kennel_open', KENNEL_OPEN, ('high', 0, 0, 32, 16)),
-    Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 48, 12)),
-    # v0.6: theatre kit, wall decor, the side door, the table straps
+    Obj('pluto_kennel_cone', 'kennel_cone', KENNEL_CONE, ('high', 0, 0, 32, 16)),
+    Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 96, 12)),
+    # v0.6: theatre kit, wall decor, the side door
     Obj('pluto_prep_sign', 'prep_sign', PREP_SIGN, None, 0.5),
-    Obj('pluto_surgical_lamp', 'surgical_lamp', SURGICAL_LAMP, None, 0.5),
     Obj('pluto_monitor_cart', 'monitor_cart', MONITOR_CART, ('low', 0, 0, 24, 10)),
     Obj('pluto_vaccine_fridge', 'vaccine_fridge', VACCINE_FRIDGE, ('high', 0, 0, 24, 16)),
     Obj('pluto_intercom', 'intercom', INTERCOM, None, 0.5),
     Obj('pluto_wall_tv', 'wall_tv', WALL_TV, None, 0.5),
     Obj('pluto_side_door', 'side_door', SIDE_DOOR, None, 0.5),
-    Obj('pluto_floor_strip', 'floor_strip', FLOOR_STRIP, None, -4.0),
-    Obj('pluto_floor_strip_1', 'floor_strip_1', FLOOR_STRIP_1, None, -4.0),
-    Obj('pluto_strap_table_pad', 'strap_pad', STRAP_PAD, None, -1.5),
+    # v0.10: the lamp in three layers (the head hangs over the actors), the wide cabinet, the wall faces, the zone floors
+    Obj('pluto_lamp_head', 'lamp_head', LAMP_HEAD, None, 2.0),
+    Obj('pluto_lamp_arm', 'lamp_arm', LAMP_ARM, None, 0.5),
+    Obj('pluto_lamp_pool', 'lamp_pool', LAMP_POOL, None, -1.4),
+    Obj('pluto_cabinet_wide', 'cabinet_wide', CABINET_WIDE, ('high', 0, 0, 64, 20)),
+    Obj('pluto_wall_face', 'wall_face', WALL_FACE, None, 0.5),
+    Obj('pluto_wall_face_solid', 'wall_face_solid', WALL_FACE_SOLID, None, 0.5),
+    Obj('pluto_floor_waiting', 'floor_waiting', FLOOR_WAITING, None, -4.0),
+    Obj('pluto_floor_ward', 'floor_ward', FLOOR_WARD, None, -4.0),
+    Obj('pluto_floor_theatre', 'floor_theatre', FLOOR_THEATRE, None, -4.0),
 ]
 
 # Extra sprites that are not placeable props: alternate frames a component swaps in (file stem -> rows).
 EXTRA_PNGS = {'clinic_door_open': CLINIC_DOOR_OPEN}
 
 # Placements (game cells) by zone. The sprite's lower-left corner sits on the cell.
-# Waiting room y 1..12: carrier and spawn bottom-left, chairs along the west wall, reception on the east.
+# Waiting room y 1..12: carrier and spawn bottom-left, orange chairs along the west wall and the south wall, reception on the east.
 # Ward y 15..31: kennels along both long walls, nurse station in the middle, medical kit along the north wall.
-# Theatre y 34..50: the old clinic dressing moved up (cabinets along the north edge, the table in the middle).
-FLOOR = [('pluto_floor_strip', (0.0, float(y))) for y in (0, 2, 4, 6, 8, 10, 15, 17, 19, 21, 23, 25, 27, 29, 34, 36, 38, 40, 42, 44, 46, 48, 50)] + \
-        [('pluto_floor_strip_1', (0.0, float(y))) for y in (12, 31)]
-
-PROPS = FLOOR + [
+# Theatre y 34..51: cabinets, fridge and sink along the north wall, the strapped table under the lamp in the middle.
+# The zone wall faces (flat, +0.5) sit on the '#' rows of the map; wall decor hangs on them.
+PROPS = [
+    ('pluto_floor_waiting', (0.0, 0.0)), ('pluto_floor_ward', (0.0, 15.0)), ('pluto_floor_theatre', (0.0, 34.0)),
+    ('pluto_wall_face', (0.0, 13.0)), ('pluto_wall_face', (0.0, 32.0)), ('pluto_wall_face_solid', (0.0, 52.0)),
     # --- waiting room
-    ('pluto_carrier', (2.0, 1.5)),
-    ('pluto_floor_mat', (0.5, 4.0)),
-    ('pluto_chair', (1.0, 5.5)), ('pluto_chair', (1.0, 7.0)), ('pluto_chair', (1.0, 8.5)), ('pluto_chair', (1.0, 10.0)),
-    ('pluto_wall_tv', (3.5, 11.0)),
-    ('pluto_window', (7.0, 10.5)), ('pluto_clock', (10.0, 11.4)),
-    ('pluto_intercom', (14.7, 12.2)),
-    ('pluto_poster', (12.0, 10.5)),
+    ('pluto_carrier', (1.5, 2.5)),
+    ('pluto_chair', (0.75, 4.5)), ('pluto_chair', (0.75, 6.0)), ('pluto_chair', (0.75, 7.5)), ('pluto_chair', (0.75, 9.0)),
+    ('pluto_chair', (8.0, 0.75)), ('pluto_chair', (9.5, 0.75)), ('pluto_chair', (11.0, 0.75)), ('pluto_chair', (12.5, 0.75)), ('pluto_chair', (14.0, 0.75)),
+    ('pluto_wall_tv', (3.5, 13.2)),
+    ('pluto_window', (7.0, 13.2)), ('pluto_clock', (10.5, 13.4)),
+    ('pluto_intercom', (16.2, 13.4)),
+    ('pluto_poster', (12.0, 13.2)),
     ('pluto_wet_floor_sign', (14.5, 5.0)),
     ('pluto_paw_prints', (9.0, 3.5)),
     ('pluto_toy_mouse', (11.0, 7.0)),
-    ('pluto_reception_desk', (19.0, 9.5)),
-    ('pluto_treat_jar', (21.9, 11.3)),
+    ('pluto_reception_desk', (19.0, 10.0)),
+    ('pluto_floor_mat', (19.5, 7.5)),
     ('pluto_plant', (26.5, 10.5)),
-    ('pluto_fish_tank', (26.0, 6.0)),
+    ('pluto_fish_tank', (26.0, 5.5)),
     ('pluto_scratch_post', (26.5, 3.0)),
     ('pluto_plant', (26.5, 1.0)),
     # --- ward
-    ('pluto_kennel', (1.0, 16.5)), ('pluto_kennel_open', (1.0, 20.0)), ('pluto_kennel', (1.0, 25.0)), ('pluto_kennel_open', (1.0, 28.5)),
-    ('pluto_kennel_open', (27.0, 16.5)), ('pluto_kennel', (27.0, 20.0)), ('pluto_kennel_open', (27.0, 25.0)), ('pluto_kennel', (27.0, 28.5)),
-    ('pluto_nurse_station', (12.0, 22.5)),
-    ('pluto_prep_sign', (11.5, 31.2)),
+    ('pluto_kennel', (1.0, 16.5)), ('pluto_kennel_open', (1.0, 20.0)), ('pluto_kennel_cone', (1.0, 25.0)), ('pluto_kennel_open', (1.0, 28.5)),
+    ('pluto_kennel_open', (27.0, 16.5)), ('pluto_kennel_cone', (27.0, 20.0)), ('pluto_kennel_open', (27.0, 25.0)), ('pluto_kennel', (27.0, 28.5)),
+    ('pluto_nurse_station', (12.0, 23.0)),
+    ('pluto_prep_sign', (11.5, 32.4)),
     ('pluto_side_door', (0.0, 22.5)), ('pluto_side_door', (29.0, 22.5)),
-    ('pluto_food_bowls', (16.0, 21.0)),
     ('pluto_litter_box', (10.0, 20.5)),
-    ('pluto_xray_box', (5.0, 30.0)), ('pluto_med_shelf', (8.0, 29.5)),
+    ('pluto_xray_box', (5.0, 32.3)), ('pluto_med_shelf', (8.0, 29.5)),
     ('pluto_iv_stand', (19.5, 29.5)), ('pluto_sharps_bin', (21.5, 30.0)), ('pluto_litter_box', (24.0, 30.0)),
     ('pluto_paw_prints', (14.0, 17.0)),
     # --- operating theatre
-    ('pluto_cabinet', (1.0, 48.0)), ('pluto_cabinet', (3.5, 48.0)), ('pluto_cabinet', (6.0, 48.0)),
-    ('pluto_vaccine_fridge', (9.0, 48.0)), ('pluto_clock', (11.6, 50.1)),
-    ('pluto_poster', (12.0, 48.0)),
-    ('pluto_cabinet', (16.0, 48.0)), ('pluto_cabinet', (19.0, 48.0)), ('pluto_cabinet', (22.0, 48.0)), ('pluto_cabinet', (25.0, 48.0)),
-    ('pluto_exam_table', (13.0, 41.0)), ('pluto_strap_table_pad', (13.25, 42.4)),
-    ('pluto_surgical_lamp', (14.0, 46.0)),
+    ('pluto_cabinet_wide', (1.0, 49.0)), ('pluto_vaccine_fridge', (5.5, 49.0)),
+    ('pluto_clock', (10.6, 52.4)), ('pluto_poster', (12.0, 52.2)),
+    ('pluto_cabinet_wide', (16.0, 49.0)), ('pluto_cabinet_wide', (21.0, 49.0)),
+    ('pluto_sink', (25.0, 49.0)), ('pluto_scale', (27.2, 49.0)),
+    ('pluto_lamp_pool', (11.0, 40.75)),
+    ('pluto_exam_table', (12.0, 41.0)),
+    ('pluto_lamp_arm', (10.0, 45.5)),
+    ('pluto_lamp_head', (11.5, 43.0)),
     ('pluto_cart', (18.0, 41.5)),
     ('pluto_monitor_cart', (8.0, 41.5)),
-    ('pluto_iv_stand', (11.0, 44.0)),
+    ('pluto_iv_stand', (23.5, 46.5)),
     ('pluto_side_door', (29.0, 39.5)),
-    ('pluto_syringe_tray', (10.0, 45.0)),
     ('pluto_cone', (22.0, 45.0)),
-    ('pluto_sink', (25.0, 43.5)),
-    ('pluto_scale', (4.0, 43.0)),
     ('pluto_toy_mouse', (7.0, 39.0)),
     ('pluto_toy_ball', (20.0, 37.0)),
     ('pluto_feather_wand', (16.0, 36.5)),

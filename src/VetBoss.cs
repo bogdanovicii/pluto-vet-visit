@@ -52,7 +52,7 @@ namespace PlutoVetVisit
             actor.OverrideDisplayName = NAME_KEY;
             hh.bossHealthBar = HealthHaver.BossBarType.MainBar; // boss bar, kill cam, boss damage rules
             hh.overrideDeathAnimation = "die";
-            actor.MovementSpeed = 3f;
+            actor.MovementSpeed = PastConfig.BossSpeed;
             actor.CollisionDamage = 1f;
             actor.CollisionKnockbackStrength = 5f;
             actor.knockbackDoer.weight = 200f;
@@ -105,6 +105,7 @@ namespace PlutoVetVisit
             };
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
+                new InitialAttackDelayBehavior { Time = 2f },   // every vanilla floor boss walks for 2 s before the first tell
                 new AttackBehaviorGroup { ShareCooldowns = false, AttackBehaviors = BuildAttacks(shootPoint) }
             };
             bs.InstantFirstTick = false;
@@ -196,6 +197,10 @@ namespace PlutoVetVisit
         public static AIBulletBank.Entry Entry(AIBulletBank.Entry template, string name, string sprite, int w, int h)
         {
             AIBulletBank.Entry e = EnemyBuildingTools.CopyBulletBankEntry(template, name, "DNC");
+            // The Bullet Kin's entry ships with PlayAudio off; the King's banks set the magnum shot on theirs.
+            e.PlayAudio = true;
+            e.AudioEvent = "Play_WPN_Magnum_shot_01";
+            e.AudioLimitOncePerFrame = true;
             GameObject clone = FakePrefab.Clone(e.BulletObject);
             Projectile p = clone.GetComponent<Projectile>();
             p.SetProjectileSpriteRight(sprite, w, h, false, tk2dBaseSprite.Anchor.MiddleCenter, w, h);
@@ -203,28 +208,46 @@ namespace PlutoVetVisit
             return e;
         }
 
+        /// <summary>Three phases by health, shaped like the vanilla floor bosses the research measured (Bullet King,
+        /// Gorgun, Beholster, Gatling Gull): bread-and-butter attacks every 1.5-2.5 s, signature patterns on 3.5-5 s
+        /// cooldowns with a longer breather (AttackCooldown) after them, a 2 s walk before the first tell, and the
+        /// heavy patterns held back for the first seconds (InitialCooldown). Attacks are range-gated so the Vet uses
+        /// the right tool for the distance: syringes lead the target at range, the spray bottle punishes hugging him.</summary>
         private static List<AttackBehaviorGroup.AttackGroupItem> BuildAttacks(GameObject shootPoint)
         {
-            // Three phases by health. Attacks are range-gated so the Vet uses the right tool for the
-            // distance: syringes lead the target at range, the spray bottle punishes hugging him.
+            float c = PastConfig.BossCooldownScale;
             return new List<AttackBehaviorGroup.AttackGroupItem>
             {
-                // Phase 1 (above half health)
-                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.9f, 0.5f, 1f, minRange: 4f)),
-                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f, 0.5f, 1f, range: 8f)),
-                Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.0f, 0.5f, 1f)),
-                // Phase 2 (half to a fifth): quicker, plus the droplet wall, the vaccination spiral and the Cone of Shame
-                Item("booster shot 2", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f, 0.2f, 0.5f, minRange: 4f)),
-                Item("spray bottle 2", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f, 0.2f, 0.5f, range: 8f)),
-                Item("pill time 2", 0.7f, Shoot(typeof(PillTimeScript), shootPoint, 2.4f, 0.2f, 0.5f)),
-                Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f, 0.2f, 0.5f, minRange: 5f)),
-                Item("vaccination spiral", 0.8f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f, 0.2f, 0.5f)),
-                Item("cone of shame", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f, 0.2f, 0.5f)),
-                // Phase 3 (last fifth): "just a little snip"
-                Item("snip time", 1.5f, Shoot(typeof(SnipTimeScript), shootPoint, 1.4f, 0f, 0.2f)),
-                Item("vaccination spiral 3", 1.0f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 3.5f, 0f, 0.2f)),
-                Item("cone of shame 3", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f, 0f, 0.2f)),
-                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 2.6f, 0f, 0.2f, minRange: 5f)),
+                // Phase 1, 100-60 %: "Consultation". Aimed bursts, fans, slow pills. About one attack every 2.5 s.
+                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f * c, 0.6f, 1f, minRange: 4f, attackCooldown: 0.5f)),
+                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f * c, 0.6f, 1f, range: 8f, attackCooldown: 0.6f)),
+                Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.5f * c, 0.6f, 1f, attackCooldown: 0.8f, initialCooldown: 4f)),
+                // Phase 2, 60-25 %: "Treatment". Quicker bursts, the droplet wall (find the gap, follow it), the spiral, the cone.
+                Item("booster shot 2", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f * c, 0.25f, 0.6f, minRange: 4f, attackCooldown: 0.5f)),
+                Item("spray bottle 2", 1.0f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f * c, 0.25f, 0.6f, range: 8f, attackCooldown: 0.6f)),
+                Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f * c, 0.25f, 0.6f, minRange: 5f, attackCooldown: 0.8f)),
+                Item("vaccination spiral", 0.8f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
+                Item("cone of shame", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
+                // Phase 3, last quarter: "Just a little snip". Fast leading bursts, the hard wall, and the full course
+                // (wall then spiral back to back, the way the Gorgun chains her two uzi hoses).
+                Item("snip time", 1.5f, Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f)),
+                Item("cone of shame 3", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
+                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 0.8f)),
+                new AttackBehaviorGroup.AttackGroupItem
+                {
+                    NickName = "full course",
+                    Probability = 1.0f,
+                    Behavior = new SequentialAttackBehaviorGroup
+                    {
+                        RunInClass = false,
+                        AttackBehaviors = new List<AttackBehaviorBase>
+                        {
+                            Shoot(typeof(DropletWallScript), shootPoint, 4.0f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 1.0f),
+                            Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f * c, 0f, 0.25f, attackCooldown: 1.0f),
+                        },
+                        OverrideCooldowns = new List<float> { 0.4f },
+                    }
+                },
             };
         }
 
@@ -234,7 +257,7 @@ namespace PlutoVetVisit
         }
 
         /// <summary>An attack usable while health is between minHealth and maxHealth (fractions of max).</summary>
-        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f)
+        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f, float attackCooldown = 0.4f, float initialCooldown = 1f)
         {
             return new ShootBehavior
             {
@@ -255,9 +278,9 @@ namespace PlutoVetVisit
                 UseVfx = false,
                 Cooldown = cooldown,
                 CooldownVariance = 0.25f,
-                AttackCooldown = 0.4f,
+                AttackCooldown = attackCooldown,
                 GlobalCooldown = 0f,
-                InitialCooldown = 1f,
+                InitialCooldown = initialCooldown,
                 InitialCooldownVariance = 0f,
                 GroupName = null,
                 GroupCooldown = 0f,
@@ -296,7 +319,7 @@ namespace PlutoVetVisit
                 called = true;
                 VetVisitController.Instance.CallReinforcements();
             }
-            if (!lastFifth && resultValue <= maxValue * 0.2f)
+            if (!lastFifth && resultValue <= maxValue * 0.25f)
             {
                 lastFifth = true;
                 VetVisitController.Instance.LastFifth();

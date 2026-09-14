@@ -64,8 +64,21 @@ class RoomTests(unittest.TestCase):
         self.assertIn(C.CONTROLLER, [name for name, _ in C.PLACEABLES])
 
     def test_placeables_on_floor(self):
+        # flat decor (no collider) may hang on a wall row: the wall faces and the pictures/signs on them
+        flat = {o.name for o in C.O.OBJECTS if o.collider is None}
         for name, (x, y) in C.PLACEABLES:
+            if name in flat:
+                self.assertTrue(0 <= x < C.WIDTH and 0 <= y < C.HEIGHT, name)
+                continue
             self.assertTrue(C.is_floor(x, y), '%s at %s,%s is not on floor' % (name, x, y))
+
+    def test_wall_faces_sit_on_the_wall_rows(self):
+        faces = [(n, c) for n, c in C.PLACEABLES if n.startswith('pluto_wall_face')]
+        self.assertEqual(faces, [('pluto_wall_face', (0.0, 13.0)), ('pluto_wall_face', (0.0, 32.0)), ('pluto_wall_face_solid', (0.0, 52.0))])
+        for _, (x, y) in faces:
+            self.assertFalse(C.is_floor(x, y))
+            self.assertFalse(C.is_floor(x, y + 1))
+        self.assertEqual(C.HEIGHT, 54)
 
     def test_named_cells_on_floor(self):
         for name, (x, y) in C.NAMED.items():
@@ -78,7 +91,7 @@ class RoomTests(unittest.TestCase):
         for y in range(C.HEIGHT):
             wall_row = y in (13, 14, 32, 33)
             for x in range(C.WIDTH):
-                expect_wall = wall_row and x not in (14, 15)
+                expect_wall = (wall_row and x not in (14, 15)) or y >= 52    # y 52..53: the theatre's solid north wall
                 self.assertEqual(C.cell(x, y) == '#', expect_wall, (x, y))
         self.assertEqual(C.ZONES, {'WARD_MIN_Y': 15, 'THEATRE_MIN_Y': 34})
         self.assertLess(C.NAMED['Spawn'][1], 13)
@@ -105,6 +118,10 @@ class RoomTests(unittest.TestCase):
         for name, (x, y) in C.NPCS:
             self.assertTrue(C.is_floor(x, y), name)
             self.assertLess(y, 13, name)
+        seats = {(x, y) for n, (x, y) in C.O.PROPS if n == 'pluto_chair'}
+        for who in ('pluto_npc_rex', 'pluto_npc_grandma'):
+            x, y = dict(C.NPCS)[who]
+            self.assertIn((x, round(y + 0.2, 2)), seats, who)         # sits a fifth of a cell in front of a chair
         self.assertLess(C.NAMED['OwnerExit'][1], 0)          # he walks off the map through the south exit
         self.assertTrue(C.is_floor(*C.NAMED['OwnerStart']))
         self.assertTrue(C.is_floor(*C.NAMED['IntroFocus']))
@@ -133,6 +150,14 @@ class RoomTests(unittest.TestCase):
     def test_preview_image_size(self):
         im = C.preview_image()
         self.assertEqual(im.size, (C.WIDTH * C.SCALE, C.HEIGHT * C.SCALE))
+
+    def test_sprite_preview_renders_the_generated_pngs(self):
+        project = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if not os.path.exists(os.path.join(project, 'Resources', 'Objects', 'floor_ward.png')):
+            raise unittest.SkipTest('run tools/make_art.py first')
+        im = C.sprite_preview_image(project)
+        self.assertEqual(im.size, (C.WIDTH * C.PX, C.HEIGHT * C.PX))
+        self.assertEqual(im.getpixel((8, im.height - 8))[:3], (0xF4, 0xF6, 0xF8))        # the waiting-room floor at (0, 0)
 
 
 if __name__ == '__main__':

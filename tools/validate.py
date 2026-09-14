@@ -63,6 +63,37 @@ def check_room():
     ok('room %dx%d, %d placeables' % (w, h, len(data['placeableGUIDs'])))
 
 
+def check_look():
+    """0.10.0: three zone floors that cover their zones, wall faces on the divider rows, lamp head above the actors."""
+    import clinic_room
+    import clinic_objects
+    placed = {}
+    for name, (x, y) in clinic_objects.PROPS:
+        placed.setdefault(name, []).append((x, y))
+    sizes = {o.name: o.size for o in clinic_objects.OBJECTS}
+    hog = {o.name: o.height_off_ground for o in clinic_objects.OBJECTS}
+    zones = {'pluto_floor_waiting': (0, 13), 'pluto_floor_ward': (15, 32), 'pluto_floor_theatre': (34, 52)}
+    for name, (y0, y1) in zones.items():
+        if name not in placed:
+            err('%s not placed' % name)
+            continue
+        x, y = placed[name][0]
+        w, h = sizes[name]
+        if w != clinic_room.WIDTH * 16 or y > y0 or y + h / 16.0 < y1:
+            err('%s is %dx%d at (%s, %s); must span x 0..%d and y %d..%d' % (name, w, h, x, y, clinic_room.WIDTH, y0, y1))
+        if hog[name] >= 0:
+            err('%s must have a negative HeightOffGround to lie under actors' % name)
+    faces = placed.get('pluto_wall_face', []) + placed.get('pluto_wall_face_solid', [])
+    for x, y in faces:
+        if clinic_room.cell(x, y) != '#':
+            err('wall face at (%s, %s) is not on a wall row' % (x, y))
+    if len(faces) < 3:
+        err('expected 3 wall faces, found %d' % len(faces))
+    if hog.get('pluto_lamp_head', 0) < 1.0:
+        err('the lamp head must draw over the actors (HeightOffGround >= 1)')
+    ok('zone floors, %d wall faces, lamp head' % len(faces))
+
+
 def check_objects():
     import clinic_objects
     for o in clinic_objects.OBJECTS:
@@ -165,7 +196,7 @@ def check_dll(man):
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room, check_objects, check_boss, check_cast]
+CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_boss, check_cast]
 
 
 def main():

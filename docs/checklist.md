@@ -118,3 +118,55 @@ Log lines: `loadout on arrival: N gun(s), current ...` (and `loadout at 1 s: ...
 6. Difficulty: how many hearts did the whole past cost? Time to kill the Vet? (Target: a real fight, no wipe.)
 
 **Result:** pending
+
+## Milestone 10 — plays, looks and reads like a vanilla past (Pluto_Vet_Visit-0.10.0.zip)
+
+Fresh config recommended (delete `BepInEx/config/bogdan.etg.plutovetvisit.cfg` once so the new `[Balance]` and `[Room]` keys appear).
+`SkipIntro = false`, `SkipWaves = false`, `DebugEndAfterSeconds = 0`.
+
+What was checked in the decompiled game before this build (so the tester knows what the log lines mean):
+- Guns: `ArkController.ResetPlayers` calls `ResetToFactorySettings` (destroy all guns, re-add `startingGunIds`, clear every input
+  override) before `LoadCustomLevel`; nothing in the level load strips guns (`Dungeon.StripPlayerOnArrival` is off on the Soldier
+  template). Firing needs `AcceptingNonMotionInput` (no input override, `PreventPausing` false), `CurrentGun != null`, `!IsGunLocked`.
+  Only `ToggleGunRenderers(true, "")` clears every hide key. The loadout check repairs all of it and logs a snapshot.
+- Staff: `BehaviorSpeculator.Update` returns unless the actor `HasBeenAwoken` (State not Inactive/Awakening). `AIActor.State` is
+  not copied to a clone; the `ObjectVisibilityManager` that wakes vanilla enemies is destroyed by `EnemyBuilder`; `AIActor.Spawn`'s
+  `autoEngage` is consumed only by that manager. So every EnemyBuilder actor was born asleep. `HasBeenEngaged = true` runs
+  `OnEngaged` (State Normal, brain on); a missing "spawn"/"awaken" clip is harmless; `ShootBehavior` needs no AIShooter.
+- Patterns: measured against the Bullet King, Gorgun, Beholster and Gatling Gull prefabs (bullet speeds 5-12, fans 7-20 bullets,
+  rings 16-64, cooldowns 1-1.5 s bread-and-butter, 3-12 s signature, `InitialAttackDelayBehavior` 2 s).
+
+Log lines, in order:
+`ambient light: N lab controller(s) disabled`, `loadout on arrival: before[...] after[...]`, `intro: camera locked`, `intro over: input AllInput`,
+`the ward door opens`, `ward greeting: camera locked`, `ward greeting over: input AllInput`, `wave 1: 3 enemies`,
+`wave 1 Vet Tech @(x, y): state Normal, awoken True, enabled True, brain True, engaged True, ... target True, ... passable True, pathed True`,
+`wave 1 cleared`, `wave 2: 5 enemies`, `wave 2 cleared`, `hearts on the nurse station`, `the theatre door opens`, `The Vet spawned`,
+`theatre dialogue over: input AllInput`, `fight started`, `the Vet calls the Nurse`, `reinforcements The Nurse ...: state Normal`, `The Vet is down`, `past killed`.
+Bad signs: `state Inactive` or `awoken False` at 2 s (engagement failed: send the whole line), `pathed False` (bad spawn cell),
+`not awake after`, `no target after`, `loadout ...: input was overridden`, any `NullReferenceException` near `BehaviorSpeculator`.
+
+1. Waiting room: Pluto holds the Royal Kibble Sack and can shoot the moment control returns (during the intro he cannot, by design).
+   If not, run `vet_loadout` and send the `loadout console:` line (it says whether the gun, its renderer or the input state was the problem).
+2. Look: white tiled floor with a few drain / paw / cracked tiles, white-and-teal wall faces with the TV, window, clock and intercom on them,
+   nine orange chairs (Rex and Grandma on two), the long reception desk with monitor and bell, the fish tank on its stand.
+   Report anything drawn over Pluto; `[Room] FloorTiles = false` / `WallFaces = false` switch them off.
+3. The ward door opens: Rex and Grandma each say a line. Walk in: the door closes, a Tech steps up: "Pluto? The doctor is through the far
+   door." / "First, hold still..." (interact skips a line), Pluto hisses, then wave 1: three Techs walk toward Pluto, stop at range,
+   raise the pistol (tell), fire a three-round burst, and die with a death animation and a corpse. Report movement within 2 s.
+4. Intercom after wave 1; wave 2 (two Techs, mutant kin, rat, parrot) from the kennels; "The doctor will see you now."; two hearts on the station.
+5. Ward look: barred kennels along both walls (two with a coned patient), the station with bowls on it, X-ray box and PREP sign on the wall.
+6. Theatre: the lamp head hangs over the strapped table and draws over Pluto when he walks under it (report if it hides the Vet).
+   Dialogue (three lines, skippable), then the boss card "THE VET — Doctor's Orders", health bar, music. He walks for ~2 s, then attacks.
+7. Fight: phase 1 (to 60 %) aimed syringe bursts, droplet fans, slow pills (shoot a pill: it pops). Phase 2 (60-25 %): the droplet wall
+   opens a gap on Pluto that shifts for the second wave; the spiral; the cone rings. At 50 % "Nurse! Hold him down!", the Nurse and two
+   Techs come in from the right with a line, the Vet answers "About time, Nurse.". Phase 3 (< 25 %): "Just... a little... snip!",
+   fast bursts, the wall then the spiral back to back. Every shot has a sound.
+8. Balance: hearts lost for the whole past, time to kill the Vet (target 60-90 s), time for the Nurse (~10 s), Techs in a few hits.
+9. `spawn pluto:vet_tech` and `spawn pluto:nurse` in a normal room: they now wake themselves (`... engaged itself` in the log) and fight.
+
+Config knobs for balance (`[Balance]`, no rebuild needed): `BulletSpeedScale` (0.8 easier, 1.2 harder, scales every enemy bullet),
+`BossCooldownScale` (1.3 slower fight), `BossSpeed` 3, `TechSpeed` 4.5, `NurseSpeed` 3.2, `TechCooldown` 1.8, `NurseFanCooldown` 2.2,
+`NurseNetCooldown` 4.5; `[Boss] BossHealth` 800; `[Cast] TechHealth` 18, `NurseHealth` 150, `BossReinforcements`; `[Waves] Wave1/Wave2`.
+Look: `[Room] FloorTiles`, `WallFaces`, `AmbientR/G/B` (0.96/0.84/0.84; the lab is 0.91/0.64/0.64).
+
+**Result:** pending

@@ -1,7 +1,8 @@
 """The vet clinic room as an ASCII cell map -> Alexandria .newroom JSON, ClinicLayout.cs and a preview.
 
-One 30 x 52 room, three zones stacked south to north (waiting room, ward, operating theatre), separated by
-two-cell-thick wall segments with a two-cell gap on the centre line. A clinic door prop (pluto_clinic_door) sits
+One 30 x 54 room, three zones stacked south to north (waiting room, ward, operating theatre), separated by
+two-cell-thick wall segments with a two-cell gap on the centre line; two more wall rows close the theatre's north
+edge so its wall face (pluto_wall_face_solid) has something to stand on. A clinic door prop (pluto_clinic_door) sits
 in each gap; VetVisitController seals it behind Pluto and opens the next one when the zone's waves are dead.
 
 Coordinates everywhere else in this file are GAME coordinates: x to the right, y up, cell (0,0) at the
@@ -14,11 +15,13 @@ from PIL import Image, ImageDraw
 
 import clinic_objects as O
 
-WIDTH, HEIGHT = 30, 52
-SCALE = 8  # preview pixels per cell
+WIDTH, HEIGHT = 30, 54
+SCALE = 8  # preview pixels per cell (the schematic); the sprite preview renders at 16
 
 ROOM_MAP = [
-    "..............................",  # y = 51 (north edge; the generator adds the outer walls)
+    "##############################",  # y = 53 (north edge; the generator adds the outer walls beyond)
+    "##############################",  # y = 52: the theatre's north wall rows carry pluto_wall_face_solid
+    "..............................",  # y = 51 (theatre y 34..51)
     "..............................",
     "..............................",
     "..............................",
@@ -96,16 +99,18 @@ ZONES = {
 # Where the waves stand up. Wave 1 comes out of the side doors (east and west wall, mid-ward); wave 2 out of
 # the kennels. Each is a list of cells; the controller reads the enemy list from the config.
 SPAWNS = {
-    'Wave1Spawns': [(2.0, 23.5), (27.0, 23.5), (2.0, 19.5), (27.0, 27.5)],
+    'Wave1Spawns': [(3.5, 23.5), (25.5, 23.5), (3.5, 19.0), (25.5, 27.5)],   # a cell and a half off the kennel columns
     'Wave2Spawns': [(3.5, 17.5), (3.5, 29.5), (25.5, 17.5), (25.5, 29.5), (14.5, 29.0), (9.0, 17.5)],
     'TheatreSpawns': [(26.0, 40.0), (26.5, 37.5), (26.5, 42.5)],   # the Nurse and two Techs, from the east side door
 }
 # Bystanders placed by the room (see cast_layout.NPC_OBJECTS for the art behind each name). Sprite lower-left on the cell.
 NPCS = [
     ('pluto_npc_owner', (3.5, 2.5)),
-    ('pluto_npc_receptionist', (20.5, 10.4)),
-    ('pluto_npc_rex', (0.6, 7.4)),
-    ('pluto_npc_grandma', (0.6, 10.4)),
+    ('pluto_npc_receptionist', (21.5, 11.3)),  # behind the desk (desk top ends at y 12.5): head and shoulders show
+    # Rex and Grandma sit on the third and fourth west-wall chairs (chairs at (0.75, 7.5) and (0.75, 9.0), 24 px tall like the
+    # sprites): each stands a fifth of a cell SOUTH of its chair so it sorts in front of the seat and the back rest shows above it.
+    ('pluto_npc_rex', (0.75, 7.3)),
+    ('pluto_npc_grandma', (0.75, 8.8)),
 ]
 EXITS = [((14, 0), 'SOUTH')]     # one unused south exit (the generator wants a door somewhere)
 
@@ -246,6 +251,57 @@ def preview_image():
     return im
 
 
+PX = 16  # sprite preview pixels per cell
+
+
+def sprite_preview_image(project):
+    """The room as the game will draw it: the real prop PNGs (Resources/Objects) and the NPCs' first idle frames pasted at
+    their placements in draw order - floors and flat decor by height off ground, then perpendicular props and NPCs from north
+    to south, then flat decor with a height off ground of 1 or more (the lamp head hangs over everything)."""
+    import cast_layout
+    import npc_poses
+
+    objects = os.path.join(project, 'Resources', 'Objects')
+    specs = {o.name: o for o in O.OBJECTS}
+    im = Image.new('RGBA', (WIDTH * PX, HEIGHT * PX), (0x2E, 0x2E, 0x3A, 255))
+    d = ImageDraw.Draw(im)
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            if cell(x, y) == '#':
+                py = (HEIGHT - 1 - y) * PX
+                d.rectangle((x * PX, py, x * PX + PX - 1, py + PX - 1), fill=(0x5A, 0x5E, 0x6A, 255))
+
+    def paste(png, x, y):
+        sprite = Image.open(png).convert('RGBA')
+        px, py = int(round(x * PX)), int(round((HEIGHT - y) * PX)) - sprite.height
+        im.alpha_composite(sprite, (px, py))
+
+    flat_under, standing, flat_over = [], [], []
+    for name, (x, y) in O.PROPS:
+        spec = specs[name]
+        png = os.path.join(objects, spec.png + '.png')
+        if spec.collider is not None:
+            standing.append((y, png, x))
+        elif spec.height_off_ground >= 1.0:
+            flat_over.append((spec.height_off_ground, png, x, y))
+        else:
+            flat_under.append((spec.height_off_ground, png, x, y))
+    for name, (x, y) in PLACEABLES_():
+        if name == DOOR:
+            standing.append((y, os.path.join(objects, 'clinic_door.png'), x))
+    for name, (x, y) in NPCS:
+        folder = cast_layout.NPC_OBJECTS[name]
+        clip = next(iter(npc_poses.NPCS[folder]['clips']))
+        standing.append((y, os.path.join(project, 'Resources', 'Npcs', folder, clip, '%s_%s_001.png' % (folder, clip)), x))
+    for hog, png, x, y in sorted(flat_under, key=lambda t: t[0]):
+        paste(png, x, y)
+    for y, png, x in sorted(standing, key=lambda t: -t[0]):
+        paste(png, x, y)
+    for hog, png, x, y in sorted(flat_over, key=lambda t: t[0]):
+        paste(png, x, y)
+    return im
+
+
 def write(project):
     room = os.path.join(project, 'Resources', 'Rooms', 'vet_clinic.newroom')
     os.makedirs(os.path.dirname(room), exist_ok=True)
@@ -257,4 +313,6 @@ def write(project):
     prev = os.path.join(project, 'docs', 'preview', 'clinic-room.png')
     os.makedirs(os.path.dirname(prev), exist_ok=True)
     preview_image().save(prev)
-    return room, cs, prev
+    sprites = os.path.join(project, 'docs', 'preview', 'clinic-room-sprites.png')
+    sprite_preview_image(project).save(sprites)
+    return room, cs, prev, sprites

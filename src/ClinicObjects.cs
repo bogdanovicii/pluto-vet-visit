@@ -35,6 +35,7 @@ namespace PlutoVetVisit
             ClinicProp prop = go.AddComponent<ClinicProp>();
             prop.heightOffGround = spec.HeightOffGround;
             prop.perpendicular = spec.Collider != ObjectSpec.Layer.None;
+            prop.kind = spec.Png.StartsWith("floor_") ? ClinicProp.Kind.Floor : spec.Png.StartsWith("wall_face") ? ClinicProp.Kind.WallFace : ClinicProp.Kind.Prop;
             if (spec.Collider != ObjectSpec.Layer.None)
             {
                 CollisionLayer layer = spec.Collider == ObjectSpec.Layer.High ? CollisionLayer.HighObstacle : CollisionLayer.LowObstacle;
@@ -102,15 +103,25 @@ namespace PlutoVetVisit
         }
     }
 
-    /// <summary>Depth sorting for placed props: furniture stands up (perpendicular), decor lies under actors.</summary>
+    /// <summary>Depth sorting for placed props: furniture stands up (perpendicular), decor lies under actors.
+    /// A flat sprite's z grows with its own height (tk2dBaseSprite tilts flat sprites away from the camera), so
+    /// the zone floors at HeightOffGround -4 sort behind every actor at every pixel; the wall faces at +0.5 draw
+    /// over the tileset's wall face and behind anyone standing south of them. Both can be switched off in the config.</summary>
     public class ClinicProp : BraveBehaviour
     {
+        public enum Kind { Prop, Floor, WallFace }
         public float heightOffGround;
         public bool perpendicular;
+        public Kind kind = Kind.Prop;
 
         private void Start()
         {
             if (sprite == null) return;
+            if ((kind == Kind.Floor && !PastConfig.FloorTiles) || (kind == Kind.WallFace && !PastConfig.WallFaces))
+            {
+                sprite.renderer.enabled = false;
+                return;
+            }
             sprite.IsPerpendicular = perpendicular;
             sprite.HeightOffGround = heightOffGround;
             sprite.UpdateZDepth();

@@ -7,7 +7,7 @@ namespace PlutoVetVisit
     {
         public static bool Enabled = true;
         public static bool GuaranteePastAccess = true;
-        public static float BossHealth = 1000f;
+        public static float BossHealth = 800f;
         public static float BossDpsCap = -1f;
         public static string BossMusic = "Play_MUS_Boss_Theme_Beholster";
         public static int RoomVisualSubtype = -1;
@@ -31,8 +31,8 @@ namespace PlutoVetVisit
         public static string Intro6 = "Pluto?";
         public static string Intro7 = "Be good.";
         public static string Epilogue = "Pluto was never taken to the vet again. He is still on Sterilised 37.";
-        public static string Ward1 = "Pluto? This way.";
-        public static string Ward2 = "Hold still. This is just something to calm you down.";
+        public static string Ward1 = "Pluto? The doctor is through the far door.";
+        public static string Ward2 = "First, hold still. Just something to calm you down.";
         public static string Ward3 = "Hsss.";
         public static string Ward4 = "Tech to the ward. The patient is loose.";
         public static string Ward5 = "The doctor will see you now.";
@@ -40,7 +40,21 @@ namespace PlutoVetVisit
         public static string Fight2 = "Coming, doctor.";
         public static string Fight3 = "Grab him!";
         public static string Fight4 = "Just... a little... snip!";
+        public static string Fight5 = "About time, Nurse.";
+        public static string DoorRex = "Don't go in there!";
+        public static string DoorGrandma = "Chin up, kitten.";
         public static bool FloorTiles = true;
+        public static bool WallFaces = true;
+        public static float AmbientR = 0.96f, AmbientG = 0.84f, AmbientB = 0.84f;
+        // Balance knobs (tune without a rebuild). Speeds in tiles per second; scales multiply the values in the code.
+        public static float BulletSpeedScale = 1f;
+        public static float BossCooldownScale = 1f;
+        public static float BossSpeed = 3f;
+        public static float TechSpeed = 4.5f;
+        public static float NurseSpeed = 3.2f;
+        public static float TechCooldown = 1.8f;
+        public static float NurseFanCooldown = 2.2f;
+        public static float NurseNetCooldown = 4.5f;
         public static string CommentOwner = "...";
         public static string CommentReceptionist = "The doctor will see you now.";
         public static string CommentRex = "Don't let them take you in the back.";
@@ -94,8 +108,23 @@ namespace PlutoVetVisit
             Fight1 = cfg.Bind("Story", "Fight1", Fight1, "The Vet at half health.").Value;
             Fight2 = cfg.Bind("Story", "Fight2", Fight2, "The Nurse arriving.").Value;
             Fight3 = cfg.Bind("Story", "Fight3", Fight3, "A Tech arriving (if no Nurse).").Value;
-            Fight4 = cfg.Bind("Story", "Fight4", Fight4, "The Vet at a fifth of his health.").Value;
+            Fight4 = cfg.Bind("Story", "Fight4", Fight4, "The Vet at a quarter of his health.").Value;
+            Fight5 = cfg.Bind("Story", "Fight5", Fight5, "The Vet when the Nurse comes in.").Value;
+            DoorRex = cfg.Bind("Story", "DoorRex", DoorRex, "Rex when the ward door opens.").Value;
+            DoorGrandma = cfg.Bind("Story", "DoorGrandma", DoorGrandma, "Grandma Cat when the ward door opens.").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
+            WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;
+            AmbientR = cfg.Bind("Room", "AmbientR", AmbientR, "Ambient light red (the lab template is 0.91/0.64/0.64; 1/1/1 is neutral).").Value;
+            AmbientG = cfg.Bind("Room", "AmbientG", AmbientG, "Ambient light green.").Value;
+            AmbientB = cfg.Bind("Room", "AmbientB", AmbientB, "Ambient light blue.").Value;
+            BulletSpeedScale = cfg.Bind("Balance", "BulletSpeedScale", BulletSpeedScale, "Multiplies every enemy bullet speed in the past (1 = vanilla band; 0.8 easier, 1.2 harder).").Value;
+            BossCooldownScale = cfg.Bind("Balance", "BossCooldownScale", BossCooldownScale, "Multiplies the Vet's attack cooldowns (1.3 = slower fight, 0.8 = faster).").Value;
+            BossSpeed = cfg.Bind("Balance", "BossSpeed", BossSpeed, "The Vet's walking speed.").Value;
+            TechSpeed = cfg.Bind("Balance", "TechSpeed", TechSpeed, "A Vet Tech's walking speed.").Value;
+            NurseSpeed = cfg.Bind("Balance", "NurseSpeed", NurseSpeed, "The Nurse's walking speed.").Value;
+            TechCooldown = cfg.Bind("Balance", "TechCooldown", TechCooldown, "Seconds between a Tech's three-round bursts (Hegemony soldiers: about 1.8).").Value;
+            NurseFanCooldown = cfg.Bind("Balance", "NurseFanCooldown", NurseFanCooldown, "Seconds between the Nurse's droplet fans.").Value;
+            NurseNetCooldown = cfg.Bind("Balance", "NurseNetCooldown", NurseNetCooldown, "Seconds between the Nurse's net throws.").Value;
             CommentOwner = cfg.Bind("Story", "CommentOwner", CommentOwner, "What the Owner says when Pluto talks to him (he leaves in the intro, so rarely seen).").Value;
             CommentReceptionist = cfg.Bind("Story", "CommentReceptionist", CommentReceptionist, "Receptionist's line when Pluto talks to her.").Value;
             CommentRex = cfg.Bind("Story", "CommentRex", CommentRex, "Rex's line when Pluto talks to him.").Value;

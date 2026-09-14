@@ -34,21 +34,38 @@ namespace PlutoVetVisit
             // The Ark wrote a FINALGEON mid-game save before loading us; the game cannot resume it for a
             // custom character, so remove it (the win page deletes it in vanilla too).
             SaveManager.DeleteCurrentSlotMidGameSave();
+            SettleAmbientLight();
 
             PlayerController player = GameManager.Instance.PrimaryPlayer;
             Place(player, ClinicLayout.Spawn);
-            EnsureLoadout(player, "on arrival");
             if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER)
-            {
                 Place(GameManager.Instance.SecondaryPlayer, ClinicLayout.Spawn + new Vector2(1.5f, 0f));
-                EnsureLoadout(GameManager.Instance.SecondaryPlayer, "on arrival");
-            }
-            StartCoroutine(LoadoutWatchdog());
             Pixelator.Instance.TriggerPastFadeIn();
+            // The level load ends with the player's fall-spawn (NoInput, renderers hidden, then AllInput and shown);
+            // repair the loadout only after that has run, or its last frame overwrites ours.
+            while (GameManager.Instance.IsLoadingLevel) yield return null;
             yield return new WaitForSeconds(0.5f);
+            EnsureLoadout(player, "on arrival", true);
+            if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "on arrival", true);
+            StartCoroutine(LoadoutWatchdog());
             if (PastConfig.DebugEndAfterSeconds > 0f) StartCoroutine(DebugEnding());
             FindDoors();
             yield return StartCoroutine(RunZones(player));
+        }
+
+        /// <summary>The Marine's LabAmbientLightController (if the template carries it) forces a pulsing red every frame
+        /// through Dungeon.OverrideAmbientLight; switch it off so the room's own pale ambient (config) applies.</summary>
+        private void SettleAmbientLight()
+        {
+            try
+            {
+                LabAmbientLightController[] labs = FindObjectsOfType<LabAmbientLightController>();
+                foreach (LabAmbientLightController lab in labs) lab.enabled = false;
+                if (GameManager.Instance.Dungeon != null) GameManager.Instance.Dungeon.OverrideAmbientLight = false;
+                PastPlugin.Log("ambient light: " + labs.Length + " lab controller(s) disabled, room ambient " + PastConfig.AmbientR + "/" + PastConfig.AmbientG + "/" + PastConfig.AmbientB
+                    + ", floor tiles " + PastConfig.FloorTiles + ", wall faces " + PastConfig.WallFaces);
+            }
+            catch (Exception e) { PastPlugin.Log("ambient light: " + e.Message); }
         }
 
         // ------------------------------------------------------------------ zones and gates
@@ -80,6 +97,7 @@ namespace PlutoVetVisit
             else HideOwner();
             SpawnCritters();
             SetDoor(wardDoor, true, "the ward door opens");
+            ReactToDoor();
             yield return StartCoroutine(WaitForZone(ClinicLayout.WARD_MIN_Y + 1.5f));
 
             // Act 2: the ward. Sealed behind Pluto; two waves; the theatre door opens when the second is dead.
@@ -124,6 +142,30 @@ namespace PlutoVetVisit
             return p != null && p.healthHaver != null && !p.healthHaver.IsDead && p.CenterPosition.y - origin.y >= cellY;
         }
 
+        // ------------------------------------------------------------------ cutscenes: one lock, one unlock, always paired
+
+        /// <summary>What every vanilla past does before a conversation (PastCameraUtility.LockConversation: the "past"
+        /// input override on every player, letterbox, HUD off, manual camera at the focus point).</summary>
+        private void BeginCutscene(string what, Vector2 focus)
+        {
+            cutscene = true;
+            PastCameraUtility.LockConversation(focus);
+            PastPlugin.Log(what + ": camera locked, input overridden");
+        }
+
+        /// <summary>The mirror image, run from a finally so a throwing line cannot leave Pluto frozen: unlock the camera,
+        /// clear the override, repair the loadout, and log the input state the act ends with.</summary>
+        private void EndCutscene(string what, PlayerController player)
+        {
+            cutscene = false;
+            try { PastCameraUtility.UnlockConversation(); } catch (Exception e) { PastPlugin.Log(what + ": unlock failed: " + e.Message); }
+            EnsureLoadout(player, "after " + what, true);
+            if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "after " + what, true);
+            if (player != null)
+                PastPlugin.Log(what + " over: input " + player.CurrentInputState + ", nonMotion " + player.AcceptingNonMotionInput + ", overridden " + player.IsInputOverridden
+                    + ", gun " + (player.CurrentGun != null ? player.CurrentGun.name : "none"));
+        }
+
         // ------------------------------------------------------------------ act 1: the intro
 
         private Transform intercom;
@@ -145,10 +187,7 @@ namespace PlutoVetVisit
         {
             ClinicNpc owner = ClinicNpc.Find("owner"), desk = ClinicNpc.Find("receptionist"), rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
             PastPlugin.Log("intro: owner " + (owner != null) + ", receptionist " + (desk != null) + ", rex " + (rex != null) + ", grandma " + (grandma != null));
-            bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
-            player.SetInputOverride("past");
-            if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
-            PastCameraUtility.LockConversation(World(ClinicLayout.IntroFocus));
+            BeginCutscene("intro", World(ClinicLayout.IntroFocus));
             try
             {
                 yield return new WaitForSeconds(0.8f);
@@ -171,10 +210,22 @@ namespace PlutoVetVisit
             }
             finally
             {
-                PastCameraUtility.UnlockConversation();
-                player.ClearInputOverride("past");
-                if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+                EndCutscene("intro", player);
             }
+        }
+
+        /// <summary>Rex and Grandma Cat react when the ward door slides open (a bubble each, a beat apart).</summary>
+        private void ReactToDoor()
+        {
+            ClinicNpc rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
+            if (rex != null) Bubble(rex.transform, PastConfig.DoorRex, 2.2f);
+            if (grandma != null) StartCoroutine(BubbleLater(grandma.transform, PastConfig.DoorGrandma, 2.2f, 1.2f));
+        }
+
+        private IEnumerator BubbleLater(Transform who, string text, float seconds, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            Bubble(who, text, seconds);
         }
 
         private void HideOwner()
@@ -248,6 +299,7 @@ namespace PlutoVetVisit
                 if (a == null) continue;
                 bool nurse = a.GetActorName() == "The Nurse" || a.name.Contains("Nurse");
                 Bubble(a.transform, nurse ? PastConfig.Fight2 : PastConfig.Fight3, 2f);
+                if (nurse && vet != null && !ending) StartCoroutine(BubbleLater(vet.transform, PastConfig.Fight5, 2f, 2.2f));
                 break;   // one arrival line is enough
             }
             if (adds.Count > 0) StartCoroutine(Heartbeat("reinforcements", adds));
@@ -336,36 +388,76 @@ namespace PlutoVetVisit
             return alive;
         }
 
-        /// <summary>Everything a spawned actor needs to actually fight in a room the player is already inside:
-        /// engaged, awake, brain on, damage allowed. The player-entered-the-room trigger never fires for them.</summary>
+        /// <summary>Everything a spawned actor needs to actually fight in a room the player is already inside.
+        /// Root cause of the 0.8.0 "staff do nothing": AIActor.State is not carried onto a clone, so every spawned
+        /// actor is born Inactive, and BehaviorSpeculator.Update returns before ticking a brain until the actor
+        /// has been awoken (State neither Inactive nor Awakening). Vanilla wakes actors through the room's
+        /// ObjectVisibilityManager (the only consumer of AIActor.Spawn's autoEngage), which EnemyBuilder strips
+        /// from its template; the Vet only worked because GenericIntroDoer.EndSequence sets State = Normal.
+        /// HasBeenEngaged = true runs OnEngaged (State Normal, speculator on), the way BecomeHostile does for the
+        /// Convict's soldiers. Each step is its own try/catch so one throw cannot leave an actor half-awake.</summary>
         public static void Engage(AIActor a)
         {
             if (a == null) return;
+            try { a.HasBeenEngaged = true; } catch (Exception e) { PastPlugin.Log("engage: HasBeenEngaged threw for " + a.name + ": " + e); }
+            try { if (a.State != AIActor.ActorState.Normal) a.State = AIActor.ActorState.Normal; } catch (Exception e) { PastPlugin.Log("engage: State threw for " + a.name + ": " + e.Message); }
+            try { a.HasDonePlayerEnterCheck = true; } catch (Exception) { }   // no 8-unit teleport if the room's Entered event fires later
+            try { a.enabled = true; } catch (Exception) { }
             try
             {
-                a.HasBeenEngaged = true;
-                a.State = AIActor.ActorState.Normal;
-                if (a.behaviorSpeculator != null) a.behaviorSpeculator.enabled = true;
-                if (a.healthHaver != null) a.healthHaver.PreventAllDamage = false;
-                if (a.specRigidbody != null) a.specRigidbody.enabled = true;
+                if (a.behaviorSpeculator != null && !a.behaviorSpeculator.enabled)
+                {
+                    a.behaviorSpeculator.enabled = true;
+                    a.behaviorSpeculator.RefreshBehaviors();
+                }
             }
-            catch (Exception e) { PastPlugin.Log("engage failed for " + a.name + ": " + e.Message); }
+            catch (Exception e) { PastPlugin.Log("engage: speculator threw for " + a.name + ": " + e.Message); }
+            try { if (a.healthHaver != null) { a.healthHaver.PreventAllDamage = false; a.healthHaver.IsVulnerable = true; } } catch (Exception) { }
+            try { if (a.specRigidbody != null) a.specRigidbody.enabled = true; } catch (Exception) { }
         }
 
-        /// <summary>Logs each wave actor's state at 2 s and 8 s and forces a target on anyone still idle.</summary>
+        /// <summary>One line per actor that says why it does or does not fight: the speculator gate (enabled, awoken,
+        /// dead), the target, the path (is its own cell passable, can it path to Pluto), the lists on the clone.</summary>
+        private string Describe(AIActor a, PlayerController target)
+        {
+            BehaviorSpeculator bs = a.behaviorSpeculator;
+            string path = "n/a";
+            try
+            {
+                bool passable = Pathfinding.Pathfinder.Instance != null && Pathfinding.Pathfinder.Instance.IsPassable(a.PathTile, a.Clearance, a.PathableTiles);
+                bool pathed = target != null && a.PathfindToPosition(target.CenterPosition);
+                path = "passable " + passable + ", pathed " + pathed + ", complete " + a.PathComplete;
+            }
+            catch (Exception e) { path = "path threw: " + e.Message; }
+            return a.GetActorName() + " @" + (a.specRigidbody != null ? a.specRigidbody.UnitCenter - origin : (Vector2)a.transform.position - origin)
+                + ": state " + a.State + ", awoken " + a.HasBeenAwoken + ", enabled " + a.enabled
+                + ", brain " + (bs != null && bs.enabled) + ", engaged " + a.HasBeenEngaged + ", gone " + a.IsGone
+                + ", room " + (a.ParentRoom == room) + ", target " + (a.TargetRigidbody != null) + ", dist " + (a.TargetRigidbody != null ? a.DistanceToTarget.ToString("0.0") : "-")
+                + ", " + path + ", speed " + a.MovementSpeed + ", vel " + (a.specRigidbody != null ? a.specRigidbody.Velocity.magnitude.ToString("0.0") : "-")
+                + ", lists " + (bs != null && bs.TargetBehaviors != null ? bs.TargetBehaviors.Count : -1) + "/" + (bs != null && bs.MovementBehaviors != null ? bs.MovementBehaviors.Count : -1) + "/" + (bs != null && bs.AttackBehaviors != null ? bs.AttackBehaviors.Count : -1)
+                + ", hp " + (a.healthHaver != null ? a.healthHaver.GetCurrentHealth() + "/" + a.healthHaver.GetMaxHealth() + " vuln " + a.healthHaver.IsVulnerable + " prevent " + a.healthHaver.PreventAllDamage : "-")
+                + ", tell " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("tell")) + ", fire " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("fire"));
+        }
+
+        /// <summary>Logs each wave actor at 0.2 s, 2 s and 6 s and re-engages or re-targets anyone still idle.
+        /// Reading the line: state Inactive or awoken false = never engaged; target true but passable/pathed false =
+        /// a bad spawn cell (the Tech still fires within 20 tiles); everything true and vel 0 = look for an exception.</summary>
         private IEnumerator Heartbeat(string label, List<AIActor> actors)
         {
-            foreach (float delay in new[] { 2f, 6f })
+            foreach (float delay in new[] { 0.2f, 1.8f, 4f })
             {
                 yield return new WaitForSeconds(delay);
                 PlayerController target = GameManager.Instance.PrimaryPlayer;
                 foreach (AIActor a in actors)
                 {
                     if (a == null || a.healthHaver == null || a.healthHaver.IsDead) continue;
-                    bool hasTarget = a.TargetRigidbody != null;
-                    PastPlugin.Log(label + " " + a.GetActorName() + ": state " + a.State + ", brain " + (a.behaviorSpeculator != null && a.behaviorSpeculator.enabled)
-                        + ", engaged " + a.HasBeenEngaged + ", target " + hasTarget + ", gone " + a.IsGone);
-                    if (!hasTarget && target != null && target.specRigidbody != null)
+                    try { PastPlugin.Log(label + " " + Describe(a, target)); } catch (Exception e) { PastPlugin.Log(label + " " + a.name + ": describe threw: " + e.Message); }
+                    if (!a.HasBeenAwoken || (a.behaviorSpeculator != null && !a.behaviorSpeculator.enabled))
+                    {
+                        PastPlugin.Log(label + " " + a.GetActorName() + ": not awake after " + delay + " s, engaging again");
+                        Engage(a);
+                    }
+                    if (delay > 1f && a.TargetRigidbody == null && target != null && target.specRigidbody != null)
                     {
                         a.OverrideTarget = target.specRigidbody;   // the same hook Coco's decoy uses: a target the brain cannot miss
                         PastPlugin.Log(label + " " + a.GetActorName() + ": no target after " + delay + " s, forcing Pluto");
@@ -403,6 +495,8 @@ namespace PlutoVetVisit
                 greeter = AIActor.Spawn(prefab, World(ClinicLayout.GreeterSpot), room, true, AIActor.AwakenAnimationType.Default, false);
                 if (greeter != null)
                 {
+                    SelfEngage self = greeter.GetComponent<SelfEngage>();
+                    if (self != null) self.hold = true;   // he talks first; Engage(greeter) after the lines is the tell
                     greeter.IgnoreForRoomClear = true;
                     greeter.healthHaver.PreventAllDamage = true;
                     if (greeter.behaviorSpeculator != null) greeter.behaviorSpeculator.enabled = false;
@@ -410,10 +504,7 @@ namespace PlutoVetVisit
             }
             catch (Exception e) { PastPlugin.Log("greeter: " + e.Message); }
             if (greeter == null) yield break;
-            bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
-            player.SetInputOverride("past");
-            if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
-            PastCameraUtility.LockConversation(World(ClinicLayout.GreeterSpot) + new Vector2(0f, -1.5f));
+            BeginCutscene("ward greeting", World(ClinicLayout.GreeterSpot) + new Vector2(0f, -1.5f));
             try
             {
                 yield return new WaitForSeconds(0.6f);
@@ -423,9 +514,7 @@ namespace PlutoVetVisit
             }
             finally
             {
-                PastCameraUtility.UnlockConversation();
-                player.ClearInputOverride("past");
-                if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+                EndCutscene("ward greeting", player);
             }
             Engage(greeter);
             wave1Extra = greeter;
@@ -467,81 +556,103 @@ namespace PlutoVetVisit
         private static readonly string[] STARTING_GUNS = { "pluto:kibble_sack" };
         private static readonly string[] STARTING_ITEMS = { "pluto:wet_food_can", "pluto:squeaky_toy", "pluto:nine_lives", "pluto:coco_blue", "pluto:puffed_up" };
 
-        /// <summary>Make sure Pluto arrives armed. The Ark resets every player with ResetToFactorySettings
-        /// (guns destroyed, starting guns re-added from startingGunIds); if that list came through empty or
-        /// the gun did not stick, give the sack by id through the same call the game uses, then the loot
-        /// engine as a fallback. Logs every step so a test run tells us which path fired.</summary>
-        private void EnsureLoadout(PlayerController p, string when)
+        /// <summary>True while one of our own cutscenes holds the "past" input override; the watchdog leaves input alone then.</summary>
+        private bool cutscene;
+
+        /// <summary>Everything that decides "is there a gun, can it be seen, can it fire" (PlayerController.HandleGunFiringInternal
+        /// needs AcceptingNonMotionInput, CurrentGun != null and !IsGunLocked; the boss intro and the time tube set PreventPausing).</summary>
+        private static string Snapshot(PlayerController p)
         {
-            if (p == null || p.inventory == null) return;
+            Gun g = p.CurrentGun;
+            GameManager gm = GameManager.Instance;
+            return "guns " + (p.inventory.AllGuns != null ? p.inventory.AllGuns.Count : -1)
+                + ", current " + (g != null ? g.name + " active=" + g.gameObject.activeSelf + " renderer=" + (g.sprite != null && g.sprite.renderer != null ? g.sprite.renderer.enabled.ToString() : "?") + " ammo=" + g.CurrentAmmo : "none")
+                + ", startingGunIds " + (p.startingGunIds != null ? p.startingGunIds.Count : -1)
+                + ", finalFightGunIds " + (p.finalFightGunIds != null ? p.finalFightGunIds.Count : -1)
+                + ", usingAlt " + p.UsingAlternateStartingGuns + ", randomGuns " + p.CharacterUsesRandomGuns
+                + ", forceNoGun " + p.inventory.ForceNoGun + ", gunLocked " + p.inventory.GunLocked.Value + ", isGunLocked " + p.IsGunLocked
+                + ", input " + p.CurrentInputState + ", nonMotion " + p.AcceptingNonMotionInput + ", overridden " + p.IsInputOverridden
+                + ", preventPausing " + gm.PreventPausing + ", bossIntro " + GameManager.IsBossIntro
+                + ", levelState " + gm.CurrentLevelOverrideState
+                + ", endTimes " + (gm.Dungeon != null && gm.Dungeon.IsEndTimes) + ", strip " + (gm.Dungeon != null && gm.Dungeon.StripPlayerOnArrival)
+                + ", loading " + gm.IsLoadingLevel + ", visible " + p.IsVisible + ", timeScale " + Time.timeScale;
+        }
+
+        /// <summary>Make sure Pluto is armed and can fire. The Ark resets every player with ResetToFactorySettings
+        /// (guns destroyed, starting guns re-added from startingGunIds, every input override cleared) before it
+        /// loads us, and nothing in the level load strips them again (Dungeon.StripPlayerOnArrival is off on the
+        /// Soldier template). So an unarmed Pluto means an empty startingGunIds, a hidden renderer, or a stuck
+        /// input state; this repairs all three and logs before/after so a test run tells us which it was.
+        /// clearInput is false only while one of our own cutscenes holds the "past" override.</summary>
+        private void EnsureLoadout(PlayerController p, string when, bool clearInput)
+        {
+            if (p == null || p.inventory == null || p.healthHaver == null || p.healthHaver.IsDead) return;
             try
             {
-                int before = p.inventory.AllGuns != null ? p.inventory.AllGuns.Count : 0;
-                if (before == 0)
+                string before = Snapshot(p);
+                if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
                 {
-                    PastPlugin.Log("loadout " + when + ": no guns (startingGunIds " + (p.startingGunIds != null ? p.startingGunIds.Count : -1) + ")");
                     if (p.startingGunIds != null && p.startingGunIds.Count > 0)
                     {
                         try { p.ReinitializeGuns(); } catch (Exception e) { PastPlugin.Log("ReinitializeGuns failed: " + e.Message); }
                     }
+                    if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
+                        foreach (string id in STARTING_GUNS) GiveGun(p, id);
                 }
-                if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
-                    foreach (string id in STARTING_GUNS) GiveGun(p, id);
                 foreach (string id in STARTING_ITEMS) Give(p, id);
-                if (p.inventory.AllGuns != null && p.inventory.AllGuns.Count > 0)
+                // A current gun whatever the lock state (GunInventory.ChangeGun returns early when GunLocked unless overridden).
+                p.inventory.ForceNoGun = false;
+                p.inventory.GunLocked.ClearOverrides();
+                p.IsGunLocked = false;
+                if (p.CurrentGun == null && p.inventory.AllGuns != null && p.inventory.AllGuns.Count > 0) p.inventory.ChangeGun(0, true, true);
+                // Renderers: only the empty reason clears every hide key (PlayerController.ToggleGunRenderers);
+                // a named reason such as "vetvisit" cannot show a gun hidden under "ark" or "initial spawn".
+                p.IsVisible = true;
+                p.ToggleGunRenderers(true, string.Empty);
+                p.ToggleHandRenderers(true, string.Empty);
+                if (clearInput && !cutscene && !GameManager.IsBossIntro)
                 {
-                    if (p.inventory.GunLocked != null && p.inventory.GunLocked.Value) PastPlugin.Log("warning: the inventory reports GunLocked");
-                    if (p.CurrentGun == null) p.inventory.ChangeGun(1);
+                    if (p.IsInputOverridden || GameManager.Instance.PreventPausing)
+                        PastPlugin.Log("loadout " + when + ": input was overridden (" + p.CurrentInputState + ", preventPausing " + GameManager.Instance.PreventPausing + "); clearing");
+                    GameManager.Instance.PreventPausing = false;
+                    p.ClearAllInputOverrides();   // what the Ark does before loading us (ArkController.ResetPlayers)
                 }
-                p.ToggleGunRenderers(true, "vetvisit");
-                p.ToggleHandRenderers(true, "vetvisit");
-                int after = p.inventory.AllGuns != null ? p.inventory.AllGuns.Count : 0;
-                if (after != before || when == "on arrival")
-                    PastPlugin.Log("loadout " + when + ": " + after + " gun(s), current " + (p.CurrentGun != null ? p.CurrentGun.EncounterNameOrDisplayName : "none")
-                        + ", input " + p.CurrentInputState + ", overrides " + (p.IsInputOverridden ? "yes" : "no"));
+                string after = Snapshot(p);
+                if (after != before || when == "on arrival" || when == "console")
+                    PastPlugin.Log("loadout " + when + ": before[" + before + "] after[" + after + "]");
             }
-            catch (Exception e) { PastPlugin.Log("loadout check failed: " + e.Message); }
+            catch (Exception e) { PastPlugin.Log("loadout check failed (" + when + "): " + e); }
         }
 
-        /// <summary>Re-checks the guns during the first minute: whatever strips them after our Start gets undone.</summary>
+        /// <summary>Re-checks every 3 s for the whole past; logs only when something changed.</summary>
         private IEnumerator LoadoutWatchdog()
         {
-            float[] at = { 1f, 3f, 6f, 10f, 20f, 40f, 60f };
             float t = 0f;
-            int i = 0;
-            while (i < at.Length && !ending)
+            while (!ending)
             {
                 t += BraveTime.DeltaTime;
-                if (t >= at[i])
+                if (t >= 3f)
                 {
-                    EnsureLoadout(GameManager.Instance.PrimaryPlayer, "at " + at[i] + " s");
-                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "at " + at[i] + " s");
-                    i++;
+                    t = 0f;
+                    EnsureLoadout(GameManager.Instance.PrimaryPlayer, "watchdog", true);
+                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "watchdog", true);
                 }
                 yield return null;
             }
         }
 
-        /// <summary>The game's own path first (PickupObjectDatabase + AddGunToInventory), the loot engine second.</summary>
+        /// <summary>The game's own path: AddGunToInventory takes the prefab and instantiates it itself.</summary>
         private static void GiveGun(PlayerController p, string id)
         {
             try
             {
                 if (!Game.Items.ContainsID(id)) { PastPlugin.Log("gun id not registered: " + id); return; }
                 PickupObject item = Game.Items[id];
-                if (item == null) { PastPlugin.Log("gun prefab null: " + id); return; }
-                if (p.HasPickupID(item.PickupObjectId)) return;
-                Gun gun = PickupObjectDatabase.GetById(item.PickupObjectId) as Gun;
-                if (gun != null)
-                {
-                    p.inventory.AddGunToInventory(gun, true);
-                    PastPlugin.Log("gave gun " + id + " via AddGunToInventory");
-                }
-                if (!p.HasPickupID(item.PickupObjectId))
-                {
-                    LootEngine.GivePrefabToPlayer(item.gameObject, p);
-                    PastPlugin.Log("gave gun " + id + " via LootEngine");
-                }
+                Gun prefab = item != null ? PickupObjectDatabase.GetById(item.PickupObjectId) as Gun : null;
+                if (prefab == null) { PastPlugin.Log("gun prefab null: " + id); return; }
+                if (p.inventory.ContainsGun(prefab.PickupObjectId)) return;
+                Gun given = p.inventory.AddGunToInventory(prefab, true);
+                PastPlugin.Log("gave gun " + id + " -> " + (given != null ? given.name : "null"));
             }
             catch (Exception e) { PastPlugin.Log("could not give gun " + id + ": " + e.Message); }
         }
@@ -559,10 +670,10 @@ namespace PlutoVetVisit
             catch (Exception e) { PastPlugin.Log("could not give " + id + ": " + e.Message); }
         }
 
-        /// <summary>Console: vet_loadout re-runs the loadout check by hand.</summary>
+        /// <summary>Console: vet_loadout re-runs the loadout check by hand and prints the full snapshot.</summary>
         public void ConsoleLoadout()
         {
-            EnsureLoadout(GameManager.Instance.PrimaryPlayer, "console");
+            EnsureLoadout(GameManager.Instance.PrimaryPlayer, "console", true);
         }
 
         private bool woken;
@@ -594,6 +705,17 @@ namespace PlutoVetVisit
             if (!woken)
             {
                 PastPlugin.Log("intro did not finish after " + seconds + " s; starting the fight anyway");
+                // GenericIntroDoer clears these only when its coroutine reaches the end (TriggerSequence -> EndSequence);
+                // an intro cut short leaves the players frozen (BossIntro override, PreventPausing, IsBossIntro).
+                try
+                {
+                    GameManager.IsBossIntro = false;
+                    GameManager.Instance.PreventPausing = false;
+                    foreach (PlayerController p in GameManager.Instance.AllPlayers)
+                        if (p != null) p.ClearInputOverride("BossIntro");
+                    BraveTime.ClearAllMultipliers();
+                }
+                catch (Exception e) { PastPlugin.Log("intro cleanup: " + e.Message); }
                 Wake();
             }
         }
@@ -637,10 +759,7 @@ namespace PlutoVetVisit
 
         private IEnumerator Dialogue(PlayerController player)
         {
-            bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
-            player.SetInputOverride("past");
-            if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
-            PastCameraUtility.LockConversation(World(ClinicLayout.CameraFocus));
+            BeginCutscene("theatre dialogue", World(ClinicLayout.CameraFocus));
             try
             {
                 yield return new WaitForSeconds(0.8f);
@@ -651,9 +770,7 @@ namespace PlutoVetVisit
             }
             finally
             {
-                PastCameraUtility.UnlockConversation();
-                player.ClearInputOverride("past");
-                if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+                EndCutscene("theatre dialogue", player);
             }
         }
 
