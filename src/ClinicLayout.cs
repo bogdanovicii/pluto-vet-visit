@@ -16,10 +16,15 @@ namespace PlutoVetVisit
         public static readonly Vector2 Controller = new Vector2(14.0f, 1.0f);
         public static readonly Vector2 WardDoor = new Vector2(14.0f, 13.0f);
         public static readonly Vector2 TheatreDoor = new Vector2(14.0f, 32.0f);
+        public static readonly Vector2 IntroFocus = new Vector2(12.0f, 6.5f);
+        public static readonly Vector2 OwnerStart = new Vector2(3.5f, 2.5f);
+        public static readonly Vector2 OwnerExit = new Vector2(13.0f, -3.5f);
+        public static readonly Vector2 Intercom = new Vector2(14.5f, 12.5f);
         public const float WARD_MIN_Y = 15.0f;
         public const float THEATRE_MIN_Y = 34.0f;
         public static readonly Vector2[] Wave1Spawns = { new Vector2(2.0f, 23.5f), new Vector2(27.0f, 23.5f), new Vector2(2.0f, 19.5f), new Vector2(27.0f, 27.5f) };
         public static readonly Vector2[] Wave2Spawns = { new Vector2(3.5f, 17.5f), new Vector2(3.5f, 29.5f), new Vector2(25.5f, 17.5f), new Vector2(25.5f, 29.5f), new Vector2(14.5f, 29.0f), new Vector2(9.0f, 17.5f) };
+        public static readonly Vector2[] TheatreSpawns = { new Vector2(26.0f, 40.0f), new Vector2(26.5f, 37.5f), new Vector2(26.5f, 42.5f) };
         public static readonly ObjectSpec[] OBJECTS = {
             new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 2, 0, 44, 16, 0.0f),
             new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
@@ -54,6 +59,14 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_kennel", "kennel", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
             new ObjectSpec("pluto_kennel_open", "kennel_open", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
             new ObjectSpec("pluto_nurse_station", "nurse_station", ObjectSpec.Layer.High, 0, 0, 48, 12, 0.0f),
+            new ObjectSpec("pluto_prep_sign", "prep_sign", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_surgical_lamp", "surgical_lamp", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_monitor_cart", "monitor_cart", ObjectSpec.Layer.Low, 0, 0, 24, 10, 0.0f),
+            new ObjectSpec("pluto_vaccine_fridge", "vaccine_fridge", ObjectSpec.Layer.High, 0, 0, 24, 16, 0.0f),
+            new ObjectSpec("pluto_intercom", "intercom", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_wall_tv", "wall_tv", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_side_door", "side_door", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_strap_table_pad", "strap_pad", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
         };
     }
 

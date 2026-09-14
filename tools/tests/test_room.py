@@ -69,6 +69,8 @@ class RoomTests(unittest.TestCase):
 
     def test_named_cells_on_floor(self):
         for name, (x, y) in C.NAMED.items():
+            if name == 'OwnerExit':
+                continue                                     # deliberately outside: the Owner leaves the room
             self.assertTrue(C.is_floor(x, y), name)
 
     def test_zone_walls_and_door_gaps(self):
@@ -92,9 +94,20 @@ class RoomTests(unittest.TestCase):
     def test_wave_spawns_in_the_ward_on_floor(self):
         for name, cells in C.SPAWNS.items():
             self.assertGreaterEqual(len(cells), 3, name)
+            lo, hi = (C.ZONES['THEATRE_MIN_Y'], C.HEIGHT) if name.startswith('Theatre') else (C.ZONES['WARD_MIN_Y'], 32)
             for x, y in cells:
                 self.assertTrue(C.is_floor(x, y), (name, x, y))
-                self.assertTrue(C.ZONES['WARD_MIN_Y'] <= y < 32, (name, x, y))
+                self.assertTrue(lo <= y < hi, (name, x, y))
+
+    def test_npcs_wait_in_the_waiting_room(self):
+        names = [n for n, _ in C.NPCS]
+        self.assertEqual(names, ['pluto_npc_owner', 'pluto_npc_receptionist', 'pluto_npc_rex', 'pluto_npc_grandma'])
+        for name, (x, y) in C.NPCS:
+            self.assertTrue(C.is_floor(x, y), name)
+            self.assertLess(y, 13, name)
+        self.assertLess(C.NAMED['OwnerExit'][1], 0)          # he walks off the map through the south exit
+        self.assertTrue(C.is_floor(*C.NAMED['OwnerStart']))
+        self.assertTrue(C.is_floor(*C.NAMED['IntroFocus']))
 
     def test_layout_cs_has_zones_and_spawns(self):
         cs = C.layout_cs()

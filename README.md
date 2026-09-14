@@ -24,17 +24,23 @@ PlutoVetVisit/
     PastLevel.cs              GameLevelDefinition tt_pluto_past + Harmony patches
     VetFlow.cs                 the one-node DungeonFlow
     ClinicRoom.cs              loads Resources/Rooms/vet_clinic.newroom
-    ClinicObjects.cs           the 13 clinic prop prefabs
-    ClinicLayout.cs            generated room-space coordinates + object specs (do not edit by hand)
+    ClinicObjects.cs           the clinic prop prefabs (and the NPC prefabs through ClinicNpc)
+    ClinicDoor.cs              the sliding zone door: collider on/off, closed/open sprite
+    ClinicNpc.cs               placed bystanders: idle/talk/walk clips, one comment line, driven by the intro
+    ClinicLayout.cs            generated room-space coordinates, zones, spawn cells + object specs (do not edit by hand)
+    CastLayout.cs              generated cast facts: canvases, hitboxes, shoot points, clip lists (do not edit by hand)
+    VetTech.cs                 the Vet Tech (regular enemy) and the Nurse (mini-boss): EnemyBuilder prefabs
     VetBoss.cs                 The Vet: prefab, stats, clips, bullet bank, behaviours
-    VetAttacks.cs              Booster Shot, Spray Bottle, Pill Time, Cone of Shame bullet scripts
-    VetVisitController.cs      fade-in, dialogue, boss trigger, ending sequence
+    VetAttacks.cs              the Vet's, the Tech's and the Nurse's bullet scripts
+    VetVisitController.cs      the three acts: intro, sealed ward waves, the Vet; reinforcements; ending
     PlutoLink.cs                finds Pluto via Alexandria, attaches the past
   Resources/
     Rooms/vet_clinic.newroom               the clinic room, generated JSON
     Boss/vet/{idle,move,tell,fire,intro,die}/vet_<clip>_NNN.png   The Vet's animation frames
     Boss/vet_bosscard.png                   boss card (427 x 240)
-    Objects/*.png                            13 clinic prop sprites
+    Objects/*.png                            clinic prop sprites (+ clinic_door_open, the door's open frame)
+    Enemies/{tech,nurse}/<clip>/*.png        Vet Tech and Nurse animation frames
+    Npcs/{owner,receptionist,rex,grandma}/<clip>/*.png   bystander animation frames
     SpriteRoot/ProjectileCollection/*.png    syringe, droplet and pill projectile sprites
     past_win_pic.png                         win-page picture (115 x 71)
   reference/gemini/            Gemini-generated references, checked in (clinic + Vet sheets, boss card / win pic / icon raws)
@@ -42,9 +48,9 @@ PlutoVetVisit/
     checklist.md                in-game test checklist per milestone, with Result: lines
     preview/                     room and sprite-sheet previews rendered by the Python tools
   tools/
-    clinic_room.py, clinic_objects.py, vet_poses.py   ASCII pixel-art sources (single source of truth)
-    cards.py, icon.py, projectiles.py, vetpixel.py, make_art.py, gemini_art.py, validate.py
-    tests/                       46 unit tests (test_room, test_objects, test_vet, test_gemini, test_past_concepts)
+    clinic_room.py, clinic_objects.py, vet_poses.py, tech_poses.py, nurse_poses.py, npc_poses.py   ASCII pixel-art sources
+    cast_layout.py, cards.py, icon.py, projectiles.py, vetpixel.py, make_art.py, gemini_art.py, gemini_past_concepts.py, validate.py
+    tests/                       unit tests (room, objects, vet, tech, nurse, npcs, cast, gemini, past_concepts)
   thunderstore/                 manifest.json, README.md, CHANGELOG.md, icon.png — the r2modman test package
 ```
 

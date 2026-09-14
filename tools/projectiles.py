@@ -23,6 +23,21 @@ SPRITES = {
         "o!!!KKKo",
         ".oooooo.",
     ]),
+    # the Nurse's butterfly net, thrown hoop first: a steel ring with a white mesh
+    'vet_net_001': R([
+        "....oooo....",
+        "..oo&&&&oo..",
+        ".o&&wWwWw&o.",
+        ".o&WwWwWwWo.",
+        "o&wWwWwWwW&o",
+        "o&WwWwWwWw&o",
+        "o&wWwWwWwW&o",
+        "o&WwWwWwWw&o",
+        ".o&wWwWwW&o.",
+        ".o&&WwWw&&o.",
+        "..oo&&&&oo..",
+        "....oooo....",
+    ]),
 }
 
 

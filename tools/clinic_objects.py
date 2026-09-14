@@ -538,6 +538,104 @@ _ns = overlay(_ns, ['oooooooo', 'o&&&&&&o', 'o&oooo&o', 'o&&&&&&o', 'o&oooo&o', 
 _ns = overlay(_ns, ['..o..', '.o%o.', 'o%%%o', 'ooooo'], 8, 0)               # call bell
 NURSE_STATION = R(_ns)
 
+# ================================================================== v0.6 props: theatre kit, wall decor, side door
+# ------------------------------------------------------------------ prep sign 16x10: teal plaque, white border, red cross
+_ps = box(16, 10, '$', top='$')
+_ps = overlay(_ps, ['W' * 14], 1, 1)
+_ps = overlay(_ps, ['W' * 14], 1, 8)
+for y in range(1, 9):
+    _ps[y] = 'oW' + _ps[y][2:14] + 'Wo'
+_ps = overlay(_ps, ['.!!.', '!!!!', '!!!!', '.!!.'], 6, 3)
+PREP_SIGN = R(_ps)
+
+# ------------------------------------------------------------------ surgical lamp 32x32: round steel head, three bulbs, jointed arm up-right
+_lamp_head = [
+    "....oooooo....",
+    "..oo%%%%%%oo..",
+    ".o%%&&&&&&%%o.",
+    ".o%&&&&&&&&%o.",
+    "o%&oo&&&&oo&%o",
+    "o%oKKo&&oKKo%o",
+    "o%oKKo&&oKKo%o",
+    "o%&oooooooo&%o",
+    "o%&&&oKKo&&&%o",
+    "o%&&&oKKo&&&%o",
+    "o%&&&&oo&&&&%o",
+    ".o%%&&&&&&%%o.",
+    "..oo%%%%%%oo..",
+    "....oooooo....",
+]
+_sl = ['.' * 32] * 32
+_sl = overlay(_sl, box(6, 9, '#', top='%'), 26, 1)                  # wall mount plate
+_sl = overlay(_sl, ['o' * 12, '&' * 12, '%' * 12, 'o' * 12], 14, 3)  # horizontal arm
+_sl = overlay(_sl, ['oooooo', 'o%&&%o', 'o%&&%o', 'oooooo'], 9, 3)  # joint knob
+_sl = overlay(_sl, ['o&%o'] * 12, 10, 7)                            # vertical arm down to the head
+_sl = overlay(_sl, _lamp_head, 0, 18)
+SURGICAL_LAMP = R(_sl)
+
+# ------------------------------------------------------------------ monitor cart 24x32: heartbeat monitor on a steel cart, keyboard shelf, wheels
+_mc = ['.' * 24] * 32
+_mc = overlay(_mc, box(20, 12, '#', top='%'), 2, 0)                  # monitor bezel
+_mc = overlay(_mc, [
+    "......e.........",
+    ".....e.e........",
+    "eeeee...e.eeeeee",
+    "........e.e.....",
+    ".........e......",
+], 4, 3)
+_mc = overlay(_mc, ['o%%o', 'o%%o', 'o%%o'], 10, 12)                 # post
+_mc = overlay(_mc, box(24, 5, '&', top='K'), 0, 15)                  # keyboard shelf
+_mc = overlay(_mc, ['o_o_o_o_o_o_o_o_o_'], 3, 17)                    # keys
+_mc = overlay(_mc, box(24, 8, '%', top='&', bottom='#'), 0, 20)      # cart body
+for x in (1, 7, 13, 19):
+    _mc = overlay(_mc, ['.oo.', 'o##o', 'o##o', '.oo.'], x, 28)      # wheels
+MONITOR_CART = R(_mc)
+
+# ------------------------------------------------------------------ vaccine fridge 24x40: white fridge, glass door with rows of blue vials, steel handle
+_vf = box(24, 40, '_', top='0', bottom='0')
+for y in range(1, 39):
+    _vf[y] = _vf[y][:21] + '0' + _vf[y][22:]                          # right-side shade
+_vf = overlay(_vf, box(16, 26, '^'), 3, 4)                           # glass door
+for sy in (8, 14, 20):
+    _vf = overlay(_vf, ['o*o*o*o*o*o*', '.*.*.*.*.*.*', '.*.*.*.*.*.*', 'oooooooooooo'], 5, sy)  # vials on shelves
+_vf = overlay(_vf, ['o&o'] * 10, 19, 12)                             # handle
+_vf = overlay(_vf, ['o' + '0' * 22 + 'o', 'o' + '_' * 22 + 'o'], 0, 32)   # compressor lip
+_vf = overlay(_vf, ['o' * 22, '0' * 22, 'o' * 22, '0' * 22], 1, 34)  # grille slats
+VACCINE_FRIDGE = R(_vf)
+
+# ------------------------------------------------------------------ intercom 10x12: steel box, speaker grille of dots, red light
+_ic = box(10, 12, '%', top='&')
+_ic = overlay(_ic, ['#.#.#.#', '.#.#.#.', '#.#.#.#', '.#.#.#.'], 2, 3)
+_ic = overlay(_ic, ['!'], 4, 9)
+_ic = overlay(_ic, ['o'], 7, 9)
+INTERCOM = R(_ic)
+
+# ------------------------------------------------------------------ wall tv 32x20: black bezel, blue screen with a glint, steel bracket
+_tv = ['.' * 32] * 20
+_tv = overlay(_tv, box(32, 16, '#'), 0, 0)
+_tv = overlay(_tv, box(28, 12, '*', edge='*'), 2, 2)
+_tv = overlay(_tv, ['KKK', 'K..', 'K..'], 4, 4)
+_tv = overlay(_tv, ['o&&o', 'o&&o'], 14, 16)                          # bracket neck
+_tv = overlay(_tv, ['o' + '&' * 10 + 'o', 'o' * 12], 10, 18)         # bracket plate
+WALL_TV = R(_tv)
+
+# ------------------------------------------------------------------ side door 16x32: plain steel door, small window, handle
+_sd = box(16, 32, '&', top='%')
+for y in range(1, 31):
+    _sd[y] = 'o%' + _sd[y][2:14] + '%o'                              # steel frame
+_sd = overlay(_sd, box(8, 8, '^'), 4, 4)                             # window
+_sd = overlay(_sd, ['ooooo', 'o###o', 'ooooo'], 9, 16)               # handle
+_sd = overlay(_sd, ['%' * 12], 2, 24)                                # kick plate seam
+SIDE_DOOR = R(_sd)
+
+# ------------------------------------------------------------------ strap pad 40x8: two leather straps with buckles across a thin steel strip
+_sp = ['.' * 40] * 8
+_sp = overlay(_sp, box(40, 4, '&', top='K'), 0, 2)
+_strap = ['oooooo', 'o\\\\\\\\o', 'o\\\\\\\\o', 'o\\++\\o', 'o\\++\\o', 'o\\\\\\\\o', 'o\\\\\\\\o', 'oooooo']
+_sp = overlay(_sp, _strap, 8, 0)
+_sp = overlay(_sp, _strap, 26, 0)
+STRAP_PAD = R(_sp)
+
 OBJECTS = [
     Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 2, 0, 44, 16)),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
@@ -574,6 +672,15 @@ OBJECTS = [
     Obj('pluto_kennel', 'kennel', KENNEL, ('high', 0, 0, 32, 16)),
     Obj('pluto_kennel_open', 'kennel_open', KENNEL_OPEN, ('high', 0, 0, 32, 16)),
     Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 48, 12)),
+    # v0.6: theatre kit, wall decor, the side door, the table straps
+    Obj('pluto_prep_sign', 'prep_sign', PREP_SIGN, None, 0.5),
+    Obj('pluto_surgical_lamp', 'surgical_lamp', SURGICAL_LAMP, None, 0.5),
+    Obj('pluto_monitor_cart', 'monitor_cart', MONITOR_CART, ('low', 0, 0, 24, 10)),
+    Obj('pluto_vaccine_fridge', 'vaccine_fridge', VACCINE_FRIDGE, ('high', 0, 0, 24, 16)),
+    Obj('pluto_intercom', 'intercom', INTERCOM, None, 0.5),
+    Obj('pluto_wall_tv', 'wall_tv', WALL_TV, None, 0.5),
+    Obj('pluto_side_door', 'side_door', SIDE_DOOR, None, 0.5),
+    Obj('pluto_strap_table_pad', 'strap_pad', STRAP_PAD, None, -1.5),
 ]
 
 # Extra sprites that are not placeable props: alternate frames a component swaps in (file stem -> rows).
@@ -588,7 +695,9 @@ PROPS = [
     ('pluto_carrier', (2.0, 1.5)),
     ('pluto_floor_mat', (0.5, 4.0)),
     ('pluto_chair', (1.0, 5.5)), ('pluto_chair', (1.0, 7.0)), ('pluto_chair', (1.0, 8.5)), ('pluto_chair', (1.0, 10.0)),
+    ('pluto_wall_tv', (3.5, 11.0)),
     ('pluto_window', (7.0, 10.5)), ('pluto_clock', (10.0, 11.4)),
+    ('pluto_intercom', (14.7, 12.2)),
     ('pluto_poster', (12.0, 10.5)),
     ('pluto_wet_floor_sign', (14.5, 5.0)),
     ('pluto_paw_prints', (9.0, 3.5)),
@@ -603,6 +712,8 @@ PROPS = [
     ('pluto_kennel', (1.0, 16.5)), ('pluto_kennel_open', (1.0, 20.0)), ('pluto_kennel', (1.0, 25.0)), ('pluto_kennel_open', (1.0, 28.5)),
     ('pluto_kennel_open', (27.0, 16.5)), ('pluto_kennel', (27.0, 20.0)), ('pluto_kennel_open', (27.0, 25.0)), ('pluto_kennel', (27.0, 28.5)),
     ('pluto_nurse_station', (12.0, 22.5)),
+    ('pluto_prep_sign', (11.5, 31.2)),
+    ('pluto_side_door', (0.0, 22.5)), ('pluto_side_door', (29.0, 22.5)),
     ('pluto_food_bowls', (16.0, 21.0)),
     ('pluto_litter_box', (10.0, 20.5)),
     ('pluto_xray_box', (5.0, 30.0)), ('pluto_med_shelf', (8.0, 29.5)),
@@ -610,12 +721,15 @@ PROPS = [
     ('pluto_paw_prints', (14.0, 17.0)),
     # --- operating theatre
     ('pluto_cabinet', (1.0, 48.0)), ('pluto_cabinet', (3.5, 48.0)), ('pluto_cabinet', (6.0, 48.0)),
-    ('pluto_window', (9.0, 48.5)), ('pluto_clock', (11.6, 50.1)),
+    ('pluto_vaccine_fridge', (9.0, 48.0)), ('pluto_clock', (11.6, 50.1)),
     ('pluto_poster', (12.0, 48.0)),
     ('pluto_cabinet', (16.0, 48.0)), ('pluto_cabinet', (19.0, 48.0)), ('pluto_cabinet', (22.0, 48.0)), ('pluto_cabinet', (25.0, 48.0)),
-    ('pluto_exam_table', (13.0, 41.0)),
+    ('pluto_exam_table', (13.0, 41.0)), ('pluto_strap_table_pad', (13.25, 42.4)),
+    ('pluto_surgical_lamp', (14.0, 46.0)),
     ('pluto_cart', (18.0, 41.5)),
-    ('pluto_iv_stand', (11.5, 42.5)),
+    ('pluto_monitor_cart', (8.0, 41.5)),
+    ('pluto_iv_stand', (11.0, 44.0)),
+    ('pluto_side_door', (29.0, 39.5)),
     ('pluto_syringe_tray', (10.0, 45.0)),
     ('pluto_cone', (22.0, 45.0)),
     ('pluto_sink', (25.0, 43.5)),

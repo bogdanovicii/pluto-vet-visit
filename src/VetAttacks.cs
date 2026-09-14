@@ -16,6 +16,47 @@ namespace PlutoVetVisit
         public DropletBullet() : base("droplet", false, false, false) { }
     }
 
+    public class NetBullet : Bullet
+    {
+        public NetBullet() : base("net", false, false, false) { }
+    }
+
+    /// <summary>Vet Tech: one aimed syringe with a little lead, like a Bullet Kin's shot but slower.</summary>
+    public class TechShotScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float aim = GetAimDirection(0.4f, 9f) + UnityEngine.Random.Range(-4f, 4f);
+            Fire(new Direction(aim, DirectionType.Absolute), new Speed(9f, SpeedType.Absolute), new SyringeBullet());
+            yield break;
+        }
+    }
+
+    /// <summary>The Nurse's shotgun syringe: one fan of seven droplets over 50 degrees, pumped twice.</summary>
+    public class NurseFanScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            for (int pump = 0; pump < 2; pump++)
+            {
+                float aim = GetAimDirection(0f, 8f);
+                for (int i = 0; i < 7; i++)
+                    Fire(new Direction(SubdivideArc(aim - 25f, 50f, 7, i, pump == 1), DirectionType.Absolute), new Speed(8f, SpeedType.Absolute), new DropletBullet());
+                yield return Wait(18);
+            }
+        }
+    }
+
+    /// <summary>The net: one big slow projectile lobbed at Pluto; easy to see, awkward to sidestep up close.</summary>
+    public class NetThrowScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            yield return Wait(10);
+            Fire(new Direction(GetAimDirection(0.8f, 5f), DirectionType.Absolute), new Speed(5f, SpeedType.Absolute), new NetBullet());
+        }
+    }
+
     /// <summary>Booster Shot: three syringes that lead Pluto (aimed where he will be), six frames apart, with a
     /// little scatter so a straight strafe does not dodge all three.</summary>
     public class BoosterShotScript : Script

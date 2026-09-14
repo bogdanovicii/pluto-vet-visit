@@ -55,7 +55,8 @@ def check_room():
     cs = open(os.path.join(PROJECT, 'src', 'ClinicLayout.cs')).read()
     if cs != clinic_room.layout_cs():
         err('ClinicLayout.cs is stale (run tools/make_art.py)')
-    known = {o.name for o in clinic_room.O.OBJECTS} | {clinic_room.CONTROLLER}
+    import cast_layout
+    known = {o.name for o in clinic_room.O.OBJECTS} | {clinic_room.CONTROLLER, clinic_room.DOOR} | set(cast_layout.NPC_OBJECTS)
     unknown = sorted(set(data['placeableGUIDs']) - known)
     if unknown:
         err('room places unknown objects: %s' % unknown)
@@ -106,6 +107,40 @@ def check_boss():
     ok('boss: %d clips, card, win pic' % len(names))
 
 
+def _check_clips(label, root, prefix, clips, canvas, prefix_rule=True):
+    for clip, frames in clips.items():
+        d = os.path.join(root, clip)
+        files = sorted(f for f in os.listdir(d)) if os.path.isdir(d) else []
+        if len(files) != len(frames):
+            err('%s %s: %d files != %d frames' % (label, clip, len(files), len(frames)))
+        if not all(re.match(r'^%s_%s_\d{3}\.png$' % (prefix, clip), f) for f in files):
+            err('%s %s: bad frame names %s' % (label, clip, files))
+        if any(Image.open(os.path.join(d, f)).size != tuple(canvas) for f in files):
+            err('%s %s: frame size != %s' % (label, clip, canvas))
+    names = list(clips)
+    for a in names:
+        for b in names:
+            if prefix_rule and a != b and b.startswith(a):
+                err('%s clip folder %s is a prefix of %s' % (label, a, b))
+
+
+def check_cast():
+    import tech_poses, nurse_poses, npc_poses, cast_layout
+    _check_clips('tech', os.path.join(RES, 'Enemies', 'tech'), 'tech', tech_poses.CLIPS, tech_poses.CANVAS)
+    _check_clips('nurse', os.path.join(RES, 'Enemies', 'nurse'), 'nurse', nurse_poses.CLIPS, nurse_poses.CANVAS)
+    for who, spec in npc_poses.NPCS.items():
+        # NPC clips are loaded by explicit path (ClinicNpc.Build), so the StartsWith rule does not apply to them
+        _check_clips(who, os.path.join(RES, 'Npcs', who), who, spec['clips'], spec['canvas'], prefix_rule=False)
+        if not spec['clips']:
+            err('%s has no clips (ClinicNpc.Build needs the first one as its rest pose)' % who)
+    cs = open(os.path.join(PROJECT, 'src', 'CastLayout.cs')).read()
+    if cs != cast_layout.layout_cs():
+        err('CastLayout.cs is stale (run tools/make_art.py)')
+    if not os.path.exists(os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', 'vet_net_001.png')):
+        err('projectile sprite missing: vet_net_001')
+    ok('cast: tech %d clips, nurse %d clips, %d npcs' % (len(tech_poses.CLIPS), len(nurse_poses.CLIPS), len(npc_poses.NPCS)))
+
+
 def dll_manifest():
     """Embedded resource names inside the built DLL, or None when not built / monodis missing."""
     if not os.path.exists(DLL):
@@ -130,7 +165,7 @@ def check_dll(man):
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room, check_objects, check_boss]
+CHECKS = [check_thunderstore, check_room, check_objects, check_boss, check_cast]
 
 
 def main():

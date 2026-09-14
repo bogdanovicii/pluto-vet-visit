@@ -19,7 +19,7 @@ namespace PlutoVetVisit
     {
         public const string GUID = "bogdan.etg.plutovetvisit";
         public const string NAME = "Pluto The Cat - The Vet Visit";
-        public const string VERSION = "0.5.0";
+        public const string VERSION = "0.8.0";
         public const string PLUTO_GUID = "bogdan.etg.plutothecat";
 
         private Harmony harmony;
@@ -64,6 +64,8 @@ namespace PlutoVetVisit
             ok &= Step("level", PastLevel.Register);
             ok &= Step("sprites", () => ETGMod.Assets.SetupSpritesFromAssembly(typeof(PastPlugin).Assembly, "PlutoVetVisit/Resources/SpriteRoot"));
             ok &= Step("boss", VetBoss.Init);
+            Step("vet tech", VetTech.Init);   // the cast is optional: a failure costs the waves their Techs, not the past
+            Step("nurse", Nurse.Init);
             if (!ok) { Log("The Vet Visit is NOT attached to Pluto because a step failed (see above)."); return; }
             Step("attach", () => PlutoLink.AttachPast(PastLevel.SCENE_NAME,
                 ResourceExtractor.GetTextureFromResource("PlutoVetVisit/Resources/past_win_pic.png", typeof(PastPlugin).Assembly)));

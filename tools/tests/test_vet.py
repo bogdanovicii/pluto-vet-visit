@@ -57,7 +57,7 @@ class VetTests(unittest.TestCase):
     def test_projectile_sprites(self):
         import projectiles as PR
         self.assertEqual({k: (len(v[0]), len(v)) for k, v in PR.SPRITES.items()},
-                         {'vet_syringe_001': (12, 4), 'vet_droplet_001': (5, 5), 'vet_pill_001': (8, 4)})
+                         {'vet_syringe_001': (12, 4), 'vet_droplet_001': (5, 5), 'vet_pill_001': (8, 4), 'vet_net_001': (12, 12)})
         for rows in PR.SPRITES.values():
             V.R(rows)
             V.image(rows)

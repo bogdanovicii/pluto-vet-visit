@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0
+- Dressing: PREP sign, surgical lamp over the table, monitor cart, vaccine fridge, intercom speaker over the ward door, a wall TV in the waiting room, side doors in the ward, leather straps on the exam table.
+- Two hearts appear on the nurse station once the ward is clear. Doors play the door sound. Tech and Nurse health in the config (`[Cast]`).
+
+## 0.7.0
+- The intro: the Owner sets Pluto's carrier down and checks him in with the Receptionist; Rex and Grandma Cat have their say; the intercom calls "Pluto?"; the Owner says goodbye and walks out. Every line can be advanced with the interact key; `[Debug] SkipIntro` skips it all. Lines in `[Story]`.
+- Bystanders: the Owner, the Receptionist, Rex (trembling on his chair) and Grandma Cat (a grey loaf) are hand-drawn placed NPCs; talk to them after the intro for a comment. A chick, a rabbit and a squirrel wander the waiting room.
+- Epilogue line before the credits (`[Story] Epilogue`).
+
+## 0.6.0
+- Vet Techs: hand-drawn regular enemies on the Bullet Kin plan (teal scrubs, cap, mask, syringe pistol) with idle, walk, tell, fire and death clips. They seek Pluto and fire aimed syringes. Wave 1 is three Techs; wave 2 is two Techs plus escaped patients.
+- The Nurse: a mini-boss at the Vet's scale with a shotgun syringe (droplet fans) and a net throw (a big slow net). Console `spawn pluto:nurse`, `spawn pluto:vet_tech`.
+- Below half health the Vet calls the Nurse and two Techs in through the east door (`[Cast] BossReinforcements`).
+
 ## 0.5.0
 - The past is now one 30 x 52 room in three zones, like the Marine's Primerdyne lab: the waiting room at the bottom (carrier, chairs, reception), the ward in the middle (kennels along both walls, a nurse station, the medical kit), and the operating theatre at the top (the old clinic dressing: cabinets, table, cart, sink, toys).
 - Sliding clinic doors gate the zones. The ward door opens a second after the fade-in; it closes behind Pluto once he is inside, and the theatre door opens only when the ward is cleared. Each door is a hand-drawn prop with a closed and an open frame.

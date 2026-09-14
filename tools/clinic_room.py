@@ -82,6 +82,10 @@ NAMED = {
     'Controller': (14.0, 1.0),   # invisible controller object
     'WardDoor': (14.0, 13.0),    # lower-left cell of the door gap in the first wall (the door prop stands here)
     'TheatreDoor': (14.0, 32.0), # same for the second wall
+    'IntroFocus': (12.0, 6.5),   # camera lock point during the waiting-room intro
+    'OwnerStart': (3.5, 2.5),    # the Owner stands here beside the carrier (sprite lower-left)
+    'OwnerExit': (13.0, -3.5),   # where he walks out (through the south exit, off the map)
+    'Intercom': (14.5, 12.5),    # the speaker above the ward door: the "Pluto?" line comes from here
 }
 # Zone thresholds (cell y): Pluto is "in" a zone once his y passes it. The controller seals the door behind him then.
 ZONES = {
@@ -93,7 +97,15 @@ ZONES = {
 SPAWNS = {
     'Wave1Spawns': [(2.0, 23.5), (27.0, 23.5), (2.0, 19.5), (27.0, 27.5)],
     'Wave2Spawns': [(3.5, 17.5), (3.5, 29.5), (25.5, 17.5), (25.5, 29.5), (14.5, 29.0), (9.0, 17.5)],
+    'TheatreSpawns': [(26.0, 40.0), (26.5, 37.5), (26.5, 42.5)],   # the Nurse and two Techs, from the east side door
 }
+# Bystanders placed by the room (see cast_layout.NPC_OBJECTS for the art behind each name). Sprite lower-left on the cell.
+NPCS = [
+    ('pluto_npc_owner', (3.5, 2.5)),
+    ('pluto_npc_receptionist', (20.5, 10.4)),
+    ('pluto_npc_rex', (0.6, 7.4)),
+    ('pluto_npc_grandma', (0.6, 10.4)),
+]
 EXITS = [((14, 0), 'SOUTH')]     # one unused south exit (the generator wants a door somewhere)
 
 
@@ -102,7 +114,7 @@ DOOR = 'pluto_clinic_door'
 
 def PLACEABLES_():
     return ([(CONTROLLER, NAMED['Controller']), (DOOR, NAMED['WardDoor']), (DOOR, NAMED['TheatreDoor'])]
-            + list(O.PROPS))
+            + list(NPCS) + list(O.PROPS))
 
 
 PLACEABLES = PLACEABLES_()

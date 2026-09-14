@@ -17,7 +17,9 @@ namespace PlutoVetVisit
             Register(ClinicLayout.CONTROLLER_OBJECT, BuildController());
             foreach (ObjectSpec spec in ClinicLayout.OBJECTS)
                 Register(spec.Name, BuildProp(spec, asm));
-            PastPlugin.Log("registered " + (ClinicLayout.OBJECTS.Length + 1) + " custom objects");
+            foreach (NpcSpec spec in CastLayout.NPCS)
+                Register(spec.Name, ClinicNpc.Build(spec, asm));
+            PastPlugin.Log("registered " + (ClinicLayout.OBJECTS.Length + CastLayout.NPCS.Length + 1) + " custom objects");
         }
 
         private static GameObject BuildController()

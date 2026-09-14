@@ -67,14 +67,17 @@ namespace PlutoVetVisit
         {
             if (door == null) { PastPlugin.Log(what + ": no door prop, nothing to " + (open ? "open" : "close")); return; }
             door.SetOpen(open);
+            try { AkSoundEngine.PostEvent(open ? "Play_OBJ_door_open_01" : "Play_OBJ_door_close_01", door.gameObject); } catch (Exception) { }
             PastPlugin.Log(what);
         }
 
         /// <summary>Act 1 (walk), act 2 (two waves behind the sealed ward door), act 3 (the Vet).</summary>
         private IEnumerator RunZones(PlayerController player)
         {
-            // Act 1: the waiting room. No combat; the intro cutscene arrives in 0.7.0.
-            yield return new WaitForSeconds(1f);
+            // Act 1: the waiting room. The Owner checks Pluto in and leaves; the intercom calls; the ward door opens.
+            if (!PastConfig.SkipIntro) yield return StartCoroutine(Intro(player));
+            else HideOwner();
+            SpawnCritters();
             SetDoor(wardDoor, true, "the ward door opens");
             yield return StartCoroutine(WaitForZone(ClinicLayout.WARD_MIN_Y + 1.5f));
 
@@ -85,6 +88,7 @@ namespace PlutoVetVisit
             {
                 yield return StartCoroutine(RunWave("wave 1", PastConfig.Wave1, ClinicLayout.Wave1Spawns));
                 yield return StartCoroutine(RunWave("wave 2", PastConfig.Wave2, ClinicLayout.Wave2Spawns));
+                SpawnHearts();
             }
             SetDoor(theatreDoor, true, "the theatre door opens");
             yield return StartCoroutine(WaitForZone(ClinicLayout.THEATRE_MIN_Y + 1.5f));
@@ -112,11 +116,127 @@ namespace PlutoVetVisit
             return p != null && p.healthHaver != null && !p.healthHaver.IsDead && p.CenterPosition.y - origin.y >= cellY;
         }
 
+        // ------------------------------------------------------------------ act 1: the intro
+
+        private Transform intercom;
+
+        private Transform Intercom()
+        {
+            if (intercom == null)
+            {
+                GameObject go = new GameObject("VetIntercom");
+                Vector2 w = World(ClinicLayout.Intercom);
+                go.transform.position = new Vector3(w.x, w.y, w.y);
+                intercom = go.transform;
+            }
+            return intercom;
+        }
+
+        /// <summary>Check-in at the desk, two patients' warnings, the intercom, the Owner leaves. Any line can be skipped.</summary>
+        private IEnumerator Intro(PlayerController player)
+        {
+            ClinicNpc owner = ClinicNpc.Find("owner"), desk = ClinicNpc.Find("receptionist"), rex = ClinicNpc.Find("rex"), grandma = ClinicNpc.Find("grandma");
+            PastPlugin.Log("intro: owner " + (owner != null) + ", receptionist " + (desk != null) + ", rex " + (rex != null) + ", grandma " + (grandma != null));
+            bool coop = GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER;
+            player.SetInputOverride("past");
+            if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.SetInputOverride("past");
+            PastCameraUtility.LockConversation(World(ClinicLayout.IntroFocus));
+            try
+            {
+                yield return new WaitForSeconds(0.8f);
+                if (owner != null) owner.Face(true);
+                yield return StartCoroutine(Line(desk, PastConfig.Intro1, 1.8f));
+                yield return StartCoroutine(Line(owner, PastConfig.Intro2, 3f));
+                yield return StartCoroutine(Line(desk, PastConfig.Intro3, 1.8f));
+                yield return new WaitForSeconds(0.4f);
+                yield return StartCoroutine(Line(rex, PastConfig.Intro4, 2.5f));
+                yield return StartCoroutine(Line(grandma, PastConfig.Intro5, 2.5f));
+                yield return new WaitForSeconds(0.4f);
+                yield return StartCoroutine(Say(Intercom(), PastConfig.Intro6, 1.6f));
+                yield return StartCoroutine(Line(owner, PastConfig.Intro7, 2f));
+                if (owner != null)
+                {
+                    owner.Face(false);
+                    yield return StartCoroutine(owner.Walk(World(ClinicLayout.OwnerExit), 4.5f, "walk_free"));
+                    owner.Hide();
+                }
+            }
+            finally
+            {
+                PastCameraUtility.UnlockConversation();
+                player.ClearInputOverride("past");
+                if (coop && GameManager.Instance.SecondaryPlayer != null) GameManager.Instance.SecondaryPlayer.ClearInputOverride("past");
+            }
+        }
+
+        private void HideOwner()
+        {
+            ClinicNpc owner = ClinicNpc.Find("owner");
+            if (owner != null) owner.Hide();
+        }
+
+        /// <summary>A bystander's line: talk clip while the box shows; the box can be advanced with the interact key.</summary>
+        private IEnumerator Line(ClinicNpc who, string text, float seconds)
+        {
+            if (who == null) yield break;
+            who.Play("talk");
+            yield return StartCoroutine(Say(who.talkPoint, text, seconds));
+            who.Play(who.idleClip);
+        }
+
+        // The waiting room's loose critters: vanilla chick, rabbit and squirrel, harmless, left to wander.
+        private static readonly string[] CRITTERS = { "chick", "rabbit", "squirrel" };
+
+        private void SpawnCritters()
+        {
+            for (int i = 0; i < CRITTERS.Length; i++)
+            {
+                try
+                {
+                    AIActor prefab = ResolveEnemy(CRITTERS[i]);
+                    if (prefab == null) continue;
+                    Vector2 cell = new Vector2(8f + 4f * i, 5f + (i % 2) * 2f);
+                    AIActor a = AIActor.Spawn(prefab, World(cell), room, true, AIActor.AwakenAnimationType.Default, true);
+                    if (a != null) { a.IgnoreForRoomClear = true; a.CanDropCurrency = false; }
+                }
+                catch (Exception e) { PastPlugin.Log("no " + CRITTERS[i] + ": " + e.Message); }
+            }
+        }
+
+        /// <summary>Two hearts on the nurse station once the ward is clear (the v2 design's "cat-bowl hearts").</summary>
+        private void SpawnHearts()
+        {
+            try
+            {
+                PickupObject heart = PickupObjectDatabase.GetById(85);   // Heart
+                if (heart == null) return;
+                LootEngine.SpawnItem(heart.gameObject, World(new Vector2(14.5f, 24.6f)), Vector2.zero, 0f, true, false, false);
+                LootEngine.SpawnItem(heart.gameObject, World(new Vector2(16.5f, 24.6f)), Vector2.zero, 0f, true, false, false);
+                PastPlugin.Log("hearts on the nurse station");
+            }
+            catch (Exception e) { PastPlugin.Log("no hearts: " + e.Message); }
+        }
+
+        // ------------------------------------------------------------------ act 3: reinforcements
+
+        private bool reinforced;
+
+        /// <summary>Called by the Vet (VetReinforcements) below half health: the Nurse and two Techs from the east door.</summary>
+        public void CallReinforcements()
+        {
+            if (reinforced || ending) return;
+            reinforced = true;
+            StartCoroutine(RunWave("reinforcements", "nurse,vet_tech,vet_tech", ClinicLayout.TheatreSpawns));
+            PastPlugin.Log("the Vet calls the Nurse");
+        }
+
         // ------------------------------------------------------------------ waves
 
         // Console names the config accepts without a GUID (vanilla enemies used by the v2 design).
         private static readonly Dictionary<string, string> ENEMY_GUIDS = new Dictionary<string, string>
         {
+            { "vet_tech", VetTech.GUID },
+            { "nurse", Nurse.GUID },
             { "rat", "6ad1cafc268f4214a101dca7af61bc91" },
             { "parrot", "4b21a913e8c54056bc05cafecf9da880" },
             { "mutant_bullet_kin", "d4a9836f8ab14f3fadd0f597438b1f1f" },
@@ -346,8 +466,15 @@ namespace PlutoVetVisit
         {
             if (string.IsNullOrEmpty(text)) yield break;
             Vector3 pos = who.position + new Vector3(0f, 2.25f, 0f);
-            TextBoxManager.ShowTextBox(pos, who, seconds, text, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, false, false);
-            yield return new WaitForSeconds(seconds + 0.3f);
+            TextBoxManager.ShowTextBox(pos, who, -1f, text, string.Empty, false, TextBoxManager.BoxSlideOrientation.NO_ADJUSTMENT, true, false);
+            float t = 0f;
+            yield return null;
+            while (t < seconds + 0.3f)
+            {
+                t += BraveTime.DeltaTime;
+                if (t > 0.5f && BraveInput.GetInstanceForPlayer(0) != null && BraveInput.GetInstanceForPlayer(0).WasAdvanceDialoguePressed()) break;
+                yield return null;
+            }
             TextBoxManager.ClearTextBox(who);
         }
 
@@ -373,6 +500,12 @@ namespace PlutoVetVisit
             GameManager.Instance.MainCameraController.OverridePosition = p.CenterPosition;
             yield return new WaitForSeconds(0.5f);
 
+            if (!string.IsNullOrEmpty(PastConfig.Epilogue))
+            {
+                TextBoxManager.ShowLetterBox(p.CenterPosition + new Vector2(0f, 2.5f), p.transform, 4.5f, PastConfig.Epilogue, false, false);
+                yield return new WaitForSeconds(4.8f);
+                TextBoxManager.ClearTextBox(p.transform);
+            }
             Pixelator.Instance.FreezeFrame();
             BraveTime.RegisterTimeScaleMultiplier(0f, gameObject);
             float elapsed = 0f;

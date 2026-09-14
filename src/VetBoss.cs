@@ -167,6 +167,7 @@ namespace PlutoVetVisit
                 boom.explosionData.ss = rpgBoom.explosionData.ss;
             }
             Prefab.AddComponent<VetDeathHandler>();
+            Prefab.AddComponent<VetReinforcements>();
 
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor); // console: spawn pluto:the_vet
             PastPlugin.Log("The Vet built: " + PastConfig.BossHealth + " HP, console id " + CONSOLE_ID);
@@ -274,6 +275,25 @@ namespace PlutoVetVisit
                 RequiresLineOfSight = false,
                 MaxUsages = 0,
             };
+        }
+    }
+
+    /// <summary>Below half health the Vet calls the Nurse and two Techs, once (v2 design, act 3).</summary>
+    public class VetReinforcements : BraveBehaviour
+    {
+        private bool called;
+
+        private void Start()
+        {
+            if (healthHaver != null) healthHaver.OnDamaged += OnDamaged;
+        }
+
+        private void OnDamaged(float resultValue, float maxValue, CoreDamageTypes damageTypes, DamageCategory damageCategory, Vector2 damageDirection)
+        {
+            if (called || !PastConfig.BossReinforcements || maxValue <= 0f || resultValue > maxValue * 0.5f) return;
+            called = true;
+            healthHaver.OnDamaged -= OnDamaged;
+            if (VetVisitController.Instance != null) VetVisitController.Instance.CallReinforcements();
         }
     }
 

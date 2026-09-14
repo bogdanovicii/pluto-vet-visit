@@ -83,3 +83,21 @@ Set `DebugEndAfterSeconds = 0`. Log lines to look for: `doors found: 2`, `the wa
    from the ward is visible through the wall from the waiting room (report if the wall segments render as pillars or gaps instead of a wall).
 
 **Result:** pending
+
+## Milestones 6-8 — cast, story, dressing (Pluto_Vet_Visit-0.8.0.zip)
+
+Set `DebugEndAfterSeconds = 0`, `SkipIntro = false`, `SkipWaves = false`. Log lines: `Vet Tech built`, `The Nurse built`, `registered 4x custom objects`,
+`intro: owner True, receptionist True, rex True, grandma True`, `wave 1: 3 enemies`, `hearts on the nurse station`, `the Vet calls the Nurse`.
+1. `vet_visit`: letterboxed intro in the waiting room. The Receptionist asks the name, the Owner answers, Rex and Grandma Cat speak, the
+   intercom says "Pluto?", the Owner says "Be good." and walks down off the screen. Interact advances a line early. Then control returns,
+   a chick, a rabbit and a squirrel run around, and the ward door opens.
+2. Talk to the Receptionist, Rex and Grandma Cat (interact): one line each. Rex trembles; Grandma breathes.
+3. Ward: three Vet Techs come from the side walls (teal scrubs, syringe pistols, aimed syringes). Kill them: two more Techs plus a rat, a
+   parrot and two mutant kin from the kennels. Then two hearts appear on the nurse station and the far door opens.
+4. Theatre: the lamp hangs over the strap table, a monitor cart and a vaccine fridge stand by the wall. The Vet fight as before; below
+   half health the Nurse (big, white cap, shotgun syringe, net on her back) and two Techs come in from the right. Her fans are seven droplets,
+   her net is one big slow projectile. Kill everyone; the Vet's death still ends the past. Epilogue line, then the credits.
+5. `spawn pluto:vet_tech` and `spawn pluto:nurse` in a normal room: they fight; report whether their outline, shadow and death look right.
+6. Report: are Tech/Nurse hitboxes fair, is the intro readable, does any NPC draw over Pluto, does the Owner leave cleanly.
+
+**Result:** pending

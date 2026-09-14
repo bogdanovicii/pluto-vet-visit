@@ -19,6 +19,10 @@ EXPECTED_SIZES = {
     'pluto_litter_box': (20, 12), 'pluto_floor_mat': (48, 24), 'pluto_paw_prints': (24, 16), 'pluto_wet_floor_sign': (12, 16),
     # v0.5
     'pluto_clinic_door': (32, 40), 'pluto_kennel': (32, 32), 'pluto_kennel_open': (32, 32), 'pluto_nurse_station': (48, 24),
+    # v0.6
+    'pluto_prep_sign': (16, 10), 'pluto_surgical_lamp': (32, 32), 'pluto_monitor_cart': (24, 32),
+    'pluto_vaccine_fridge': (24, 40), 'pluto_intercom': (10, 12), 'pluto_wall_tv': (32, 20),
+    'pluto_side_door': (16, 32), 'pluto_strap_table_pad': (40, 8),
 }
 
 
@@ -49,7 +53,8 @@ class ObjectTests(unittest.TestCase):
         self.assertEqual(blocking, {'pluto_exam_table', 'pluto_cabinet', 'pluto_cart', 'pluto_sink', 'pluto_carrier', 'pluto_scratch_post',
                                     'pluto_reception_desk', 'pluto_chair', 'pluto_plant', 'pluto_med_shelf', 'pluto_fish_tank',
                                     'pluto_sharps_bin', 'pluto_iv_stand', 'pluto_litter_box', 'pluto_wet_floor_sign',
-                                    'pluto_clinic_door', 'pluto_kennel', 'pluto_kennel_open', 'pluto_nurse_station'})
+                                    'pluto_clinic_door', 'pluto_kennel', 'pluto_kennel_open', 'pluto_nurse_station',
+                                    'pluto_monitor_cart', 'pluto_vaccine_fridge'})
 
     def test_props_placed_inside_room(self):
         sizes = {o.name: o.size for o in O.OBJECTS}
