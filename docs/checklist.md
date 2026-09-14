@@ -272,3 +272,8 @@ Balance knobs (no rebuild): `[Balance] BulletSpeedScale`, `BossCooldownScale`, `
 `Reinforce3`; easier: `BulletSpeedScale = 0.85`, `BossCooldownScale = 1.25`, `Wave2 = mutant_bullet_kin,shroomer,syringe_tech`.
 
 **Result:** pending
+
+### 0.11.1 — the Vet redrawn
+Same steps as milestone 11. Also check: the Vet's new sprite in the theatre (tell crouch, star flash on firing, the intro flick, the death),
+that his shots leave from the needle tip and that Pluto's shots hit his body but not the air in front of the gun.
+Log: `The Vet prefab bank: ...`, `the Vet first shot: ... built ...`.

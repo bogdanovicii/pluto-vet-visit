@@ -19,7 +19,7 @@ namespace PlutoVetVisit
     {
         public const string GUID = "bogdan.etg.plutovetvisit";
         public const string NAME = "Pluto The Cat - The Vet Visit";
-        public const string VERSION = "0.11.0";
+        public const string VERSION = "0.11.1";
         public const string PLUTO_GUID = "bogdan.etg.plutothecat";
 
         private Harmony harmony;

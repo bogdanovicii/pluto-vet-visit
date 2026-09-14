@@ -9,10 +9,12 @@ from collections import OrderedDict
 
 import tech_poses as T
 import nurse_poses as N
+import vet_poses as VP
 import npc_poses as NP
 
 ENEMY_ROOT = 'PlutoVetVisit/Resources/Enemies'
 NPC_ROOT = 'PlutoVetVisit/Resources/Npcs'
+BOSS_ROOT = 'PlutoVetVisit/Resources/Boss'
 
 # Placeable name -> art folder. The room places NPCs by these names (clinic_room.NPCS).
 NPC_OBJECTS = OrderedDict([
@@ -23,13 +25,13 @@ NPC_OBJECTS = OrderedDict([
 ])
 
 
-def _enemy_block(prefix, module, folder):
+def _enemy_block(prefix, module, folder, root=ENEMY_ROOT):
     w, h = module.CANVAS
     hx, hy, hw, hh = module.HITBOX
     sx, sy = module.SHOOT_POINT
     clips = list(module.CLIPS)
     return [
-        '        public const string %s_ROOT = "%s/%s";' % (prefix, ENEMY_ROOT, folder),
+        '        public const string %s_ROOT = "%s/%s";' % (prefix, root, folder),
         '        public const int %s_W = %d, %s_H = %d;' % (prefix, w, prefix, h),
         '        public const int %s_HIT_X = %d, %s_HIT_Y = %d, %s_HIT_W = %d, %s_HIT_H = %d;' % (prefix, hx, prefix, hy, prefix, hw, prefix, hh),
         '        public const int %s_SHOOT_X = %d, %s_SHOOT_Y = %d;' % (prefix, sx, prefix, sy),
@@ -51,6 +53,7 @@ def layout_cs():
     stech = types.SimpleNamespace(CANVAS=T.CANVAS, HITBOX=T.HITBOX, SHOOT_POINT=T.STECH_SHOOT_POINT, CLIPS=T.STECH_CLIPS)
     lines += _enemy_block('STECH', stech, 'stech')
     lines += _enemy_block('NURSE', N, 'nurse')
+    lines += _enemy_block('VET', VP, 'vet', root=BOSS_ROOT)
     lines.append('        public static readonly NpcSpec[] NPCS = {')
     for name, who in NPC_OBJECTS.items():
         spec = NP.NPCS[who]

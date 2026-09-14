@@ -22,6 +22,12 @@ namespace PlutoVetVisit
         public const int NURSE_SHOOT_X = 44, NURSE_SHOOT_Y = 16;
         public static readonly string[] NURSE_CLIPS = { "idle", "move", "tell", "fire", "net", "die" };
         public static readonly int[] NURSE_FRAMES = { 4, 6, 3, 3, 4, 8 };
+        public const string VET_ROOT = "PlutoVetVisit/Resources/Boss/vet";
+        public const int VET_W = 48, VET_H = 40;
+        public const int VET_HIT_X = 7, VET_HIT_Y = 0, VET_HIT_W = 20, VET_HIT_H = 39;
+        public const int VET_SHOOT_X = 45, VET_SHOOT_Y = 20;
+        public static readonly string[] VET_CLIPS = { "idle", "move", "tell", "fire", "intro", "die" };
+        public static readonly int[] VET_FRAMES = { 5, 6, 4, 4, 8, 8 };
         public static readonly NpcSpec[] NPCS = {
             new NpcSpec("pluto_npc_owner", "owner", 48, 40, new[] { "idle", "walk", "walk_free" }, new[] { 2, 6, 6 }),
             new NpcSpec("pluto_npc_receptionist", "receptionist", 32, 40, new[] { "idle", "talk" }, new[] { 2, 2 }),

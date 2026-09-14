@@ -336,6 +336,26 @@ LAYOUT_PROMPTS = [
       'of shame and folded towels, a counter on the east with a printer and a sanitizer dispenser, a biohazard bin. '
       'Wide open floor around the table as a boss arena. '),
 ]
+# v0.12 boss-sprite references for the in-game Vet redesign (references only, never pixels). Own list so PROMPTS and
+# LAYOUT_PROMPTS stay pinned; plan() reads all three.
+SPRITE_PROMPTS = [
+    P('vet_sprite_sheet', '16:9', SHEET_BG +
+      'Enter the Gungeon style pixel-art boss sprite sheet of a smug veterinarian, drawn at game proportions as if 40 '
+      'pixels tall then shown large: white lab coat over teal scrubs #3F9E8F, round glasses, slicked dark quiff, a '
+      'stethoscope around the neck, a smug one-sided grin, holding an oversized syringe pistol with a glowing blue barrel '
+      '#4FA8E8 and a steel needle, facing right. One row per animation, four to six frames each: idle breathing; walk '
+      'cycle; wind-up tell (leans back, syringe raised, glasses glint); firing recoil with a bright muzzle flash on the '
+      'needle; death (knocked back, kneels, falls flat on his back). Top-down three-quarter view like the game, 16-colour '
+      'palette, dark outlines, chunky readable silhouette, big expressive head about 40 percent of the height, strong '
+      '3 tone shading from a top-left light, 1 px highlight lines on metal and glass. ', VET_REF),
+    P('vet_sprite_closeup', '16:9', SHEET_BG +
+      'Close-up turnaround reference at sprite scale for a 2D game boss, as if 16 pixels per head, shown large with '
+      'crisp pixels: LEFT, the veterinarian\'s head in right-facing three-quarter view, front view and a grinning '
+      'expression: slicked dark quiff with one highlight, round glasses with a white glint, a smug one-sided grin, '
+      'skin with a three tone ramp. RIGHT, his oversized syringe pistol facing right in side view: steel plunger ring, '
+      'glass barrel with glowing blue liquid #4FA8E8 and measure marks, steel collar, long needle, pistol grip with a '
+      'teal-gloved hand, plus the same gun firing with a small star-shaped muzzle flash at the needle tip. ', VET_REF),
+]
 
 # ---------------------------------------------------------------- generation
 
@@ -348,7 +368,7 @@ def out_path(prompt, candidate):
 def plan(force=False, only=None, candidates=2):
     jobs = []
     wanted = None if only is None else {n.strip().removesuffix('.png') for n in only.split(',')}
-    for p in PROMPTS + LAYOUT_PROMPTS:
+    for p in PROMPTS + LAYOUT_PROMPTS + SPRITE_PROMPTS:
         if wanted is not None and p.name[:-4] not in wanted:
             continue
         n = candidates if p.name in MULTI else 1

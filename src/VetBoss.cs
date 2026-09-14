@@ -35,8 +35,9 @@ namespace PlutoVetVisit
             if (BossBuilder.Dictionary.ContainsKey(GUID)) { Prefab = BossBuilder.Dictionary[GUID]; return; }
             Assembly asm = typeof(PastPlugin).Assembly;
 
-            // Hitbox arguments are pixels from the sprite's lower-left (48x40 canvas, body at columns 16-30).
-            Prefab = BossBuilder.BuildPrefab("The Vet", GUID, ROOT + "/idle/vet_idle_001", new IntVector2(16, 0), new IntVector2(14, 36), false);
+            // Hitbox arguments are pixels from the sprite's lower-left; tools/vet_poses.py owns them (HITBOX, SHOOT_POINT).
+            Prefab = BossBuilder.BuildPrefab("The Vet", GUID, ROOT + "/idle/vet_idle_001",
+                new IntVector2(CastLayout.VET_HIT_X, CastLayout.VET_HIT_Y), new IntVector2(CastLayout.VET_HIT_W, CastLayout.VET_HIT_H), false);
             if (Prefab == null) throw new Exception("BossBuilder.BuildPrefab returned null");
             AIActor actor = Prefab.GetComponent<AIActor>();
             HealthHaver hh = actor.healthHaver;
@@ -69,7 +70,7 @@ namespace PlutoVetVisit
             {
                 AIActor kinActor = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN);
                 GameObject shadow = kinActor != null ? (kinActor.ShadowPrefab != null ? kinActor.ShadowPrefab : kinActor.ShadowObject) : null;
-                if (shadow != null) EnemyBuildingTools.AddShadowToAIActor(actor, shadow, new Vector2(23f / 16f, 0f), "shadow");
+                if (shadow != null) EnemyBuildingTools.AddShadowToAIActor(actor, shadow, new Vector2((CastLayout.VET_HIT_X + CastLayout.VET_HIT_W / 2f) / 16f, 0f), "shadow");
             }
             catch (Exception e) { PastPlugin.Log("no borrowed shadow for the Vet (the default blob is used): " + e.Message); }
             actor.specRigidbody.CollideWithOthers = true;
@@ -79,7 +80,7 @@ namespace PlutoVetVisit
                 ColliderGenerationMode = PixelCollider.PixelColliderGeneration.Manual,
                 CollisionLayer = CollisionLayer.EnemyHitBox,
                 IsTrigger = false,
-                ManualOffsetX = 16, ManualOffsetY = 0, ManualWidth = 14, ManualHeight = 36,
+                ManualOffsetX = CastLayout.VET_HIT_X, ManualOffsetY = CastLayout.VET_HIT_Y, ManualWidth = CastLayout.VET_HIT_W, ManualHeight = CastLayout.VET_HIT_H,
             });
 
             Clip(anim, "idle", 6, asm, tk2dSpriteAnimationClip.WrapMode.Loop);
@@ -103,7 +104,7 @@ namespace PlutoVetVisit
             bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 8, 4));
             bank.Bullets.Add(Entry(kin, "cloud", "vet_cloud_001", 14, 14));
 
-            GameObject shootPoint = EnemyBuildingTools.GenerateShootPoint(Prefab, actor.sprite.WorldCenter + new Vector2(1.2f, 0.0f), "syringe_tip"); // the needle of the vaccine gun
+            GameObject shootPoint = VetTech.ShootPoint(Prefab, actor, CastLayout.VET_SHOOT_X, CastLayout.VET_SHOOT_Y, CastLayout.VET_W, CastLayout.VET_H, "syringe_tip"); // the needle tip
             bs.TargetBehaviors = new List<TargetBehaviorBase>
             {
                 new TargetPlayerBehavior { Radius = 35f, LineOfSight = false, ObjectPermanence = true, SearchInterval = 0.25f, PauseOnTargetSwitch = false, PauseTime = 0.25f }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1
+- The Vet redrawn in Enter the Gungeon's boss style: a big head with a swept quiff and glinting round glasses, a one-sided grin, a wide stance, and a proper syringe pistol (plunger ring, glass barrel, long needle). New animations: a crouching wind-up with the syringe whipped up beside his head, a recoil with a star-shaped muzzle flash, an intro where he flicks a drop off the needle and levels it at Pluto, and a death where he drops the gun, kneels and falls on his back. All frames hand-drawn; Gemini images were used as references only.
+- His hitbox and the point his shots leave from now come from the art itself, so they match the new sprite.
+
 ## 0.11.0
 - Enemy bullets hit. Re-skinning a vanilla enemy bullet with Alexandria's player-projectile helper left its hitbox at 0x0, so every syringe, droplet, pill and net flew through Pluto. Each bullet now has a hitbox sized to its sprite, does half a heart like every vanilla enemy bullet, and the log prints the built hitbox of each actor's first shot. The `Duplicate prefab name` errors are gone.
 - A hard past with real movement. Vet Techs strafe, side-step and lunge, fire bursts on the move and a long-tell dart rifle from range. The new Syringe Tech flanks with a syringe shotgun and lunges in. The Nurse closes in to spray, hops back to throw the net, sweeps a tranquilizer spray and adds an IV line below half health. The Vet no longer runs away when hit (that cancelled his attacks); he strafes and hops between patterns, finishes every pattern he starts, and gains stitches that stop and re-aim, a scalpel ring with a gap, anesthesia clouds and a leap-in ring. A second group of adds arrives at a quarter of his health.

@@ -194,6 +194,22 @@ sheets instead.
 
 As with every image on this page: references only. Never pixelize, trace or copy them into `Resources/`.
 
+## v0.12 boss-sprite references (the in-game Vet redesign)
+
+A third list, `SPRITE_PROMPTS`, holds two 16:9 sheets generated on 2026-09-14 with `gemini-3-pro-image` at 2K and the
+boss card attached (`python3 tools/gemini_past_concepts.py --only vet_sprite_sheet,vet_sprite_closeup`). They informed
+the hand-drawn redesign in `tools/vet_poses.py`; nothing from them was resized, traced or copied.
+
+- `vet_sprite_sheet.png`: an Enter the Gungeon style sheet (idle, walk, wind-up tell, fire with recoil, death). Take:
+  the big head and white glinting lenses with dot eyes, the wide braced stance for the tell and fire, the syringe
+  whipped up beside the head with a glasses glint as the anticipation, the recoil lean with a star flash on the
+  needle, and the death read (knocked back, kneel, flat on his back with the syringe dropped beside him). Ignore: the
+  teal gloves (the card has bare hands), the yellow-green coat tint, the soft glows, the long walk cycle.
+- `vet_sprite_closeup.png`: head turnaround (three-quarter, front, grinning) and the syringe pistol in side view,
+  idle and firing. Take: the swept quiff with one highlight, the one-sided grin with a row of teeth, the syringe's
+  parts in order (plunger ring, finger flange, glass barrel with the liquid darker at the bottom, steel collar, long
+  needle) and a small star flash at the tip. Ignore: the orange flash colour (ours is vaccine blue-white).
+
 ## Story beats
 
 ### 14. `beat_intro.png` (16:9, round 2)
