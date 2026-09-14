@@ -27,6 +27,22 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_feather_wand", "feather_wand", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
             new ObjectSpec("pluto_scratch_post", "scratch_post", ObjectSpec.Layer.Low, 2, 0, 12, 8, 0.0f),
             new ObjectSpec("pluto_syringe_tray", "syringe_tray", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_reception_desk", "reception_desk", ObjectSpec.Layer.High, 0, 0, 48, 14, 0.0f),
+            new ObjectSpec("pluto_chair", "chair", ObjectSpec.Layer.Low, 1, 0, 14, 8, 0.0f),
+            new ObjectSpec("pluto_plant", "plant", ObjectSpec.Layer.High, 4, 0, 8, 8, 0.0f),
+            new ObjectSpec("pluto_window", "window", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_xray_box", "xray_box", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_med_shelf", "med_shelf", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
+            new ObjectSpec("pluto_clock", "clock", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
+            new ObjectSpec("pluto_fish_tank", "fish_tank", ObjectSpec.Layer.High, 0, 0, 32, 14, 0.0f),
+            new ObjectSpec("pluto_sharps_bin", "sharps_bin", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
+            new ObjectSpec("pluto_iv_stand", "iv_stand", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
+            new ObjectSpec("pluto_treat_jar", "treat_jar", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_food_bowls", "food_bowls", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
+            new ObjectSpec("pluto_litter_box", "litter_box", ObjectSpec.Layer.Low, 0, 0, 20, 8, 0.0f),
+            new ObjectSpec("pluto_floor_mat", "floor_mat", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.5f),
+            new ObjectSpec("pluto_paw_prints", "paw_prints", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.0f),
+            new ObjectSpec("pluto_wet_floor_sign", "wet_floor_sign", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
         };
     }
 

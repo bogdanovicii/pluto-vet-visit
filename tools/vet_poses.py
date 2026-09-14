@@ -1,61 +1,63 @@
 """The Vet: one hand-drawn base pose (32x40, facing right) on a 48x40 canvas, plus overlays and derived clips.
 
-Palette: o outline, W/w/K white coat, = skin, - skin shade, @ hair, $ ~ teal scrubs, & % # steel syringe, * liquid, g eyes.
+Palette: o outline, W/w/K white coat, = skin, - skin shade, @ hair/shoes/stethoscope, $ ~ teal scrubs, & % # steel,
+* liquid, ^ glass, g eyes, ! pen, : name tag. v0.4: glasses, stethoscope, coat pocket, a vaccine gun (syringe pistol).
 The left-facing versions are mirrored by the game (DirectionalAnimation FlipType.Flip), so only right-facing art exists.
+Exported WITHOUT the outline: the Vet is an AIActor and the game draws his outline at runtime (procedurallyOutlined).
 """
 import os
 from collections import OrderedDict
 
-from vetpixel import R, pad, shift, overlay, erase, rotate_free, settle, save, sheet
+from vetpixel import R, pad, shift, overlay, erase, rotate_free, settle, save, sheet, strip_outline
 
 CANVAS = (48, 40)
-DX = 8                      # the 32-wide pose sits at columns 8..39 of the 48-wide canvas
+DX = 8                      # the 36-wide pose sits at columns 8..43 of the 48-wide canvas
 HITBOX = (16, 0, 14, 36)    # x, y, w, h in canvas pixels: the body column (head to shoes), not the syringe
 
 POSE = R([
-    "................................",
-    "................................",
-    "............oooooo..............",
-    "...........o@@@@@@o.............",
-    "..........o@@@@@@@@o............",
-    "..........o@@@@@@@@o............",
-    "..........o@=======o............",
-    "..........o====g==go............",
-    "..........o=oo=oo==o............",
-    "..........o========o............",
-    "...........o===-==o.............",
-    "............o====o..............",
-    ".............oooo...............",
-    "..........ooWWWWWWoo............",
-    ".........oWWW$$$$WWWo...........",
-    "........oWWWW$$$$WWWWo..........",
-    "........oWWWW$$$$WWWWoo.........",
-    "........oWWWW$$$$WWWWWWo........",
-    "........oWWWW$$$$WWWWWWWo.......",
-    "........oWWWW$~~$WWWWWW=oo......",
-    "........oWWWW$~~$WWWWW=&&&&&&o..",
-    "........oWWWW$~~$WWWWWo&****&%o.",
-    "........oWWWW$~~$WWWWWoo&&&&&&%%",
-    "........oWWWWW$$WWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWWWWWWWWWWWWWo.........",
-    "........oWwwwwwwwwwwWWo.........",
-    ".........oooooooooooooo.........",
-    "..........o~~~o.o~~~o...........",
-    "..........o~~~o.o~~~o...........",
-    "..........o~~~o.o~~~o...........",
-    "..........o~~~o.o~~~o...........",
-    "..........o~~~o.o~~~o...........",
-    "..........o~~~o.o~~~o...........",
-    ".........oooooo.oooooo..........",
-    ".........oooooo.oooooo..........",
+    "....................................",
+    "............oooooo..................",
+    "...........o@@@@@@o.................",
+    "..........o@@@@@@@@o................",
+    "..........o@@@@@@@@o................",
+    "..........o@@@=====o................",
+    "..........o@========o...............",
+    "..........o=oo=oo==o................",
+    "..........o=^g=^g==o................",
+    "..........o========o................",
+    "..........o===-=-==o................",
+    "...........o==oo==o.................",
+    "............oooooo..................",
+    "..........ooWWWWWWoo................",
+    ".........oWWW@$$@WWWo...............",
+    "........oWWWW@$$@WWWWo..............",
+    "........oWWWW@$$@WWWWoo.............",
+    "........oWWWW@%%@WWWWW=o............",
+    "........oWWWWW@@WWWWWW=oo...........",
+    "........oWWWWWWWWWWWWW==o&&&&&&&&o..",
+    "........oWWW!WWWWWWWWWo=##&******&%%",
+    "........oWWW:WWWWWWWWWoo#&%%%%%%%&o.",
+    "........oWWWWWWWWWWWWWo.oo###ooooo..",
+    "........oWwWWWWWWWWWwWo..o###o......",
+    "........oWwWWWWWWWWWwWo..ooooo......",
+    "........oWwWWWWWWWWWwWo.............",
+    "........oWwWWWWWWWWWwWo.............",
+    "........oWwWWWWWWWWWwWo.............",
+    "........oWwWWWWWWWWWwWo.............",
+    "........oWwWWWWWWWWWwWo.............",
+    "........oWwwwwwwwwwwwWo.............",
+    ".........oooooooooooooo.............",
+    "..........o~~~o.o~~~o...............",
+    "..........o~~~o.o~~~o...............",
+    "..........o~~~o.o~~~o...............",
+    "..........o~$~o.o~$~o...............",
+    "..........o~~~o.o~~~o...............",
+    "..........o~~~o.o~~~o...............",
+    ".........o@@@@o.o@@@@o..............",
+    ".........oooooo.oooooo..............",
 ])
 LEG_ROWS = (32, 40)                 # trouser + shoe rows of the pose
-ARM_BOX = (22 + DX, 16, 32 + DX, 23)  # canvas x0, y0, x1, y1 of the arm + syringe region
+ARM_BOX = (23 + DX, 17, 36 + DX, 25)  # canvas x0, y0, x1, y1 of the arm + vaccine gun region
 TORSO_EDGE = ['o'] * (ARM_BOX[3] - ARM_BOX[1])  # outline column where the arm meets the coat, redrawn after every arm move
 BASE = overlay(pad(POSE, CANVAS[0], CANVAS[1], DX, 0), TORSO_EDGE, ARM_BOX[0] - 1, ARM_BOX[1])
 
@@ -67,7 +69,7 @@ LEGS_A = R([
     ".......o~~~o........o~~~o.......",
     ".......o~~~o........o~~~o.......",
     "......o~~~o..........o~~~o......",
-    ".....oooooo..........oooooo.....",
+    ".....o@@@@o..........o@@@@o.....",
     ".....oooooo..........oooooo.....",
 ])
 LEGS_B = R([
@@ -77,7 +79,7 @@ LEGS_B = R([
     "............o~~oo~~o............",
     "............o~~oo~~o............",
     "............o~~oo~~o............",
-    "...........ooooooooo............",
+    "...........o@@@oo@@@o...........",
     "...........ooooooooo............",
 ])
 
@@ -131,7 +133,7 @@ def write(project):
     for clip, frames in CLIPS.items():
         for i, f in enumerate(frames, 1):
             p = os.path.join(root, clip, 'vet_%s_%03d.png' % (clip, i))
-            save(f, p)
+            save(strip_outline(f), p)     # the game adds the outline to actors at runtime
             paths.append(p)
     return paths
 

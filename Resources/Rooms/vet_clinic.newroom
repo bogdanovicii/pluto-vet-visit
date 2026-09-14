@@ -23,19 +23,31 @@
    "y": 1.0
   },
   {
-   "x": 1.0,
+   "x": 0.5,
    "y": 15.0
   },
   {
-   "x": 4.0,
+   "x": 3.0,
    "y": 15.0
   },
   {
-   "x": 7.0,
+   "x": 6.0,
+   "y": 15.5
+  },
+  {
+   "x": 8.6,
+   "y": 17.1
+  },
+  {
+   "x": 9.0,
    "y": 15.0
   },
   {
-   "x": 12.0,
+   "x": 10.5,
+   "y": 15.5
+  },
+  {
+   "x": 14.0,
    "y": 15.0
   },
   {
@@ -51,10 +63,6 @@
    "y": 15.0
   },
   {
-   "x": 23.0,
-   "y": 9.0
-  },
-  {
    "x": 11.0,
    "y": 8.0
   },
@@ -63,28 +71,64 @@
    "y": 8.5
   },
   {
-   "x": 3.0,
-   "y": 10.0
+   "x": 9.5,
+   "y": 9.5
   },
   {
    "x": 8.0,
-   "y": 11.0
+   "y": 12.0
   },
   {
    "x": 20.0,
    "y": 12.0
   },
   {
-   "x": 2.0,
-   "y": 1.5
-  },
-  {
-   "x": 22.0,
-   "y": 2.0
+   "x": 16.0,
+   "y": 5.5
   },
   {
    "x": 8.0,
    "y": 5.0
+  },
+  {
+   "x": 23.0,
+   "y": 10.5
+  },
+  {
+   "x": 23.0,
+   "y": 6.5
+  },
+  {
+   "x": 24.5,
+   "y": 4.0
+  },
+  {
+   "x": 0.5,
+   "y": 4.0
+  },
+  {
+   "x": 1.0,
+   "y": 5.0
+  },
+  {
+   "x": 2.5,
+   "y": 5.0
+  },
+  {
+   "x": 0.5,
+   "y": 8.0
+  },
+  {
+   "x": 4.0,
+   "y": 10.0
+  },
+  {
+   "x": 2.0,
+   "y": 1.5
+  },
+  {
+   "x": 7.0,
+   "y": 6.0
   },
   {
    "x": 18.0,
@@ -93,30 +137,82 @@
   {
    "x": 14.0,
    "y": 3.5
+  },
+  {
+   "x": 1.0,
+   "y": 11.5
+  },
+  {
+   "x": 5.5,
+   "y": 12.5
+  },
+  {
+   "x": 18.5,
+   "y": 1.5
+  },
+  {
+   "x": 21.4,
+   "y": 3.3
+  },
+  {
+   "x": 22.5,
+   "y": 4.5
   }
  ],
  "placeableGUIDs": [
   "pluto_past_controller",
   "pluto_cabinet",
   "pluto_cabinet",
-  "pluto_cabinet",
+  "pluto_window",
+  "pluto_clock",
   "pluto_poster",
+  "pluto_xray_box",
+  "pluto_med_shelf",
   "pluto_cabinet",
   "pluto_cabinet",
   "pluto_cabinet",
-  "pluto_sink",
   "pluto_exam_table",
   "pluto_cart",
-  "pluto_scale",
+  "pluto_iv_stand",
   "pluto_syringe_tray",
   "pluto_cone",
+  "pluto_wet_floor_sign",
+  "pluto_paw_prints",
+  "pluto_sink",
+  "pluto_fish_tank",
+  "pluto_sharps_bin",
+  "pluto_floor_mat",
+  "pluto_chair",
+  "pluto_chair",
+  "pluto_plant",
+  "pluto_scale",
   "pluto_carrier",
-  "pluto_scratch_post",
   "pluto_toy_mouse",
   "pluto_toy_ball",
-  "pluto_feather_wand"
+  "pluto_feather_wand",
+  "pluto_litter_box",
+  "pluto_food_bowls",
+  "pluto_reception_desk",
+  "pluto_treat_jar",
+  "pluto_scratch_post"
  ],
  "placeableAttributes": [
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
   "",
   "",
   "",

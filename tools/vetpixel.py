@@ -14,7 +14,7 @@ PROJECT = os.path.dirname(HERE)
 MAIN_TOOLS = os.path.join(os.path.dirname(PROJECT), 'tools')
 if MAIN_TOOLS not in sys.path:
     sys.path.insert(0, MAIN_TOOLS)
-from pixel import img_from_rows, check_rect, pad, shift, overlay, erase, rows_from_img  # noqa: E402,F401
+from pixel import img_from_rows, check_rect, pad, shift, overlay, erase, rows_from_img, strip_outline  # noqa: E402,F401
 
 # Snapshotted verbatim from ../tools/pixel.py's PALETTE: only the base cat/body keys our art
 # actually uses (scanned from vet_poses.py, clinic_objects.py, projectiles.py and cards.py).

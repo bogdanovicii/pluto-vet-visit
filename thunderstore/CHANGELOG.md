@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+- The Vet redrawn: glasses, stethoscope, coat pocket with pen and name tag, dark shoes, and a proper vaccine gun (syringe pistol with plunger, barrel, needle and grip) that he raises to shoot; walk cycle with shoes; shots leave from the needle. His frames ship without a drawn outline because the game outlines actors itself (he had a double outline).
+- Sixteen new clinic props: reception desk with monitor and papers, two waiting chairs on a floor mat, a potted plant, a window with blinds, a wall clock, an X-ray light box, a medicine shelf, a fish tank, a sharps bin, an IV stand, a treat jar, Royal Canin food and water bowls, a litter box, paw prints and a wet-floor sign.
+- Room re-dressed: cabinets, window, poster, X-ray box and shelf along the north wall; exam area with table, cart, IV stand and tray; sink, tank and bin on the right; waiting corner bottom-left; reception bottom-right.
+
 ## 0.3.0
 - Pluto arrives armed: the past hands him his starting loadout (Royal Kibble Sack, Wet Food Can, Squeaky Toy, Nine Lives, Coco Blue, Puffed Up) if the run's reset left him empty-handed.
 - The Vet's name no longer shows as an error: the boss card, boss bar and actor name use registered string-table keys.

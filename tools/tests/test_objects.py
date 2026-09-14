@@ -12,6 +12,11 @@ EXPECTED_SIZES = {
     'pluto_scale': (16, 16), 'pluto_carrier': (32, 24), 'pluto_poster': (16, 24), 'pluto_cone': (12, 10),
     'pluto_toy_mouse': (10, 6), 'pluto_toy_ball': (6, 6), 'pluto_feather_wand': (14, 10),
     'pluto_scratch_post': (16, 24), 'pluto_syringe_tray': (16, 10),
+    # v0.4
+    'pluto_reception_desk': (48, 28), 'pluto_chair': (16, 20), 'pluto_plant': (16, 28), 'pluto_window': (32, 24),
+    'pluto_xray_box': (24, 20), 'pluto_med_shelf': (32, 36), 'pluto_clock': (10, 10), 'pluto_fish_tank': (32, 24),
+    'pluto_sharps_bin': (12, 14), 'pluto_iv_stand': (12, 32), 'pluto_treat_jar': (8, 10), 'pluto_food_bowls': (20, 8),
+    'pluto_litter_box': (20, 12), 'pluto_floor_mat': (48, 24), 'pluto_paw_prints': (24, 16), 'pluto_wet_floor_sign': (12, 16),
 }
 
 
@@ -39,7 +44,9 @@ class ObjectTests(unittest.TestCase):
 
     def test_furniture_blocks_and_decor_does_not(self):
         blocking = {o.name for o in O.OBJECTS if o.collider is not None}
-        self.assertEqual(blocking, {'pluto_exam_table', 'pluto_cabinet', 'pluto_cart', 'pluto_sink', 'pluto_carrier', 'pluto_scratch_post'})
+        self.assertEqual(blocking, {'pluto_exam_table', 'pluto_cabinet', 'pluto_cart', 'pluto_sink', 'pluto_carrier', 'pluto_scratch_post',
+                                    'pluto_reception_desk', 'pluto_chair', 'pluto_plant', 'pluto_med_shelf', 'pluto_fish_tank',
+                                    'pluto_sharps_bin', 'pluto_iv_stand', 'pluto_litter_box', 'pluto_wet_floor_sign'})
 
     def test_props_placed_inside_room(self):
         sizes = {o.name: o.size for o in O.OBJECTS}

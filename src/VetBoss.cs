@@ -90,7 +90,7 @@ namespace PlutoVetVisit
             bank.Bullets.Add(Entry(kin, "droplet", "vet_droplet_001", 5, 5));
             bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 8, 4));
 
-            GameObject shootPoint = EnemyBuildingTools.GenerateShootPoint(Prefab, actor.sprite.WorldCenter + new Vector2(0.9f, 0.4f), "syringe_tip");
+            GameObject shootPoint = EnemyBuildingTools.GenerateShootPoint(Prefab, actor.sprite.WorldCenter + new Vector2(1.2f, 0.0f), "syringe_tip"); // the needle of the vaccine gun
             bs.TargetBehaviors = new List<TargetBehaviorBase>
             {
                 new TargetPlayerBehavior { Radius = 35f, LineOfSight = false, ObjectPermanence = true, SearchInterval = 0.25f, PauseOnTargetSwitch = false, PauseTime = 0.25f }
