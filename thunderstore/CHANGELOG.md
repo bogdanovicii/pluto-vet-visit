@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.1
+- Enemies shoot. Every enemy shot since 0.3.0 threw a NullReferenceException in `AIBulletBank.CreateProjectileFromBank`: each bullet copy was cloned a second time, Alexandria's instantiate hook switched that clone on, the live projectile flew off and destroyed itself, and the bank entry was left empty (our actors have no gun to fall back on). The copy is now made once and kept switched off, and every Tech, Nurse and the Vet checks its bank when it appears and rebuilds any entry that went missing (`... bank: syringe ok inactive`).
+- Pluto shoots when started with `vet_visit`. Loading the past straight from the Breach skipped the game's "left the Breach" step, so the game still thought Pluto was in the Breach (no firing) and his gun stayed switched off. The loadout check now does what leaving the Breach does and switches the gun back on; the watchdog prints a short line every 15 s.
+- The engage error on the ward greeter is gone (its brain is no longer switched off before it starts).
+- Look, from the first in-game screenshots: the wall faces now stand in front of the lab's purple wall blocks, with the wall decor hung on them; calmer floor tiles; a stacked, occupied kennel bank along both ward walls with swung-open doors (the ward side doors are gone); a brown paw-print doormat; spaced waiting-room chairs; a readable clock; the theatre toys moved out of the fight into the corner.
+
 ## 0.10.0
 - Armed, verified against the game's own code: the Ark hands the starting guns back before the past loads and nothing strips them afterwards, so an unarmed Pluto means a hidden gun renderer or a stuck input state. The loadout check now repairs all three (gun, renderer, input), runs after the level's fall-spawn, after every cutscene and every 3 s, and logs a full before/after snapshot (`loadout ...: before[...] after[...]`). `vet_loadout` prints it on demand.
 - The staff fight, root cause found: EnemyBuilder enemies are born `Inactive` (the visibility manager that wakes vanilla enemies is stripped from the template) and their brain never ticks. Every spawned Tech, patient and the Nurse is now woken explicitly, re-woken if a heartbeat finds it asleep, and wakes itself when spawned from the console. Each actor logs one diagnostic line at 0.2, 2 and 6 s (state, brain, target, path, lists, health).

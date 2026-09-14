@@ -170,3 +170,37 @@ Config knobs for balance (`[Balance]`, no rebuild needed): `BulletSpeedScale` (0
 Look: `[Room] FloorTiles`, `WallFaces`, `AmbientR/G/B` (0.96/0.84/0.84; the lab is 0.91/0.64/0.64).
 
 **Result:** pending
+
+### 0.10.0 result (Steam machine, 2026-09-14)
+Techs woke, walked and started their tell, but every shot threw the `AIBulletBank.CreateProjectileFromBank` NullReferenceException
+(188 times); Pluto had the sack but `active=False` and input `FoyerInputOnly`; the past stopped at wave 1. Screenshots: the lab's purple
+wall blocks covered the wall faces, the floor variants looked like dirt, kennels stood apart.
+
+## Milestone 10.1 — shots and the Breach state (Pluto_Vet_Visit-0.10.1.zip)
+
+Checked in the decompiled game:
+- `AIBulletBank.CreateProjectileFromBank` reads `GetBullet(name).BulletObject` and, when it is null, `aiShooter.CurrentGun` with no null check;
+  our actors have no AIShooter. The entry was null because `VetBoss.Entry` cloned Alexandria's already-inactive fake-prefab copy again, and
+  Alexandria's Instantiate hook activates any clone of a fake prefab, so the live projectile died in the world.
+- `Foyer` sets `GameManager.IsFoyer`, `ForceNoGun` and `CurrentGun.gameObject.SetActive(false)`; only `Foyer.OnDepartedFoyer` undoes them.
+  `PlayerController.CurrentInputState` returns `FoyerInputOnly` while `IsFoyer`, and `AcceptingNonMotionInput` is then false.
+- `BehaviorSpeculator.RefreshBehaviors` initialises every behaviour with `m_aiActor`, which only the component's Start sets; the greeter's
+  speculator was switched off before Start, so each behaviour started with a null actor: the engage NRE. Enabling it is enough.
+
+Log lines to look for:
+`Vet Tech prefab bank: syringe ok inactive`, `The Nurse prefab bank: droplet ok inactive, net ok inactive`, `The Vet prefab bank: syringe ok inactive, droplet ok inactive, pill ok inactive`,
+`loadout on arrival: left the Breach state (IsFoyer); ForceNoGun off; gun object switched on ...` (only with `vet_visit`; the Ark route prints
+`nothing to repair`), with the `after[...]` snapshot showing `current pluto_kibble_sack active=True`, `input AllInput`, `nonMotion True`, `isFoyer False`,
+`Vet Tech spawned, bank: syringe ok inactive` for each Tech, `watchdog 15 s: gun pluto_kibble_sack active True, input AllInput, nonMotion True, isFoyer False`.
+Bad signs: any `bank: ... BROKEN` or `REPAIRED` (send the line), `active!` on a bank entry, `input FoyerInputOnly`, the CreateProjectileFromBank exception,
+or a `loadout watchdog: ...` line during normal play (it now acts only on a state that lasted two ticks: say what Pluto was doing).
+Pluto's cardboard box and dodge rolls must still hide the gun normally.
+
+1. `vet_visit` from the Breach: after the intro Pluto fires the kibble sack.
+2. Ward: the greeting, then the Techs close in and their syringe bursts actually fly (with a sound) and hurt Pluto. No engage error line.
+3. Clear both waves, reach the theatre, the Vet fires his patterns; the Nurse fires fans and nets.
+4. Look: the divider walls show the white-and-teal face (no purple blocks), TV, window, clock and intercom on it; Pluto standing against a wall is drawn in
+   front of it; the kennel bank is continuous with animals; the doormat is brown. Screenshot each zone again.
+5. Report hearts lost and the time to kill the Vet (target 60-90 s).
+
+**Result:** pending

@@ -40,11 +40,11 @@
   },
   {
    "x": 0.75,
-   "y": 7.3
+   "y": 7.8
   },
   {
    "x": 0.75,
-   "y": 8.8
+   "y": 9.8
   },
   {
    "x": 0.0,
@@ -76,7 +76,7 @@
   },
   {
    "x": 0.75,
-   "y": 4.5
+   "y": 4.0
   },
   {
    "x": 0.75,
@@ -84,11 +84,11 @@
   },
   {
    "x": 0.75,
-   "y": 7.5
+   "y": 8.0
   },
   {
    "x": 0.75,
-   "y": 9.0
+   "y": 10.0
   },
   {
    "x": 8.0,
@@ -112,23 +112,23 @@
   },
   {
    "x": 3.5,
-   "y": 13.2
+   "y": 13.75
   },
   {
    "x": 7.0,
-   "y": 13.2
+   "y": 13.75
   },
   {
    "x": 10.5,
-   "y": 13.4
-  },
-  {
-   "x": 16.2,
-   "y": 13.4
+   "y": 14.0
   },
   {
    "x": 12.0,
-   "y": 13.2
+   "y": 13.75
+  },
+  {
+   "x": 16.375,
+   "y": 14.125
   },
   {
    "x": 14.5,
@@ -167,28 +167,36 @@
    "y": 1.0
   },
   {
-   "x": 1.0,
-   "y": 16.5
+   "x": 0.5,
+   "y": 16.0
   },
   {
-   "x": 1.0,
-   "y": 20.0
+   "x": 0.5,
+   "y": 19.0
   },
   {
-   "x": 1.0,
+   "x": 0.5,
+   "y": 22.0
+  },
+  {
+   "x": 0.5,
    "y": 25.0
   },
   {
-   "x": 1.0,
-   "y": 28.5
+   "x": 0.5,
+   "y": 28.0
   },
   {
    "x": 27.0,
-   "y": 16.5
+   "y": 16.0
   },
   {
    "x": 27.0,
-   "y": 20.0
+   "y": 19.0
+  },
+  {
+   "x": 26.25,
+   "y": 22.0
   },
   {
    "x": 27.0,
@@ -196,51 +204,35 @@
   },
   {
    "x": 27.0,
-   "y": 28.5
+   "y": 28.0
   },
   {
    "x": 12.0,
    "y": 23.0
   },
   {
+   "x": 4.0,
+   "y": 32.75
+  },
+  {
    "x": 11.5,
-   "y": 32.4
+   "y": 33.25
   },
   {
-   "x": 0.0,
-   "y": 22.5
-  },
-  {
-   "x": 29.0,
-   "y": 22.5
+   "x": 18.0,
+   "y": 32.75
   },
   {
    "x": 10.0,
-   "y": 20.5
+   "y": 29.8
   },
   {
-   "x": 5.0,
-   "y": 32.3
-  },
-  {
-   "x": 8.0,
-   "y": 29.5
+   "x": 17.0,
+   "y": 30.0
   },
   {
    "x": 19.5,
-   "y": 29.5
-  },
-  {
-   "x": 21.5,
    "y": 30.0
-  },
-  {
-   "x": 24.0,
-   "y": 30.0
-  },
-  {
-   "x": 14.0,
-   "y": 17.0
   },
   {
    "x": 1.0,
@@ -251,12 +243,12 @@
    "y": 49.0
   },
   {
-   "x": 10.6,
-   "y": 52.4
+   "x": 10.5,
+   "y": 53.0
   },
   {
    "x": 12.0,
-   "y": 52.2
+   "y": 52.75
   },
   {
    "x": 16.0,
@@ -307,27 +299,23 @@
    "y": 39.5
   },
   {
-   "x": 22.0,
-   "y": 45.0
-  },
-  {
-   "x": 7.0,
-   "y": 39.0
-  },
-  {
-   "x": 20.0,
-   "y": 37.0
-  },
-  {
-   "x": 16.0,
-   "y": 36.5
-  },
-  {
-   "x": 24.5,
+   "x": 2.5,
    "y": 37.5
   },
   {
-   "x": 8.0,
+   "x": 4.0,
+   "y": 36.5
+  },
+  {
+   "x": 3.0,
+   "y": 39.0
+  },
+  {
+   "x": 2.0,
+   "y": 41.5
+  },
+  {
+   "x": 5.5,
    "y": 36.0
   }
  ],
@@ -358,8 +346,8 @@
   "pluto_wall_tv",
   "pluto_window",
   "pluto_clock",
-  "pluto_intercom",
   "pluto_poster",
+  "pluto_intercom",
   "pluto_wet_floor_sign",
   "pluto_paw_prints",
   "pluto_toy_mouse",
@@ -369,25 +357,23 @@
   "pluto_fish_tank",
   "pluto_scratch_post",
   "pluto_plant",
-  "pluto_kennel",
-  "pluto_kennel_open",
+  "pluto_kennel_cat",
+  "pluto_kennel_open_r",
   "pluto_kennel_cone",
-  "pluto_kennel_open",
-  "pluto_kennel_open",
+  "pluto_kennel_dog",
+  "pluto_kennel_cat",
+  "pluto_kennel_dog",
+  "pluto_kennel_cat",
+  "pluto_kennel_open_l",
+  "pluto_kennel_cat",
   "pluto_kennel_cone",
-  "pluto_kennel_open",
-  "pluto_kennel",
   "pluto_nurse_station",
-  "pluto_prep_sign",
-  "pluto_side_door",
-  "pluto_side_door",
-  "pluto_litter_box",
   "pluto_xray_box",
-  "pluto_med_shelf",
+  "pluto_prep_sign",
+  "pluto_wall_shelf",
   "pluto_iv_stand",
   "pluto_sharps_bin",
   "pluto_litter_box",
-  "pluto_paw_prints",
   "pluto_cabinet_wide",
   "pluto_vaccine_fridge",
   "pluto_clock",
@@ -404,17 +390,13 @@
   "pluto_monitor_cart",
   "pluto_iv_stand",
   "pluto_side_door",
-  "pluto_cone",
   "pluto_toy_mouse",
   "pluto_toy_ball",
   "pluto_feather_wand",
-  "pluto_scratch_post",
-  "pluto_paw_prints"
+  "pluto_cone",
+  "pluto_scratch_post"
  ],
  "placeableAttributes": [
-  "",
-  "",
-  "",
   "",
   "",
   "",

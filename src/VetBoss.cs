@@ -171,6 +171,7 @@ namespace PlutoVetVisit
             Prefab.AddComponent<VetReinforcements>();
 
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor); // console: spawn pluto:the_vet
+            CheckBank(actor, "The Vet prefab");
             PastPlugin.Log("The Vet built: " + PastConfig.BossHealth + " HP, console id " + CONSOLE_ID);
         }
 
@@ -193,7 +194,17 @@ namespace PlutoVetVisit
             EnemyBuildingTools.AddNewDirectionAnimation(anim, name, new[] { "vet_" + name, "vet_" + name }, new[] { FlipType.None, FlipType.Flip }, DirType.TwoWayHorizontal);
         }
 
-        /// <summary>A copy of a vanilla bullet-bank entry whose projectile prefab wears one of our sprites.</summary>
+        /// <summary>The sprite recipe and the live projectile object per bank name, so a broken entry can be rebuilt.</summary>
+        private class BulletRecipe { public string Sprite; public int W, H; public GameObject Object; }
+        private static readonly Dictionary<string, BulletRecipe> Recipes = new Dictionary<string, BulletRecipe>();
+
+        /// <summary>A copy of a vanilla bullet-bank entry whose projectile prefab wears one of our sprites.
+        /// CopyBulletBankEntry already instantiates a private copy of the projectile, marks it a fake prefab and
+        /// switches it off. Up to 0.10.0 we cloned that copy again with FakePrefab.Clone, and Alexandria's own
+        /// Instantiate hook re-activates any clone of a fake prefab: the second copy was a live projectile in the
+        /// world that flew out of range and destroyed itself, leaving BulletObject null. AIBulletBank.
+        /// CreateProjectileFromBank then falls back to aiShooter.CurrentGun, and our actors have no AIShooter:
+        /// the NullReferenceException on every enemy shot since 0.3.0. So: one copy, kept inactive.</summary>
         public static AIBulletBank.Entry Entry(AIBulletBank.Entry template, string name, string sprite, int w, int h)
         {
             AIBulletBank.Entry e = EnemyBuildingTools.CopyBulletBankEntry(template, name, "DNC");
@@ -201,11 +212,77 @@ namespace PlutoVetVisit
             e.PlayAudio = true;
             e.AudioEvent = "Play_WPN_Magnum_shot_01";
             e.AudioLimitOncePerFrame = true;
-            GameObject clone = FakePrefab.Clone(e.BulletObject);
-            Projectile p = clone.GetComponent<Projectile>();
+            GameObject bullet = e.BulletObject;
+            bullet.SetActive(false);
+            FakePrefab.MarkAsFakePrefab(bullet);
+            Projectile p = bullet.GetComponent<Projectile>();
             p.SetProjectileSpriteRight(sprite, w, h, false, tk2dBaseSprite.Anchor.MiddleCenter, w, h);
-            e.BulletObject = clone;
+            e.preloadCount = 0;   // AIBulletBank.Awake preloads BulletObject when this is > 0; nothing to preload
+            BulletRecipe prior;
+            if (Recipes.TryGetValue(name, out prior) && (prior.Sprite != sprite || prior.W != w || prior.H != h))
+                PastPlugin.Log("warning: bank name '" + name + "' is built with two different sprites; one name must mean one sprite, or a repair picks the last");
+            Recipes[name] = new BulletRecipe { Sprite = sprite, W = w, H = h, Object = bullet };
             return e;
+        }
+
+        private static bool Usable(AIBulletBank.Entry e)
+        {
+            return e != null && e.BulletObject != null && e.BulletObject.GetComponent<Projectile>() != null;
+        }
+
+        /// <summary>A repaired entry is also written back to the actor's prefab, matched by bank name.</summary>
+        private static void WriteBackToPrefab(AIActor a, string name, GameObject bullet)
+        {
+            if (a == null) return;
+            GameObject prefab = a.EnemyGuid == GUID ? Prefab : a.EnemyGuid == VetTech.GUID ? VetTech.Prefab : a.EnemyGuid == Nurse.GUID ? Nurse.Prefab : null;
+            AIBulletBank bank = prefab != null ? prefab.GetComponent<AIBulletBank>() : null;
+            if (bank == null || bank.Bullets == null || bank == a.bulletBank) return;
+            foreach (AIBulletBank.Entry pe in bank.Bullets)
+                if (pe != null && string.Equals(pe.Name, name, StringComparison.OrdinalIgnoreCase)) pe.BulletObject = bullet;
+        }
+
+        /// <summary>Short bank state for the per-actor diagnostic line: "ok 1" or "BROKEN syringe".</summary>
+        public static string BankState(AIActor a)
+        {
+            AIBulletBank bank = a != null ? a.bulletBank : null;
+            if (bank == null || bank.Bullets == null) return "none";
+            List<string> broken = new List<string>();
+            foreach (AIBulletBank.Entry e in bank.Bullets) if (!Usable(e)) broken.Add(e != null ? e.Name : "null");
+            return broken.Count == 0 ? "ok " + bank.Bullets.Count : "BROKEN " + string.Join("/", broken.ToArray());
+        }
+
+        /// <summary>Logs every bank entry of an actor (name, usable, active) and rebuilds any entry whose projectile
+        /// object is gone, so one lost prefab can never again cost every shot of the past.</summary>
+        public static void CheckBank(AIActor a, string label)
+        {
+            try
+            {
+                AIBulletBank bank = a != null ? a.bulletBank : null;
+                if (bank == null || bank.Bullets == null) { PastPlugin.Log(label + " bank: no AIBulletBank"); return; }
+                List<string> parts = new List<string>();
+                foreach (AIBulletBank.Entry e in bank.Bullets)
+                {
+                    if (e == null) { parts.Add("null entry"); continue; }
+                    string note = "ok";
+                    BulletRecipe r;
+                    if (!Usable(e) && Recipes.TryGetValue(e.Name, out r))
+                    {
+                        if (r.Object == null || r.Object.GetComponent<Projectile>() == null)
+                        {
+                            AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
+                            Entry(kin, e.Name, r.Sprite, r.W, r.H);
+                            r = Recipes[e.Name];
+                        }
+                        e.BulletObject = r.Object;
+                        WriteBackToPrefab(a, e.Name, r.Object);   // so the next spawn starts with a usable entry
+                        note = Usable(e) ? "REPAIRED" : "BROKEN (repair failed)";
+                    }
+                    else if (!Usable(e)) note = "BROKEN (no recipe)";
+                    parts.Add(e.Name + " " + note + (e.BulletObject != null ? (e.BulletObject.activeSelf ? " active!" : " inactive") : " null"));
+                }
+                PastPlugin.Log(label + " bank: " + string.Join(", ", parts.ToArray()));
+            }
+            catch (Exception ex) { PastPlugin.Log(label + " bank check threw: " + ex); }
         }
 
         /// <summary>Three phases by health, shaped like the vanilla floor bosses the research measured (Bullet King,

@@ -91,7 +91,33 @@ def check_look():
         err('expected 3 wall faces, found %d' % len(faces))
     if hog.get('pluto_lamp_head', 0) < 1.0:
         err('the lamp head must draw over the actors (HeightOffGround >= 1)')
-    ok('zone floors, %d wall faces, lamp head' % len(faces))
+    # 0.10.1: the lab tileset's wall face sorts like a standing sprite on the upper wall row, so a FLAT face prop loses
+    # to it (the in-game screenshots showed purple wall blocks over our face). Faces must stand, slightly below the
+    # ground (Pluto hugging the wall stays in front), and wall decor must stand a hair in front of the face.
+    stand = {o.name: getattr(o, 'stand', o.collider is not None) for o in clinic_objects.OBJECTS}
+    face_hog = None
+    for name in ('pluto_wall_face', 'pluto_wall_face_solid'):
+        if not stand.get(name):
+            err('%s must stand (perpendicular), or the tileset wall draws over it' % name)
+        if hog.get(name, 0) >= 0:
+            err('%s must have a small negative HeightOffGround so actors against the wall stay in front' % name)
+        face_hog = hog.get(name, face_hog)
+    bases = sorted({y for _, y in faces})
+    decor = 0
+    for name, (x, y) in clinic_objects.PROPS:
+        if name.startswith('pluto_wall_face') or clinic_room.cell(x, y) != '#' or name == 'pluto_clinic_door':
+            continue
+        base = max(b for b in bases if b <= y) if any(b <= y for b in bases) else None
+        if base is None:
+            continue
+        decor += 1
+        if not stand.get(name):
+            err('wall decor %s at (%s, %s) must stand, or the wall face covers it' % (name, x, y))
+        if face_hog is not None:
+            want = face_hog + 2 * (y - base) + 0.05
+            if hog.get(name, 0.0) <= face_hog + 2 * (y - base):
+                err('wall decor %s at (%s, %s): HeightOffGround %.2f draws behind the face (needs about %.2f)' % (name, x, y, hog.get(name, 0.0), want))
+    ok('zone floors, %d standing wall faces, %d wall decor in front of them, lamp head' % (len(faces), decor))
 
 
 def check_objects():

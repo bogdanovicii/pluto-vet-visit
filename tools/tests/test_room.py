@@ -147,6 +147,22 @@ class RoomTests(unittest.TestCase):
             self.assertIn('public static readonly Vector2 %s = ' % name, cs)
         self.assertIn('public static readonly ObjectSpec[] OBJECTS', cs)
 
+    def test_layout_cs_object_spec_contract(self):
+        """ClinicObjects.cs reads spec.Perpendicular: a 9th constructor argument from Obj.stand."""
+        cs = C.layout_cs()
+        self.assertIn('public bool Perpendicular;', cs)
+        self.assertIn('public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, '
+                      'float heightOffGround, bool perpendicular)', cs)
+        self.assertIn('Perpendicular = perpendicular;', cs)
+        for o in C.O.OBJECTS:
+            line = next(l for l in cs.splitlines() if l.strip().startswith('new ObjectSpec("%s",' % o.name))
+            self.assertEqual(line.count(','), 9, line)
+            self.assertTrue(line.endswith(', %s),' % ('true' if o.stand else 'false')), line)
+        faces = [l for l in cs.splitlines() if '"pluto_wall_face' in l]
+        self.assertEqual(len(faces), 2)
+        for l in faces:
+            self.assertIn('-0.2f, true),', l)
+
     def test_preview_image_size(self):
         im = C.preview_image()
         self.assertEqual(im.size, (C.WIDTH * C.SCALE, C.HEIGHT * C.SCALE))

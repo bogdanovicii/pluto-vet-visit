@@ -23,59 +23,61 @@ namespace PlutoVetVisit
         public static readonly Vector2 GreeterSpot = new Vector2(14.5f, 19.5f);
         public const float WARD_MIN_Y = 15.0f;
         public const float THEATRE_MIN_Y = 34.0f;
-        public static readonly Vector2[] Wave1Spawns = { new Vector2(3.5f, 23.5f), new Vector2(25.5f, 23.5f), new Vector2(3.5f, 19.0f), new Vector2(25.5f, 27.5f) };
-        public static readonly Vector2[] Wave2Spawns = { new Vector2(3.5f, 17.5f), new Vector2(3.5f, 29.5f), new Vector2(25.5f, 17.5f), new Vector2(25.5f, 29.5f), new Vector2(14.5f, 29.0f), new Vector2(9.0f, 17.5f) };
+        public static readonly Vector2[] Wave1Spawns = { new Vector2(4.5f, 23.5f), new Vector2(25.5f, 23.5f), new Vector2(4.5f, 19.0f), new Vector2(25.5f, 27.5f) };
+        public static readonly Vector2[] Wave2Spawns = { new Vector2(4.5f, 17.5f), new Vector2(4.5f, 29.5f), new Vector2(25.5f, 17.5f), new Vector2(25.5f, 29.5f), new Vector2(14.5f, 29.0f), new Vector2(9.0f, 17.5f) };
         public static readonly Vector2[] TheatreSpawns = { new Vector2(26.0f, 40.0f), new Vector2(26.5f, 37.5f), new Vector2(26.5f, 42.5f) };
         public static readonly ObjectSpec[] OBJECTS = {
-            new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 4, 0, 72, 16, 0.0f),
-            new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
-            new ObjectSpec("pluto_cart", "cart", ObjectSpec.Layer.Low, 0, 0, 24, 14, 0.0f),
-            new ObjectSpec("pluto_sink", "sink", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f),
-            new ObjectSpec("pluto_scale", "scale", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_carrier", "carrier", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
-            new ObjectSpec("pluto_poster", "poster", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_cone", "cone", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_toy_mouse", "toy_mouse", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_toy_ball", "toy_ball", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_feather_wand", "feather_wand", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_scratch_post", "scratch_post", ObjectSpec.Layer.Low, 2, 0, 12, 8, 0.0f),
-            new ObjectSpec("pluto_syringe_tray", "syringe_tray", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_reception_desk", "reception_desk", ObjectSpec.Layer.High, 0, 0, 112, 16, 0.0f),
-            new ObjectSpec("pluto_chair", "chair", ObjectSpec.Layer.Low, 2, 0, 20, 8, 0.0f),
-            new ObjectSpec("pluto_plant", "plant", ObjectSpec.Layer.High, 4, 0, 8, 8, 0.0f),
-            new ObjectSpec("pluto_window", "window", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_xray_box", "xray_box", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_med_shelf", "med_shelf", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
-            new ObjectSpec("pluto_clock", "clock", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_fish_tank", "fish_tank", ObjectSpec.Layer.High, 0, 0, 32, 12, 0.0f),
-            new ObjectSpec("pluto_sharps_bin", "sharps_bin", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
-            new ObjectSpec("pluto_iv_stand", "iv_stand", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
-            new ObjectSpec("pluto_treat_jar", "treat_jar", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_food_bowls", "food_bowls", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f),
-            new ObjectSpec("pluto_litter_box", "litter_box", ObjectSpec.Layer.Low, 0, 0, 20, 8, 0.0f),
-            new ObjectSpec("pluto_floor_mat", "floor_mat", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.5f),
-            new ObjectSpec("pluto_paw_prints", "paw_prints", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.0f),
-            new ObjectSpec("pluto_wet_floor_sign", "wet_floor_sign", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f),
-            new ObjectSpec("pluto_clinic_door", "clinic_door", ObjectSpec.Layer.High, 0, 0, 32, 32, 0.0f),
-            new ObjectSpec("pluto_kennel", "kennel", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
-            new ObjectSpec("pluto_kennel_open", "kennel_open", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
-            new ObjectSpec("pluto_kennel_cone", "kennel_cone", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f),
-            new ObjectSpec("pluto_nurse_station", "nurse_station", ObjectSpec.Layer.High, 0, 0, 96, 12, 0.0f),
-            new ObjectSpec("pluto_prep_sign", "prep_sign", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_monitor_cart", "monitor_cart", ObjectSpec.Layer.Low, 0, 0, 24, 10, 0.0f),
-            new ObjectSpec("pluto_vaccine_fridge", "vaccine_fridge", ObjectSpec.Layer.High, 0, 0, 24, 16, 0.0f),
-            new ObjectSpec("pluto_intercom", "intercom", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_wall_tv", "wall_tv", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_side_door", "side_door", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_lamp_head", "lamp_head", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.0f),
-            new ObjectSpec("pluto_lamp_arm", "lamp_arm", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_lamp_pool", "lamp_pool", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.4f),
-            new ObjectSpec("pluto_cabinet_wide", "cabinet_wide", ObjectSpec.Layer.High, 0, 0, 64, 20, 0.0f),
-            new ObjectSpec("pluto_wall_face", "wall_face", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_wall_face_solid", "wall_face_solid", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f),
-            new ObjectSpec("pluto_floor_waiting", "floor_waiting", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f),
-            new ObjectSpec("pluto_floor_ward", "floor_ward", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f),
-            new ObjectSpec("pluto_floor_theatre", "floor_theatre", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f),
+            new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 4, 0, 72, 16, 0.0f, true),
+            new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f, true),
+            new ObjectSpec("pluto_cart", "cart", ObjectSpec.Layer.Low, 0, 0, 24, 14, 0.0f, true),
+            new ObjectSpec("pluto_sink", "sink", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f, true),
+            new ObjectSpec("pluto_scale", "scale", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_carrier", "carrier", ObjectSpec.Layer.High, 0, 0, 32, 16, 0.0f, true),
+            new ObjectSpec("pluto_poster", "poster", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true),
+            new ObjectSpec("pluto_cone", "cone", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_toy_mouse", "toy_mouse", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_toy_ball", "toy_ball", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_feather_wand", "feather_wand", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_scratch_post", "scratch_post", ObjectSpec.Layer.Low, 2, 0, 12, 8, 0.0f, true),
+            new ObjectSpec("pluto_syringe_tray", "syringe_tray", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_reception_desk", "reception_desk", ObjectSpec.Layer.High, 0, 0, 112, 16, 0.0f, true),
+            new ObjectSpec("pluto_chair", "chair", ObjectSpec.Layer.Low, 2, 0, 20, 8, 0.0f, true),
+            new ObjectSpec("pluto_plant", "plant", ObjectSpec.Layer.High, 4, 0, 8, 8, 0.0f, true),
+            new ObjectSpec("pluto_window", "window", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true),
+            new ObjectSpec("pluto_xray_box", "xray_box", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true),
+            new ObjectSpec("pluto_clock", "clock", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.85f, true),
+            new ObjectSpec("pluto_fish_tank", "fish_tank", ObjectSpec.Layer.High, 0, 0, 32, 12, 0.0f, true),
+            new ObjectSpec("pluto_sharps_bin", "sharps_bin", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f, true),
+            new ObjectSpec("pluto_iv_stand", "iv_stand", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f, true),
+            new ObjectSpec("pluto_treat_jar", "treat_jar", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_food_bowls", "food_bowls", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.5f, false),
+            new ObjectSpec("pluto_litter_box", "litter_box", ObjectSpec.Layer.Low, 0, 0, 20, 8, 0.0f, true),
+            new ObjectSpec("pluto_floor_mat", "floor_mat", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.5f, false),
+            new ObjectSpec("pluto_paw_prints", "paw_prints", ObjectSpec.Layer.None, 0, 0, 0, 0, -2.0f, false),
+            new ObjectSpec("pluto_wet_floor_sign", "wet_floor_sign", ObjectSpec.Layer.Low, 0, 0, 12, 6, 0.0f, true),
+            new ObjectSpec("pluto_clinic_door", "clinic_door", ObjectSpec.Layer.High, 0, 0, 32, 32, 0.0f, true),
+            new ObjectSpec("pluto_nurse_station", "nurse_station", ObjectSpec.Layer.High, 0, 0, 96, 12, 0.0f, true),
+            new ObjectSpec("pluto_prep_sign", "prep_sign", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.35f, true),
+            new ObjectSpec("pluto_monitor_cart", "monitor_cart", ObjectSpec.Layer.Low, 0, 0, 24, 10, 0.0f, true),
+            new ObjectSpec("pluto_vaccine_fridge", "vaccine_fridge", ObjectSpec.Layer.High, 0, 0, 24, 16, 0.0f, true),
+            new ObjectSpec("pluto_intercom", "intercom", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.1f, true),
+            new ObjectSpec("pluto_wall_tv", "wall_tv", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true),
+            new ObjectSpec("pluto_side_door", "side_door", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f, false),
+            new ObjectSpec("pluto_lamp_head", "lamp_head", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.0f, false),
+            new ObjectSpec("pluto_lamp_arm", "lamp_arm", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f, false),
+            new ObjectSpec("pluto_lamp_pool", "lamp_pool", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.4f, false),
+            new ObjectSpec("pluto_cabinet_wide", "cabinet_wide", ObjectSpec.Layer.High, 0, 0, 64, 20, 0.0f, true),
+            new ObjectSpec("pluto_wall_face", "wall_face", ObjectSpec.Layer.None, 0, 0, 0, 0, -0.2f, true),
+            new ObjectSpec("pluto_wall_face_solid", "wall_face_solid", ObjectSpec.Layer.None, 0, 0, 0, 0, -0.2f, true),
+            new ObjectSpec("pluto_wall_shelf", "wall_shelf", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true),
+            new ObjectSpec("pluto_kennel_cat", "kennel_cat", ObjectSpec.Layer.High, 0, 0, 40, 48, 0.0f, true),
+            new ObjectSpec("pluto_kennel_dog", "kennel_dog", ObjectSpec.Layer.High, 0, 0, 40, 48, 0.0f, true),
+            new ObjectSpec("pluto_kennel_cone", "kennel_cone", ObjectSpec.Layer.High, 0, 0, 40, 48, 0.0f, true),
+            new ObjectSpec("pluto_kennel_open_r", "kennel_open_r", ObjectSpec.Layer.High, 0, 0, 40, 48, 0.0f, true),
+            new ObjectSpec("pluto_kennel_open_l", "kennel_open_l", ObjectSpec.Layer.High, 12, 0, 40, 48, 0.0f, true),
+            new ObjectSpec("pluto_floor_waiting", "floor_waiting", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false),
+            new ObjectSpec("pluto_floor_ward", "floor_ward", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false),
+            new ObjectSpec("pluto_floor_theatre", "floor_theatre", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false),
         };
     }
 
@@ -87,9 +89,11 @@ namespace PlutoVetVisit
         public Layer Collider;
         public int OffX, OffY, W, H;
         public float HeightOffGround;
-        public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, float heightOffGround)
+        public bool Perpendicular;
+        public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, float heightOffGround, bool perpendicular)
         {
             Name = name; Png = png; Collider = collider; OffX = offX; OffY = offY; W = w; H = h; HeightOffGround = heightOffGround;
+            Perpendicular = perpendicular;
         }
     }
 }

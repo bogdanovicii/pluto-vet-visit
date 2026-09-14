@@ -405,11 +405,10 @@ namespace PlutoVetVisit
             try { a.enabled = true; } catch (Exception) { }
             try
             {
-                if (a.behaviorSpeculator != null && !a.behaviorSpeculator.enabled)
-                {
-                    a.behaviorSpeculator.enabled = true;
-                    a.behaviorSpeculator.RefreshBehaviors();
-                }
+                // Just switch it on: Unity runs a component's Start on its first enable, which initialises every
+                // behaviour. RefreshBehaviors (0.10.0) threw for a speculator disabled before its Start: it initialises
+                // the behaviours with m_aiActor, which only Start sets, so each one started with a null actor.
+                if (a.behaviorSpeculator != null && !a.behaviorSpeculator.enabled) a.behaviorSpeculator.enabled = true;
             }
             catch (Exception e) { PastPlugin.Log("engage: speculator threw for " + a.name + ": " + e.Message); }
             try { if (a.healthHaver != null) { a.healthHaver.PreventAllDamage = false; a.healthHaver.IsVulnerable = true; } } catch (Exception) { }
@@ -436,7 +435,8 @@ namespace PlutoVetVisit
                 + ", " + path + ", speed " + a.MovementSpeed + ", vel " + (a.specRigidbody != null ? a.specRigidbody.Velocity.magnitude.ToString("0.0") : "-")
                 + ", lists " + (bs != null && bs.TargetBehaviors != null ? bs.TargetBehaviors.Count : -1) + "/" + (bs != null && bs.MovementBehaviors != null ? bs.MovementBehaviors.Count : -1) + "/" + (bs != null && bs.AttackBehaviors != null ? bs.AttackBehaviors.Count : -1)
                 + ", hp " + (a.healthHaver != null ? a.healthHaver.GetCurrentHealth() + "/" + a.healthHaver.GetMaxHealth() + " vuln " + a.healthHaver.IsVulnerable + " prevent " + a.healthHaver.PreventAllDamage : "-")
-                + ", tell " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("tell")) + ", fire " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("fire"));
+                + ", tell " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("tell")) + ", fire " + (a.aiAnimator != null && a.aiAnimator.IsPlaying("fire"))
+                + ", bank " + VetBoss.BankState(a);
         }
 
         /// <summary>Logs each wave actor at 0.2 s, 2 s and 6 s and re-engages or re-targets anyone still idle.
@@ -499,7 +499,6 @@ namespace PlutoVetVisit
                     if (self != null) self.hold = true;   // he talks first; Engage(greeter) after the lines is the tell
                     greeter.IgnoreForRoomClear = true;
                     greeter.healthHaver.PreventAllDamage = true;
-                    if (greeter.behaviorSpeculator != null) greeter.behaviorSpeculator.enabled = false;
                 }
             }
             catch (Exception e) { PastPlugin.Log("greeter: " + e.Message); }
@@ -518,6 +517,7 @@ namespace PlutoVetVisit
             }
             Engage(greeter);
             wave1Extra = greeter;
+            StartCoroutine(Heartbeat("greeter", new List<AIActor> { greeter }));
         }
 
         private AIActor wave1Extra;
@@ -575,51 +575,115 @@ namespace PlutoVetVisit
                 + ", preventPausing " + gm.PreventPausing + ", bossIntro " + GameManager.IsBossIntro
                 + ", levelState " + gm.CurrentLevelOverrideState
                 + ", endTimes " + (gm.Dungeon != null && gm.Dungeon.IsEndTimes) + ", strip " + (gm.Dungeon != null && gm.Dungeon.StripPlayerOnArrival)
-                + ", loading " + gm.IsLoadingLevel + ", visible " + p.IsVisible + ", timeScale " + Time.timeScale;
+                + ", isFoyer " + gm.IsFoyer + ", loading " + gm.IsLoadingLevel + ", visible " + p.IsVisible + ", timeScale " + Time.timeScale;
         }
 
-        /// <summary>Make sure Pluto is armed and can fire. The Ark resets every player with ResetToFactorySettings
-        /// (guns destroyed, starting guns re-added from startingGunIds, every input override cleared) before it
-        /// loads us, and nothing in the level load strips them again (Dungeon.StripPlayerOnArrival is off on the
-        /// Soldier template). So an unarmed Pluto means an empty startingGunIds, a hidden renderer, or a stuck
-        /// input state; this repairs all three and logs before/after so a test run tells us which it was.
-        /// clearInput is false only while one of our own cutscenes holds the "past" override.</summary>
-        private void EnsureLoadout(PlayerController p, string when, bool clearInput)
+        // How many consecutive watchdog ticks the gun has been hidden / the input overridden, per player (0 primary, 1 co-op).
+        private readonly int[] hiddenTicks = new int[2], overriddenTicks = new int[2];
+
+        /// <summary>Make sure Pluto is armed and can fire, and log exactly what had to be repaired.
+        /// The Ark's ResetPlayers hands the starting guns back and clears input before the past loads; the console
+        /// start (`vet_visit`) comes straight from the Breach and skips Foyer.OnDepartedFoyer, which leaves IsFoyer set
+        /// (input FoyerInputOnly, no firing), ForceNoGun on and the gun object switched off.
+        /// full = one of our own moments (arrival, the end of a cutscene, the console): repair everything now.
+        /// Otherwise (the 3 s watchdog) presence, the Breach state and a switched-off gun object are repaired at once,
+        /// but a hidden gun or an input override only after it persisted for two ticks outside stealth, rolls,
+        /// cutscenes and the boss intro, so the watchdog never fights a legitimate short state (the cardboard box,
+        /// a dodge roll, a pit, an item).</summary>
+        private void EnsureLoadout(PlayerController p, string when, bool full)
         {
             if (p == null || p.inventory == null || p.healthHaver == null || p.healthHaver.IsDead) return;
             try
             {
                 string before = Snapshot(p);
+                List<string> did = new List<string>();
+                int k = p == GameManager.Instance.SecondaryPlayer ? 1 : 0;
+                // 1. guns present
                 if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
                 {
                     if (p.startingGunIds != null && p.startingGunIds.Count > 0)
                     {
-                        try { p.ReinitializeGuns(); } catch (Exception e) { PastPlugin.Log("ReinitializeGuns failed: " + e.Message); }
+                        try { p.ReinitializeGuns(); did.Add("ReinitializeGuns"); } catch (Exception e) { PastPlugin.Log("ReinitializeGuns failed: " + e.Message); }
                     }
                     if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
+                    {
                         foreach (string id in STARTING_GUNS) GiveGun(p, id);
+                        did.Add("gave the starting gun");
+                    }
                 }
-                foreach (string id in STARTING_ITEMS) Give(p, id);
-                // A current gun whatever the lock state (GunInventory.ChangeGun returns early when GunLocked unless overridden).
-                p.inventory.ForceNoGun = false;
-                p.inventory.GunLocked.ClearOverrides();
-                p.IsGunLocked = false;
-                if (p.CurrentGun == null && p.inventory.AllGuns != null && p.inventory.AllGuns.Count > 0) p.inventory.ChangeGun(0, true, true);
-                // Renderers: only the empty reason clears every hide key (PlayerController.ToggleGunRenderers);
-                // a named reason such as "vetvisit" cannot show a gun hidden under "ark" or "initial spawn".
-                p.IsVisible = true;
-                p.ToggleGunRenderers(true, string.Empty);
-                p.ToggleHandRenderers(true, string.Empty);
-                if (clearInput && !cutscene && !GameManager.IsBossIntro)
+                if (full) foreach (string id in STARTING_ITEMS) Give(p, id);
+                // 2. the Breach state, replayed the way Foyer.OnDepartedFoyer does it
+                if (GameManager.Instance.IsFoyer)
                 {
-                    if (p.IsInputOverridden || GameManager.Instance.PreventPausing)
-                        PastPlugin.Log("loadout " + when + ": input was overridden (" + p.CurrentInputState + ", preventPausing " + GameManager.Instance.PreventPausing + "); clearing");
-                    GameManager.Instance.PreventPausing = false;
-                    p.ClearAllInputOverrides();   // what the Ark does before loading us (ArkController.ResetPlayers)
+                    GameManager.Instance.IsFoyer = false;
+                    try { p.ClearOverrideShader(); } catch (Exception e) { PastPlugin.Log("ClearOverrideShader: " + e.Message); }
+                    did.Add("left the Breach state (IsFoyer)");
                 }
+                if (p.inventory.ForceNoGun)
+                {
+                    p.inventory.ForceNoGun = false;
+                    did.Add("ForceNoGun off");
+                }
+                // 3. a current gun, and its object switched on (clearing ForceNoGun does not switch it back on)
+                bool noCurrent = p.CurrentGun == null && p.inventory.AllGuns != null && p.inventory.AllGuns.Count > 0;
+                if (noCurrent || full)
+                {
+                    if (p.inventory.GunLocked.Value || p.IsGunLocked) did.Add("gun lock cleared");
+                    p.inventory.GunLocked.ClearOverrides();
+                    p.IsGunLocked = false;
+                }
+                if (noCurrent)
+                {
+                    p.inventory.ChangeGun(0, true, true);
+                    did.Add("selected a gun");
+                }
+                Gun current = p.CurrentGun;
+                if (current != null && !current.gameObject.activeSelf)
+                {
+                    current.gameObject.SetActive(true);
+                    try { p.ProcessHandAttachment(); } catch (Exception e) { PastPlugin.Log("ProcessHandAttachment: " + e.Message); }
+                    did.Add("gun object switched on");
+                }
+                // 4. renderers (only the empty reason clears every hide key)
+                bool calm = !cutscene && !GameManager.IsBossIntro && !p.IsDodgeRolling && !p.IsStealthed && p.IsVisible;
+                bool hidden = current != null && current.sprite != null && current.sprite.renderer != null && !current.sprite.renderer.enabled;
+                if (full)
+                {
+                    if (hidden) did.Add("gun renderer shown");
+                    p.IsVisible = true;
+                    p.ToggleGunRenderers(true, string.Empty);
+                    p.ToggleHandRenderers(true, string.Empty);
+                    hiddenTicks[k] = 0;
+                }
+                else
+                {
+                    hiddenTicks[k] = hidden && calm ? hiddenTicks[k] + 1 : 0;
+                    if (hiddenTicks[k] >= 2)
+                    {
+                        p.ToggleGunRenderers(true, string.Empty);
+                        p.ToggleHandRenderers(true, string.Empty);
+                        did.Add("gun hidden for two ticks with no reason in sight, shown");
+                        hiddenTicks[k] = 0;
+                    }
+                }
+                // 5. input, never inside our own cutscene or the boss intro
+                if (!cutscene && !GameManager.IsBossIntro)
+                {
+                    bool overridden = p.IsInputOverridden || GameManager.Instance.PreventPausing;
+                    overriddenTicks[k] = overridden ? overriddenTicks[k] + 1 : 0;
+                    if (overridden && (full || overriddenTicks[k] >= 2))
+                    {
+                        did.Add("input was " + p.CurrentInputState + " (preventPausing " + GameManager.Instance.PreventPausing + "), cleared");
+                        GameManager.Instance.PreventPausing = false;
+                        p.ClearAllInputOverrides();   // what the Ark does before loading us (ArkController.ResetPlayers)
+                        overriddenTicks[k] = 0;
+                    }
+                }
+                else overriddenTicks[k] = 0;
                 string after = Snapshot(p);
-                if (after != before || when == "on arrival" || when == "console")
-                    PastPlugin.Log("loadout " + when + ": before[" + before + "] after[" + after + "]");
+                if (did.Count > 0 || when == "on arrival" || when == "console")
+                    PastPlugin.Log("loadout " + when + ": " + (did.Count > 0 ? string.Join("; ", did.ToArray()) : "nothing to repair")
+                        + " before[" + before + "] after[" + after + "]");
             }
             catch (Exception e) { PastPlugin.Log("loadout check failed (" + when + "): " + e); }
         }
@@ -628,14 +692,21 @@ namespace PlutoVetVisit
         private IEnumerator LoadoutWatchdog()
         {
             float t = 0f;
+            int ticks = 0;
             while (!ending)
             {
                 t += BraveTime.DeltaTime;
                 if (t >= 3f)
                 {
                     t = 0f;
-                    EnsureLoadout(GameManager.Instance.PrimaryPlayer, "watchdog", true);
-                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "watchdog", true);
+                    ticks++;
+                    PlayerController p = GameManager.Instance.PrimaryPlayer;
+                    EnsureLoadout(p, "watchdog", false);
+                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "watchdog", false);
+                    // It logs a full snapshot only when it had to change something; this line proves it is running.
+                    if (ticks % 5 == 0 && p != null)
+                        PastPlugin.Log("watchdog " + (ticks * 3) + " s: gun " + (p.CurrentGun != null ? p.CurrentGun.name + " active " + p.CurrentGun.gameObject.activeSelf : "none")
+                            + ", input " + p.CurrentInputState + ", nonMotion " + p.AcceptingNonMotionInput + ", isFoyer " + GameManager.Instance.IsFoyer);
                 }
                 yield return null;
             }
@@ -724,6 +795,7 @@ namespace PlutoVetVisit
         {
             if (vet == null || woken) return;
             woken = true;
+            VetBoss.CheckBank(vet, "the Vet");
             Engage(vet);
             StartCoroutine(Heartbeat("the Vet", new List<AIActor> { vet }));
             PastPlugin.Log("fight started");

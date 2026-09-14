@@ -96,21 +96,21 @@ ZONES = {
     'WARD_MIN_Y': 15,
     'THEATRE_MIN_Y': 34,
 }
-# Where the waves stand up. Wave 1 comes out of the side doors (east and west wall, mid-ward); wave 2 out of
-# the kennels. Each is a list of cells; the controller reads the enemy list from the config.
+# Where the waves stand up. Both ward waves come out of the kennel bank (east and west wall); wave 2 also from the north
+# kit and the south-west. Each is a list of cells; the controller reads the enemy list from the config.
 SPAWNS = {
-    'Wave1Spawns': [(3.5, 23.5), (25.5, 23.5), (3.5, 19.0), (25.5, 27.5)],   # a cell and a half off the kennel columns
-    'Wave2Spawns': [(3.5, 17.5), (3.5, 29.5), (25.5, 17.5), (25.5, 29.5), (14.5, 29.0), (9.0, 17.5)],
+    'Wave1Spawns': [(4.5, 23.5), (25.5, 23.5), (4.5, 19.0), (25.5, 27.5)],   # out of the kennel bank, 1.5 cells off its colliders
+    'Wave2Spawns': [(4.5, 17.5), (4.5, 29.5), (25.5, 17.5), (25.5, 29.5), (14.5, 29.0), (9.0, 17.5)],   # out of the kennel bank
     'TheatreSpawns': [(26.0, 40.0), (26.5, 37.5), (26.5, 42.5)],   # the Nurse and two Techs, from the east side door
 }
 # Bystanders placed by the room (see cast_layout.NPC_OBJECTS for the art behind each name). Sprite lower-left on the cell.
 NPCS = [
     ('pluto_npc_owner', (3.5, 2.5)),
     ('pluto_npc_receptionist', (21.5, 11.3)),  # behind the desk (desk top ends at y 12.5): head and shoulders show
-    # Rex and Grandma sit on the third and fourth west-wall chairs (chairs at (0.75, 7.5) and (0.75, 9.0), 24 px tall like the
+    # Rex and Grandma sit on the third and fourth west-wall chairs (chairs at (0.75, 8.0) and (0.75, 10.0), 24 px tall like the
     # sprites): each stands a fifth of a cell SOUTH of its chair so it sorts in front of the seat and the back rest shows above it.
-    ('pluto_npc_rex', (0.75, 7.3)),
-    ('pluto_npc_grandma', (0.75, 8.8)),
+    ('pluto_npc_rex', (0.75, 7.8)),
+    ('pluto_npc_grandma', (0.75, 9.8)),
 ]
 EXITS = [((14, 0), 'SOUTH')]     # one unused south exit (the generator wants a door somewhere)
 
@@ -199,8 +199,8 @@ def layout_cs():
         else:
             layer_key, ox, oy, w, h = o.collider
             layer = {'low': 'Low', 'high': 'High'}[layer_key]
-        lines.append('            new ObjectSpec("%s", "%s", ObjectSpec.Layer.%s, %d, %d, %d, %d, %sf),'
-                     % (o.name, o.png, layer, ox, oy, w, h, o.height_off_ground))
+        lines.append('            new ObjectSpec("%s", "%s", ObjectSpec.Layer.%s, %d, %d, %d, %d, %sf, %s),'
+                     % (o.name, o.png, layer, ox, oy, w, h, round(o.height_off_ground, 4), 'true' if o.stand else 'false'))
     lines += [
         '        };',
         '    }',
@@ -213,9 +213,11 @@ def layout_cs():
         '        public Layer Collider;',
         '        public int OffX, OffY, W, H;',
         '        public float HeightOffGround;',
-        '        public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, float heightOffGround)',
+        '        public bool Perpendicular;',
+        '        public ObjectSpec(string name, string png, Layer collider, int offX, int offY, int w, int h, float heightOffGround, bool perpendicular)',
         '        {',
         '            Name = name; Png = png; Collider = collider; OffX = offX; OffY = offY; W = w; H = h; HeightOffGround = heightOffGround;',
+        '            Perpendicular = perpendicular;',
         '        }',
         '    }',
         '}',
@@ -256,8 +258,9 @@ PX = 16  # sprite preview pixels per cell
 
 def sprite_preview_image(project):
     """The room as the game will draw it: the real prop PNGs (Resources/Objects) and the NPCs' first idle frames pasted at
-    their placements in draw order - floors and flat decor by height off ground, then perpendicular props and NPCs from north
-    to south, then flat decor with a height off ground of 1 or more (the lamp head hangs over everything)."""
+    their placements in draw order - floors and flat decor by height off ground, then standing props and NPCs from back to
+    front (by their base depth 2*y - height off ground, which is north to south for everything at height 0 and puts wall decor
+    just in front of its wall face), then flat decor with a height off ground of 1 or more (the lamp head hangs over everything)."""
     import cast_layout
     import npc_poses
 
@@ -280,22 +283,22 @@ def sprite_preview_image(project):
     for name, (x, y) in O.PROPS:
         spec = specs[name]
         png = os.path.join(objects, spec.png + '.png')
-        if spec.collider is not None:
-            standing.append((y, png, x))
+        if spec.stand:
+            standing.append((2.0 * y - spec.height_off_ground, png, x, y))
         elif spec.height_off_ground >= 1.0:
             flat_over.append((spec.height_off_ground, png, x, y))
         else:
             flat_under.append((spec.height_off_ground, png, x, y))
     for name, (x, y) in PLACEABLES_():
         if name == DOOR:
-            standing.append((y, os.path.join(objects, 'clinic_door.png'), x))
+            standing.append((2.0 * y - specs[DOOR].height_off_ground, os.path.join(objects, 'clinic_door.png'), x, y))
     for name, (x, y) in NPCS:
         folder = cast_layout.NPC_OBJECTS[name]
         clip = next(iter(npc_poses.NPCS[folder]['clips']))
-        standing.append((y, os.path.join(project, 'Resources', 'Npcs', folder, clip, '%s_%s_001.png' % (folder, clip)), x))
+        standing.append((2.0 * y, os.path.join(project, 'Resources', 'Npcs', folder, clip, '%s_%s_001.png' % (folder, clip)), x, y))
     for hog, png, x, y in sorted(flat_under, key=lambda t: t[0]):
         paste(png, x, y)
-    for y, png, x in sorted(standing, key=lambda t: -t[0]):
+    for depth, png, x, y in sorted(standing, key=lambda t: -t[0]):
         paste(png, x, y)
     for hog, png, x, y in sorted(flat_over, key=lambda t: t[0]):
         paste(png, x, y)

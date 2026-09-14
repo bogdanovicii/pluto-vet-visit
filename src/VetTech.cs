@@ -49,6 +49,7 @@ namespace PlutoVetVisit
             bs.AttackBehaviors = new List<AttackBehaviorBase> { burst };
             Prefab.AddComponent<SelfEngage>();
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
+            VetBoss.CheckBank(actor, "Vet Tech prefab");
             PastPlugin.Log("Vet Tech built: " + PastConfig.TechHealth + " HP, console id " + CONSOLE_ID);
         }
 
@@ -153,6 +154,7 @@ namespace PlutoVetVisit
         private IEnumerator Start()
         {
             yield return null;
+            if (aiActor != null) VetBoss.CheckBank(aiActor, aiActor.GetActorName() + " spawned,");
             yield return new WaitForSeconds(0.15f);
             if (hold || aiActor == null) yield break;
             if (!aiActor.HasBeenAwoken)
@@ -213,6 +215,7 @@ namespace PlutoVetVisit
             };
             Prefab.AddComponent<SelfEngage>();
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
+            VetBoss.CheckBank(actor, "The Nurse prefab");
             PastPlugin.Log("The Nurse built: " + PastConfig.NurseHealth + " HP, console id " + CONSOLE_ID);
         }
     }

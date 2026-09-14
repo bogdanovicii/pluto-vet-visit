@@ -34,7 +34,9 @@ namespace PlutoVetVisit
             GameObject go = SpriteBuilder.SpriteFromResource(OBJECT_ROOT + "/" + spec.Png + ".png", new GameObject(spec.Name), asm);
             ClinicProp prop = go.AddComponent<ClinicProp>();
             prop.heightOffGround = spec.HeightOffGround;
-            prop.perpendicular = spec.Collider != ObjectSpec.Layer.None;
+            // Standing (perpendicular) is its own flag since 0.10.1: the wall faces and the decor hung on them stand
+            // without a collider, or the tileset's standing wall face draws over them.
+            prop.perpendicular = spec.Perpendicular;
             prop.kind = spec.Png.StartsWith("floor_") ? ClinicProp.Kind.Floor : spec.Png.StartsWith("wall_face") ? ClinicProp.Kind.WallFace : ClinicProp.Kind.Prop;
             if (spec.Collider != ObjectSpec.Layer.None)
             {
