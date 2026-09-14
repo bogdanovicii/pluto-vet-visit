@@ -85,7 +85,7 @@ namespace PlutoVetVisit
         {
             if (door == null) { PastPlugin.Log(what + ": no door prop, nothing to " + (open ? "open" : "close")); return; }
             door.SetOpen(open);
-            try { AkSoundEngine.PostEvent(open ? "Play_OBJ_door_open_01" : "Play_OBJ_door_close_01", door.gameObject); } catch (Exception) { }
+            ClinicSound.Play(open ? "Play_OBJ_door_open_01" : "Play_OBJ_door_close_01", door.gameObject);
             PastPlugin.Log(what);
         }
 
@@ -113,10 +113,12 @@ namespace PlutoVetVisit
                 {
                     while (wave1Extra != null && wave1Extra.healthHaver != null && !wave1Extra.healthHaver.IsDead) yield return null;
                 }
+                ClinicSound.Play("Play_UI_menu_confirm_01", player.gameObject);
                 PastTalk.Announce(this, player.transform, PastConfig.Ward4, 3f);
                 yield return StartCoroutine(RunWave("wave 2", PastConfig.Wave2, ClinicLayout.Wave2Spawns));
                 SpawnHearts();
             }
+            ClinicSound.Play("Play_UI_menu_confirm_01", player.gameObject);
             PastTalk.Announce(this, player.transform, PastConfig.Ward5, 3f);
             StartCoroutine(ThoughtLater(player, PastConfig.WardThink, 2f, 3.4f));
             SetDoor(theatreDoor, true, "the theatre door opens");
@@ -208,6 +210,7 @@ namespace PlutoVetVisit
                 yield return StartCoroutine(Think(player, PastConfig.IntroThink1, 1.6f));
                 yield return StartCoroutine(Line(grandma, PastConfig.IntroGrandma2, 2f));
                 yield return new WaitForSeconds(0.3f);
+                ClinicSound.Play("Play_UI_menu_confirm_01", Intercom().gameObject);
                 yield return StartCoroutine(Say(Intercom(), PastConfig.Intro6, 1.6f));
                 yield return StartCoroutine(Line(bianca, PastConfig.Intro7, 2.4f, "wave"));
                 yield return StartCoroutine(OwnersLeave(player, bogdan, bianca));
@@ -387,6 +390,7 @@ namespace PlutoVetVisit
             {
                 PickupObject heart = PickupObjectDatabase.GetById(85);   // Heart
                 if (heart == null) return;
+                ClinicSound.Play("Play_OBJ_item_spawn_01", gameObject);
                 foreach (Vector2 spot in ClinicLayout.HeartSpots)
                     LootEngine.SpawnItem(heart.gameObject, World(spot), Vector2.zero, 0f, true, false, false);
                 PastPlugin.Log("hearts on the nurse station");
@@ -958,7 +962,17 @@ namespace PlutoVetVisit
             VetBoss.WatchFirstShot(vet);
             Engage(vet);
             StartCoroutine(Heartbeat("the Vet", new List<AIActor> { vet }));
+            StartCoroutine(MonitorBeeps());
             PastPlugin.Log("fight started");
+        }
+
+        private IEnumerator MonitorBeeps()
+        {
+            while (!ending && vet != null && vet.healthHaver != null && !vet.healthHaver.IsDead)
+            {
+                ClinicSound.Play("Play_UI_cooldown_ready_01", gameObject);
+                yield return new WaitForSeconds(1.2f);
+            }
         }
 
         public Vector2 World(Vector2 cell)
@@ -1016,6 +1030,7 @@ namespace PlutoVetVisit
         {
             if (ending) return;
             ending = true;
+            if (vet != null) ClinicSound.Play("Play_OBJ_glassbottle_shatter_01", vet.gameObject);
             StartCoroutine(EndPast());
         }
 

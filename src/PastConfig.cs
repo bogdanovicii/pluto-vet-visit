@@ -58,6 +58,7 @@ namespace PlutoVetVisit
         public static string DoorGrandma = "Chin up, kitten.";
         public static bool FloorTiles = true;
         public static bool WallFaces = true;
+        public static bool ClinicSounds = true;
         public static float AmbientR = 0.96f, AmbientG = 0.84f, AmbientB = 0.84f;
         // Balance knobs (tune without a rebuild). Speeds in tiles per second; scales multiply the values in the code.
         public static float BulletSpeedScale = 1f;
@@ -187,6 +188,7 @@ namespace PlutoVetVisit
                 if (!string.IsNullOrEmpty(spec.Comment))
                     propComments[spec.Name] = cfg.Bind("Props", "Comment_" + spec.Name.Replace("pluto_", string.Empty), spec.Comment,
                         "What Pluto thinks when he examines this prop (empty = not examinable).").Value;
+            ClinicSounds = cfg.Bind("Mood", "ClinicSounds", ClinicSounds, "Play the clinic's built-in sound events (kennel barks, intercom chime, heart monitor, lamp, tray crash, ending).").Value;
             FloorTiles = cfg.Bind("Room", "FloorTiles", FloorTiles, "Lay the white clinic floor tiles over the past tileset (turn off if they draw over Pluto).").Value;
             WallFaces = cfg.Bind("Room", "WallFaces", WallFaces, "Draw the clinic's white-and-teal wall faces over the lab tileset's walls (turn off if they flicker or draw over Pluto).").Value;
             AmbientR = cfg.Bind("Room", "AmbientR", AmbientR, "Ambient light red (the lab template is 0.91/0.64/0.64; 1/1/1 is neutral).").Value;

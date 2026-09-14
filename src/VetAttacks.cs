@@ -301,6 +301,7 @@ namespace PlutoVetVisit
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
             EndOnBlank = true;
+            if (SpeedBonus > 0f && BulletBank != null) ClinicSound.Play("Play_ENM_deathray_charge_01", BulletBank.gameObject);   // the phase-3 wall charges up
             yield return Wait(Pace.LeadIn);
             float speed = Pace.S(PastConfig.WallSpeed + SpeedBonus);
             float aim = GetAimDirection(0.3f, speed);
@@ -335,6 +336,7 @@ namespace PlutoVetVisit
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
             EndOnBlank = true;
+            if (BulletBank != null) ClinicSound.Play("Play_ENM_deathray_charge_01", BulletBank.gameObject);
             yield return Wait(Pace.LeadIn);
             float start = RandomAngle(), speed = Pace.S(PastConfig.SpiralSpeed);
             int dir = Random.value < 0.5f ? 1 : -1;
