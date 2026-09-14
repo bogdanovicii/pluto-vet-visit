@@ -21,6 +21,9 @@ namespace PlutoVetVisit
         public const string ROOT = "PlutoVetVisit/Resources/Boss/vet";
         public const string CARD = "PlutoVetVisit/Resources/Boss/vet_bosscard.png";
         private const string BULLET_KIN = "01972dee89fc4404a5c408d50007dad5";
+        public const string NAME_KEY = "#PLUTO_THE_VET";
+        public const string SUBTITLE_KEY = "#PLUTO_THE_VET_SUBTITLE";
+        public const string QUOTE_KEY = "#PLUTO_THE_VET_QUOTE";
 
         public static GameObject Prefab;
 
@@ -40,7 +43,13 @@ namespace PlutoVetVisit
 
             hh.ForceSetCurrentHealth(PastConfig.BossHealth);
             hh.SetHealthMaximum(PastConfig.BossHealth);
-            hh.overrideBossName = "The Vet";
+            // Boss card, boss bar and actor name all go through StringTableManager.GetEnemiesString, so the
+            // names must be string-table KEYS (a raw name shows as an error). MtG API lets us add keys.
+            ETGMod.Databases.Strings.Enemies.Set(NAME_KEY, "The Vet");
+            ETGMod.Databases.Strings.Enemies.Set(SUBTITLE_KEY, "Doctor's Orders");
+            ETGMod.Databases.Strings.Enemies.Set(QUOTE_KEY, "Just a little snip.");
+            hh.overrideBossName = NAME_KEY;
+            actor.OverrideDisplayName = NAME_KEY;
             hh.bossHealthBar = HealthHaver.BossBarType.MainBar; // boss bar, kill cam, boss damage rules
             hh.overrideDeathAnimation = "die";
             actor.MovementSpeed = 3f;
@@ -86,9 +95,13 @@ namespace PlutoVetVisit
             {
                 new TargetPlayerBehavior { Radius = 35f, LineOfSight = false, ObjectPermanence = true, SearchInterval = 0.25f, PauseOnTargetSwitch = false, PauseTime = 0.25f }
             };
+            // Movement stack, first match wins each tick: back off when Pluto gets close, close in when he is
+            // far, otherwise strafe around him unpredictably. Keeps the fight at syringe range.
             bs.MovementBehaviors = new List<MovementBehaviorBase>
             {
-                new MoveErraticallyBehavior { PathInterval = 0.35f, PointReachedPauseTime = 0.4f, PreventFiringWhileMoving = false, InitialDelay = 0.5f, StayOnScreen = true, AvoidTarget = false, UseTargetsRoom = true }
+                new FleeTargetBehavior { TooCloseDistance = 3.5f, TooCloseLOS = false, CloseDistance = 5f, CloseTime = 2f, DesiredDistance = 7f, CanAttackWhileMoving = true, PathInterval = 0.25f },
+                new SeekTargetBehavior { StopWhenInRange = true, CustomRange = 8.5f, LineOfSight = false, ReturnToSpawn = false, PathInterval = 0.3f },
+                new MoveErraticallyBehavior { PathInterval = 0.35f, PointReachedPauseTime = 0.3f, PreventFiringWhileMoving = false, InitialDelay = 0.5f, StayOnScreen = true, AvoidTarget = true, UseTargetsRoom = true }
             };
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
@@ -112,8 +125,8 @@ namespace PlutoVetVisit
             intro.InvisibleBeforeIntroAnim = false;
             intro.preIntroAnim = string.Empty;
             intro.preIntroDirectionalAnim = string.Empty;
-            intro.introAnim = "vet_intro";
-            intro.introDirectionalAnim = string.Empty;
+            intro.introAnim = string.Empty;
+            intro.introDirectionalAnim = "intro";      // directional: mirrors to face Pluto
             intro.continueAnimDuringOutro = false;
             intro.cameraFocus = null;
             intro.roomPositionCameraFocus = Vector2.zero;
@@ -124,9 +137,9 @@ namespace PlutoVetVisit
             intro.SkipBossCard = false;
             intro.portraitSlideSettings = new PortraitSlideSettings
             {
-                bossNameString = "The Vet",
-                bossSubtitleString = "Doctor's Orders",
-                bossQuoteString = string.Empty,
+                bossNameString = NAME_KEY,
+                bossSubtitleString = SUBTITLE_KEY,
+                bossQuoteString = QUOTE_KEY,
                 bossArtSprite = ResourceExtractor.GetTextureFromResource(CARD, asm),
                 bossSpritePxOffset = IntVector2.Zero,
                 topLeftTextPxOffset = IntVector2.Zero,
@@ -191,17 +204,26 @@ namespace PlutoVetVisit
 
         private static List<AttackBehaviorGroup.AttackGroupItem> BuildAttacks(GameObject shootPoint)
         {
+            // Three phases by health. Attacks are range-gated so the Vet uses the right tool for the
+            // distance: syringes lead the target at range, the spray bottle punishes hugging him.
             return new List<AttackBehaviorGroup.AttackGroupItem>
             {
-                // Phase 1 (health above one half)
-                Item("booster shot", 1f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f, 0.5f, 1f)),
-                Item("spray bottle", 1f, Shoot(typeof(SprayBottleScript), shootPoint, 2.2f, 0.5f, 1f)),
+                // Phase 1 (above half health)
+                Item("booster shot", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.6f, 0.5f, 1f, minRange: 4f)),
+                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.0f, 0.5f, 1f, range: 8f)),
                 Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.0f, 0.5f, 1f)),
-                // Phase 2 (half health and below): quicker, plus the Cone of Shame
-                Item("booster shot 2", 1f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f, 0f, 0.5f)),
-                Item("spray bottle 2", 1f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f, 0f, 0.5f)),
-                Item("pill time 2", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 2.2f, 0f, 0.5f)),
-                Item("cone of shame", 1.5f, Shoot(typeof(ConeOfShameScript), shootPoint, 2.5f, 0f, 0.5f)),
+                // Phase 2 (half to a fifth): quicker, plus the droplet wall, the vaccination spiral and the Cone of Shame
+                Item("booster shot 2", 1.2f, Shoot(typeof(BoosterShotScript), shootPoint, 1.1f, 0.2f, 0.5f, minRange: 4f)),
+                Item("spray bottle 2", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f, 0.2f, 0.5f, range: 8f)),
+                Item("pill time 2", 0.7f, Shoot(typeof(PillTimeScript), shootPoint, 2.4f, 0.2f, 0.5f)),
+                Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f, 0.2f, 0.5f, minRange: 5f)),
+                Item("vaccination spiral", 0.8f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f, 0.2f, 0.5f)),
+                Item("cone of shame", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f, 0.2f, 0.5f)),
+                // Phase 3 (last fifth): "just a little snip"
+                Item("snip time", 1.5f, Shoot(typeof(SnipTimeScript), shootPoint, 1.4f, 0f, 0.2f)),
+                Item("vaccination spiral 3", 1.0f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 3.5f, 0f, 0.2f)),
+                Item("cone of shame 3", 1.0f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f, 0f, 0.2f)),
+                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 2.6f, 0f, 0.2f, minRange: 5f)),
             };
         }
 
@@ -211,7 +233,7 @@ namespace PlutoVetVisit
         }
 
         /// <summary>An attack usable while health is between minHealth and maxHealth (fractions of max).</summary>
-        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth)
+        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f)
         {
             return new ShootBehavior
             {
@@ -238,8 +260,8 @@ namespace PlutoVetVisit
                 InitialCooldownVariance = 0f,
                 GroupName = null,
                 GroupCooldown = 0f,
-                MinRange = 0f,
-                Range = 40f,
+                MinRange = minRange,
+                Range = range,
                 MinWallDistance = 0f,
                 MaxEnemiesInRoom = 0f,
                 MinHealthThreshold = minHealth,

@@ -16,15 +16,17 @@ namespace PlutoVetVisit
         public DropletBullet() : base("droplet", false, false, false) { }
     }
 
-    /// <summary>Booster Shot: three syringes straight at Pluto, eight frames apart.</summary>
+    /// <summary>Booster Shot: three syringes that lead Pluto (aimed where he will be), six frames apart, with a
+    /// little scatter so a straight strafe does not dodge all three.</summary>
     public class BoosterShotScript : Script
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
             for (int i = 0; i < 3; i++)
             {
-                Fire(new Direction(0f, DirectionType.Aim), new Speed(10f, SpeedType.Absolute), new SyringeBullet());
-                yield return Wait(8);
+                float aim = GetAimDirection(i == 1 ? 0f : 0.7f, 11f) + UnityEngine.Random.Range(-3f, 3f);
+                Fire(new Direction(aim, DirectionType.Absolute), new Speed(11f, SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(6);
             }
         }
     }
@@ -52,7 +54,7 @@ namespace PlutoVetVisit
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
             yield return Wait(40);
-            float start = RandomAngle();
+            float start = GetAimDirection(0f, 6f);   // one droplet of the burst always heads for Pluto
             for (int i = 0; i < 6; i++)
                 Fire(new Direction(SubdivideCircle(start, 6, i), DirectionType.Absolute), new Speed(6f, SpeedType.Absolute), new DropletBullet());
             Vanish(false);
@@ -85,6 +87,60 @@ namespace PlutoVetVisit
                     Fire(new Direction(SubdivideCircle(0f, 16, i, 1f, ring == 1), DirectionType.Absolute), new Speed(5.5f, SpeedType.Absolute), new SyringeBullet());
                 yield return Wait(24);
             }
+        }
+    }
+
+    /// <summary>Droplet Wall (phase 2+): a 130-degree curtain of droplets with a two-droplet gap that opens
+    /// somewhere in it, twice. Read the gap and step through it.</summary>
+    public class DropletWallScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            for (int wave = 0; wave < 2; wave++)
+            {
+                float aim = GetAimDirection(0.3f, 6f);
+                int gap = UnityEngine.Random.Range(3, 11);          // of 15 slots, never at the very edge
+                for (int i = 0; i < 15; i++)
+                {
+                    if (i == gap || i == gap + 1) continue;
+                    Fire(new Direction(SubdivideArc(aim - 65f, 130f, 15, i), DirectionType.Absolute), new Speed(6f, SpeedType.Absolute), new DropletBullet());
+                }
+                yield return Wait(30);
+            }
+        }
+    }
+
+    /// <summary>Vaccination Spiral (phase 2+): four arms of syringes rotating for two seconds. Walk around it.</summary>
+    public class VaccinationSpiralScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            float start = RandomAngle();
+            int dir = UnityEngine.Random.value < 0.5f ? 1 : -1;
+            for (int t = 0; t < 24; t++)
+            {
+                for (int arm = 0; arm < 4; arm++)
+                    Fire(new Direction(start + dir * t * 11f + arm * 90f, DirectionType.Absolute), new Speed(5f, SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(4);
+            }
+        }
+    }
+
+    /// <summary>Snip Time (last fifth of his health): five fast leading syringes, then a ring of droplets.</summary>
+    public class SnipTimeScript : Script
+    {
+        public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                float aim = GetAimDirection(0.8f, 13f) + UnityEngine.Random.Range(-4f, 4f);
+                Fire(new Direction(aim, DirectionType.Absolute), new Speed(13f, SpeedType.Absolute), new SyringeBullet());
+                yield return Wait(4);
+            }
+            yield return Wait(10);
+            float ring = RandomAngle();
+            for (int i = 0; i < 12; i++)
+                Fire(new Direction(SubdivideCircle(ring, 12, i), DirectionType.Absolute), new Speed(6f, SpeedType.Absolute), new DropletBullet());
         }
     }
 }

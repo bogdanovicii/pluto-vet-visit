@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using Dungeonator;
+using Gungeon;
 
 namespace PlutoVetVisit
 {
@@ -32,8 +34,12 @@ namespace PlutoVetVisit
 
             PlayerController player = GameManager.Instance.PrimaryPlayer;
             Place(player, ClinicLayout.Spawn);
+            EnsureLoadout(player);
             if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER)
+            {
                 Place(GameManager.Instance.SecondaryPlayer, ClinicLayout.Spawn + new Vector2(1.5f, 0f));
+                EnsureLoadout(GameManager.Instance.SecondaryPlayer);
+            }
             Pixelator.Instance.TriggerPastFadeIn();
             yield return new WaitForSeconds(0.5f);
             if (PastConfig.DebugEndAfterSeconds > 0f) StartCoroutine(DebugEnding());
@@ -71,6 +77,48 @@ namespace PlutoVetVisit
             return a;
         }
 
+        // Pluto's starting loadout (console ids). Vanilla pasts strip the run's items and hand the
+        // Gungeoneer their starting gear back; a custom character's lists can come through empty.
+        private static readonly string[] STARTING_GUNS = { "pluto:kibble_sack" };
+        private static readonly string[] STARTING_ITEMS = { "pluto:wet_food_can", "pluto:squeaky_toy", "pluto:nine_lives", "pluto:coco_blue", "pluto:puffed_up" };
+
+        /// <summary>Make sure Pluto arrives armed: starting guns via the game's own reset, then by id.</summary>
+        private void EnsureLoadout(PlayerController p)
+        {
+            if (p == null || p.inventory == null) return;
+            try
+            {
+                if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
+                {
+                    PastPlugin.Log("no guns in the past; restoring the starting guns");
+                    if (p.startingGunIds != null && p.startingGunIds.Count > 0) p.ReinitializeGuns();
+                }
+                if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
+                    foreach (string id in STARTING_GUNS) Give(p, id);
+                foreach (string id in STARTING_ITEMS) Give(p, id);
+                if (p.CurrentGun == null && p.inventory.AllGuns != null && p.inventory.AllGuns.Count > 0) p.inventory.ChangeGun(1);
+                p.ToggleGunRenderers(true, "vetvisit");
+                p.ToggleHandRenderers(true, "vetvisit");
+                PastPlugin.Log("loadout: " + (p.inventory.AllGuns != null ? p.inventory.AllGuns.Count : 0) + " gun(s), current " + (p.CurrentGun != null ? p.CurrentGun.EncounterNameOrDisplayName : "none"));
+            }
+            catch (Exception e) { PastPlugin.Log("loadout check failed: " + e.Message); }
+        }
+
+        private static void Give(PlayerController p, string id)
+        {
+            try
+            {
+                if (!Game.Items.ContainsID(id)) return;
+                PickupObject item = Game.Items[id];
+                if (item == null || p.HasPickupID(item.PickupObjectId)) return;
+                LootEngine.GivePrefabToPlayer(item.gameObject, p);
+                PastPlugin.Log("gave " + id);
+            }
+            catch (Exception e) { PastPlugin.Log("could not give " + id + ": " + e.Message); }
+        }
+
+        private bool woken;
+
         private void StartFight(PlayerController player)
         {
             if (vet == null) return;
@@ -88,11 +136,24 @@ namespace PlutoVetVisit
             intro.ConfigureOnPlacement(room);
             intro.OnIntroFinished = Wake;
             intro.TriggerSequence(player); // walk-in, boss card, health bar, boss music
+            StartCoroutine(FightWatchdog(14f));
+        }
+
+        /// <summary>If the intro never reports back (a missing clip, a skipped callback), start the fight anyway.</summary>
+        private IEnumerator FightWatchdog(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            if (!woken)
+            {
+                PastPlugin.Log("intro did not finish after " + seconds + " s; starting the fight anyway");
+                Wake();
+            }
         }
 
         private void Wake()
         {
-            if (vet == null) return;
+            if (vet == null || woken) return;
+            woken = true;
             vet.HasBeenEngaged = true;
             vet.behaviorSpeculator.enabled = true;
             vet.healthHaver.PreventAllDamage = false;
