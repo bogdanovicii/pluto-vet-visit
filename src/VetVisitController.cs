@@ -758,6 +758,7 @@ namespace PlutoVetVisit
             if (p == null || p.inventory == null || p.healthHaver == null || p.healthHaver.IsDead) return;
             try
             {
+                if (full) PastPlugin.Log("loadout " + when + ": " + LoadoutChoice.Describe(p));
                 string before = Snapshot(p);
                 List<string> did = new List<string>();
                 int k = p == GameManager.Instance.SecondaryPlayer ? 1 : 0;
@@ -770,8 +771,16 @@ namespace PlutoVetVisit
                     }
                     if (p.inventory.AllGuns == null || p.inventory.AllGuns.Count == 0)
                     {
-                        foreach (string id in STARTING_GUNS) GiveGun(p, id);
-                        did.Add("gave the starting gun");
+                        if (LoadoutChoice.UseAlternate(p))
+                        {
+                            foreach (int id in p.startingAlternateGunIds) GiveGunById(p, id);
+                            did.Add("gave the costume's starting guns");
+                        }
+                        else
+                        {
+                            foreach (string id in STARTING_GUNS) GiveGun(p, id);
+                            did.Add("gave the starting gun");
+                        }
                     }
                 }
                 if (full) foreach (string id in STARTING_ITEMS) Give(p, id);
@@ -876,6 +885,19 @@ namespace PlutoVetVisit
         }
 
         /// <summary>The game's own path: AddGunToInventory takes the prefab and instantiates it itself.</summary>
+        private static void GiveGunById(PlayerController p, int pickupId)
+        {
+            try
+            {
+                Gun prefab = PickupObjectDatabase.GetById(pickupId) as Gun;
+                if (prefab == null) { PastPlugin.Log("costume gun id " + pickupId + " is not a gun"); return; }
+                if (p.inventory.ContainsGun(pickupId)) return;
+                Gun given = p.inventory.AddGunToInventory(prefab, true);
+                PastPlugin.Log("gave costume gun #" + pickupId + " -> " + (given != null ? given.name : "null"));
+            }
+            catch (Exception e) { PastPlugin.Log("could not give costume gun #" + pickupId + ": " + e.Message); }
+        }
+
         private static void GiveGun(PlayerController p, string id)
         {
             try
