@@ -11,6 +11,7 @@ import tech_poses as T
 import nurse_poses as N
 import vet_poses as VP
 import npc_poses as NP
+import art_sources
 
 ENEMY_ROOT = 'PlutoVetVisit/Resources/Enemies'
 NPC_ROOT = 'PlutoVetVisit/Resources/Npcs'
@@ -55,6 +56,9 @@ def layout_cs():
     lines += _enemy_block('STECH', stech, 'stech')
     lines += _enemy_block('NURSE', N, 'nurse')
     lines += _enemy_block('VET', VP, 'vet', root=BOSS_ROOT)
+    # 0.14.0: the masked last phase; frames come from approved art (art_sources.MASK_CLIPS)
+    lines.append('        public static readonly string[] VET_MASK_CLIPS = { %s };' % ', '.join('"%s"' % c for c in art_sources.MASK_CLIPS))
+    lines.append('        public static readonly int[] VET_MASK_FRAMES = { %s };' % ', '.join(str(n) for n in art_sources.MASK_CLIPS.values()))
     lines.append('        public static readonly NpcSpec[] NPCS = {')
     for name, who in NPC_OBJECTS.items():
         spec = NP.NPCS[who]

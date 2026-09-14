@@ -40,3 +40,16 @@ class CastLayoutTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class MaskClipTests(unittest.TestCase):
+    def test_mask_clips_in_cast_layout(self):
+        import art_sources
+        import cast_layout
+        cs = cast_layout.layout_cs()
+        self.assertTrue('VET_MASK_CLIPS = { "mask_on", "mask_idle", "mask_move", "mask_tell", "mask_fire", "mask_die" };' in cs)
+        self.assertTrue('VET_MASK_FRAMES = { 5, 5, 6, 4, 4, 8 };' in cs)
+        names = list(art_sources.MASK_CLIPS) + ['idle', 'move', 'tell', 'fire', 'intro', 'die']
+        for a in names:
+            for b in names:
+                self.assertFalse(a != b and b.startswith(a), (a, b))

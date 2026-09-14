@@ -461,6 +461,7 @@ namespace PlutoVetVisit
         public void LastFifth()
         {
             if (!ending) TheatreMood.Red(room);
+            if (!ending) VetMask.Apply(vet);
             if (vet != null && !ending) Bubble(vet.transform, PastConfig.Fight4, 2.5f);
             if (ending || !PastConfig.BossReinforcements || string.IsNullOrEmpty(PastConfig.Reinforce3)) return;
             List<AIActor> adds = SpawnWave("last reinforcements", PastConfig.Reinforce3, ClinicLayout.TheatreSpawns);

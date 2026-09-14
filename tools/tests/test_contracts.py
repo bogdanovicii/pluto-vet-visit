@@ -49,3 +49,8 @@ class ContractTests(unittest.TestCase):
         c = src('VetVisitController.cs')
         self.assertGreaterEqual(c.count('KennelCritter.RattleAll();'), 2)
         self.has('go.AddComponent<KennelCritter>()', src('ClinicObjects.cs'), 'ClinicObjects.cs')
+
+    def test_mask_applies_at_the_last_phase(self):
+        self.has('VetMask.Apply(vet);', src('VetVisitController.cs'), 'VetVisitController.cs')
+        self.has('masked: VetMask.Available', src('VetBoss.cs'), 'VetBoss.cs')
+        self.has('overrideDeathAnimation = "mask_die"', src('VetMask.cs'), 'VetMask.cs')

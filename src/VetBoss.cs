@@ -96,6 +96,18 @@ namespace PlutoVetVisit
             Directional(anim, "fire");
             Directional(anim, "intro");
             Directional(anim, "die");
+            VetMask.Available = VetMask.ClipsPresent(asm);
+            if (VetMask.Available)
+            {
+                Clip(anim, "mask_on", 10, asm, tk2dSpriteAnimationClip.WrapMode.Once);
+                Clip(anim, "mask_idle", 6, asm, tk2dSpriteAnimationClip.WrapMode.Loop);
+                Clip(anim, "mask_move", 8, asm, tk2dSpriteAnimationClip.WrapMode.Loop);
+                Clip(anim, "mask_tell", 8, asm, tk2dSpriteAnimationClip.WrapMode.Once);
+                Clip(anim, "mask_fire", 12, asm, tk2dSpriteAnimationClip.WrapMode.Once);
+                Clip(anim, "mask_die", 8, asm, tk2dSpriteAnimationClip.WrapMode.Once);
+                foreach (string clip in CastLayout.VET_MASK_CLIPS) Directional(anim, clip);
+            }
+            PastPlugin.Log("mask clips " + (VetMask.Available ? "loaded" : "not embedded yet"));
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
@@ -421,12 +433,12 @@ namespace PlutoVetVisit
                 Item("leap and ring", 0.6f, LeapRing(shootPoint, 7f * c, 0f, 0.6f)),
                 // Phase 3, last quarter: "Just a little snip". Fast leading bursts, the hard wall, the full course (wall then
                 // spiral back to back), quicker stitches and rings, clouds, double hops.
-                Item("snip time", 1.5f, Aimed(Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f))),
-                Item("cone of shame 3", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
-                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 0.8f)),
-                Item("stitches 3", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 3.5f * c, 0f, 0.25f, attackCooldown: 1.0f)),
-                Item("scalpel ring 3", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f)),
-                Item("anesthesia 3", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 5.0f * c, 0f, 0.25f, attackCooldown: 1.0f)),
+                Item("snip time", 1.5f, Aimed(Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f, masked: VetMask.Available))),
+                Item("cone of shame 3", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available)),
+                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 0.8f, masked: VetMask.Available)),
+                Item("stitches 3", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 3.5f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available)),
+                Item("scalpel ring 3", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available)),
+                Item("anesthesia 3", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 5.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available)),
                 Item("hop 3", 1.5f, BossHop(PastConfig.BossHopCooldown * 0.7f * c, 0f, 0.25f, 0.35f)),
                 new AttackBehaviorGroup.AttackGroupItem
                 {
@@ -437,8 +449,8 @@ namespace PlutoVetVisit
                         RunInClass = false,
                         AttackBehaviors = new List<AttackBehaviorBase>
                         {
-                            Shoot(typeof(DropletWallScript), shootPoint, 4.0f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 1.0f),
-                            Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f * c, 0f, 0.25f, attackCooldown: 1.0f),
+                            Shoot(typeof(DropletWallScript), shootPoint, 4.0f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 1.0f, masked: VetMask.Available),
+                            Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available),
                         },
                         OverrideCooldowns = new List<float> { 0.4f },
                     }
@@ -484,7 +496,7 @@ namespace PlutoVetVisit
         }
 
         /// <summary>An attack usable while health is between minHealth and maxHealth (fractions of max).</summary>
-        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f, float attackCooldown = 0.4f, float initialCooldown = 1f)
+        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f, float attackCooldown = 0.4f, float initialCooldown = 1f, bool masked = false)
         {
             return new ShootBehavior
             {
@@ -499,8 +511,8 @@ namespace PlutoVetVisit
                 RequiresTarget = true,
                 PreventTargetSwitching = true,
                 Uninterruptible = true,   // vanilla bosses and adds finish a pattern once it starts; a hit never cancels a tell
-                TellAnimation = "tell",
-                FireAnimation = "fire",
+                TellAnimation = masked ? "mask_tell" : "tell",
+                FireAnimation = masked ? "mask_fire" : "fire",
                 HideGun = false,
                 UseVfx = false,
                 Cooldown = cooldown,

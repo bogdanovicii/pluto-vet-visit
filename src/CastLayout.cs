@@ -28,6 +28,8 @@ namespace PlutoVetVisit
         public const int VET_SHOOT_X = 45, VET_SHOOT_Y = 20;
         public static readonly string[] VET_CLIPS = { "idle", "move", "tell", "fire", "intro", "die" };
         public static readonly int[] VET_FRAMES = { 5, 6, 4, 4, 8, 8 };
+        public static readonly string[] VET_MASK_CLIPS = { "mask_on", "mask_idle", "mask_move", "mask_tell", "mask_fire", "mask_die" };
+        public static readonly int[] VET_MASK_FRAMES = { 5, 5, 6, 4, 4, 8 };
         public static readonly NpcSpec[] NPCS = {
             new NpcSpec("pluto_npc_bogdan", "bogdan", 48, 40, new[] { "idle", "walk", "walk_free" }, new[] { 2, 6, 6 }),
             new NpcSpec("pluto_npc_bianca", "bianca", 48, 40, new[] { "idle", "walk", "wave" }, new[] { 2, 6, 4 }),
