@@ -43,6 +43,10 @@ def used_keys():
     return keys
 
 
+# vetpixel keys copied from the main mod's tools/pixel.py (checked 2026-09-14 against its commit 2c14d8a-era palette).
+COPIED_FROM_MAIN = '.2ABGHKLMPWXZabdegmopqw'
+
+
 class PaletteTests(unittest.TestCase):
     def test_every_used_key_is_defined(self):
         """Guards against art that references a palette key nobody defined (a typo, or a new
@@ -65,7 +69,9 @@ class PaletteTests(unittest.TestCase):
             raise unittest.SkipTest('../tools/pixel.py is not importable (main mod not checked out here)')
 
         drifted = []
-        for key in sorted(set(V.PALETTE) & set(pixel.PALETTE)):
+        # Only the keys vetpixel copied from pixel.py on purpose. The main mod may add keys later that reuse a letter
+        # Vet Visit already uses for its own colour (2.16.0's samurai '0', '4'-'8'); that is not drift.
+        for key in sorted(k for k in COPIED_FROM_MAIN if k in pixel.PALETTE):
             ours, theirs = V.PALETTE[key], pixel.PALETTE[key]
             if ours != theirs:
                 drifted.append('%r: vetpixel.PALETTE=%r, pixel.PALETTE=%r' % (key, ours, theirs))
