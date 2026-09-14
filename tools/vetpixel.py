@@ -71,6 +71,12 @@ PALETTE.update({
     ',': (0x9A, 0xA6, 0xBC, 255),  # coat deep shade (cool blue-grey): coat folds and seams on the boss card
     '<': (0x68, 0xC6, 0xB0, 255),  # scrubs teal light: lit side of the scrubs on the boss card
     '>': (0x9E, 0xE6, 0xFF, 255),  # vaccine glow: the syringe core and the rim light it throws on the boss card
+    # v0.12 projectile ramps (symbols neither palette used)
+    '[': (0x2A, 0x5C, 0xB0, 255),  # vaccine deep blue: shade of the vaccine orb and the syringe dose
+    ']': (0xB4, 0xF0, 0x7A, 255),  # tranquilizer green light: lit side of the Nurse's tranq bubble ('5' is its mid tone)
+    '{': (0x2E, 0x7A, 0x3A, 255),  # tranquilizer green dark
+    '}': (0x8E, 0x1E, 0x2A, 255),  # medical red dark: pill, dart and stitch shade
+    '`': (0xFF, 0x8A, 0x7A, 255),  # medical red light: pill, dart and stitch highlight
 })
 
 

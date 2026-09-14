@@ -64,7 +64,7 @@ def check_room():
 
 
 def check_look():
-    """0.10.0: three zone floors that cover their zones, wall faces on the divider rows, lamp head above the actors."""
+    """0.10.0: three zone floors that cover their zones, wall faces on the divider rows; 0.12.0: nothing draws over the Vet at his spawn."""
     import clinic_room
     import clinic_objects
     placed = {}
@@ -72,7 +72,7 @@ def check_look():
         placed.setdefault(name, []).append((x, y))
     sizes = {o.name: o.size for o in clinic_objects.OBJECTS}
     hog = {o.name: o.height_off_ground for o in clinic_objects.OBJECTS}
-    zones = {'pluto_floor_waiting': (0, 13), 'pluto_floor_ward': (15, 32), 'pluto_floor_theatre': (34, 52)}
+    zones = {name: (y0, y0 + rows) for name, (y0, rows, _) in clinic_objects.FLOOR_ZONES.items()}   # 0.12.0: from the room's zones
     for name, (y0, y1) in zones.items():
         if name not in placed:
             err('%s not placed' % name)
@@ -89,8 +89,22 @@ def check_look():
             err('wall face at (%s, %s) is not on a wall row' % (x, y))
     if len(faces) < 3:
         err('expected 3 wall faces, found %d' % len(faces))
-    if hog.get('pluto_lamp_head', 0) < 1.0:
-        err('the lamp head must draw over the actors (HeightOffGround >= 1)')
+    # 0.12.0: the flat lamp head at +2 drew over the Vet's spawn (in-game screenshot). The op lamp stands on the exam table's base
+    # row, and no prop sprite near the Vet's 48x40 sprite at his spawn may sort in front of him.
+    specs = {o.name: o for o in clinic_objects.OBJECTS}
+    if 'pluto_op_lamp' not in specs or not specs['pluto_op_lamp'].stand:
+        err('pluto_op_lamp must exist and stand (a flat lamp over the table draws over the actors)')
+    vx0, vy0, vx1, vy1 = clinic_room.vet_sprite_rect()
+    for name, (x, y) in clinic_objects.PROPS:
+        o = specs[name]
+        w, h = o.size
+        if not (x < vx1 + 0.25 and vx0 - 0.25 < x + w / 16.0 and y < vy1 + 0.25 and vy0 - 0.25 < y + h / 16.0):
+            continue
+        in_front = (2 * y - o.height_off_ground <= 2 * vy0) if o.stand else o.height_off_ground >= 0
+        if in_front:
+            err('%s at (%s, %s) draws over the Vet at his spawn %s' % (name, x, y, clinic_room.NAMED['Vet']))
+    if any(not o.stand and o.height_off_ground > 0.5 for o in clinic_objects.OBJECTS):
+        err('a flat prop hangs over the actors (HeightOffGround > 0.5): it would draw over anyone under it')
     # 0.10.1: the lab tileset's wall face sorts like a standing sprite on the upper wall row, so a FLAT face prop loses
     # to it (the in-game screenshots showed purple wall blocks over our face). Faces must stand, slightly below the
     # ground (Pluto hugging the wall stays in front), and wall decor must stand a hair in front of the face.
@@ -117,7 +131,7 @@ def check_look():
             want = face_hog + 2 * (y - base) + 0.05
             if hog.get(name, 0.0) <= face_hog + 2 * (y - base):
                 err('wall decor %s at (%s, %s): HeightOffGround %.2f draws behind the face (needs about %.2f)' % (name, x, y, hog.get(name, 0.0), want))
-    ok('zone floors, %d standing wall faces, %d wall decor in front of them, lamp head' % (len(faces), decor))
+    ok('zone floors, %d standing wall faces, %d wall decor in front of them, the Vet stands clear' % (len(faces), decor))
 
 
 def check_objects():
@@ -164,9 +178,6 @@ def check_boss():
         err('boss card must be at least half transparent (vanilla boss cards are 60-75 % transparent)')
     if Image.open(os.path.join(RES, 'past_win_pic.png')).size != (115, 71):
         err('past win pic must be 115x71')
-    for name in ('vet_syringe_001', 'vet_droplet_001', 'vet_pill_001', 'vet_net_001', 'vet_cloud_001'):
-        if not os.path.exists(os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', name + '.png')):
-            err('projectile sprite missing: ' + name)
     ok('boss: %d clips, card, win pic' % len(names))
 
 
@@ -200,9 +211,34 @@ def check_cast():
     cs = open(os.path.join(PROJECT, 'src', 'CastLayout.cs')).read()
     if cs != cast_layout.layout_cs():
         err('CastLayout.cs is stale (run tools/make_art.py)')
-    if not os.path.exists(os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', 'vet_net_001.png')):
-        err('projectile sprite missing: vet_net_001')
     ok('cast: tech %d clips, nurse %d clips, %d npcs' % (len(tech_poses.CLIPS), len(nurse_poses.CLIPS), len(npc_poses.NPCS)))
+
+
+def check_projectiles():
+    """Every bank sprite exists at its drawn size, and every VetBoss.Entry call in src/*.cs matches tools/projectiles.py BANK."""
+    import projectiles
+    for bank, (sprite, hw, hh, rotates) in projectiles.BANK.items():
+        path = os.path.join(RES, 'SpriteRoot', 'ProjectileCollection', sprite + '.png')
+        if not os.path.exists(path):
+            err('projectile sprite missing: ' + sprite)
+        elif Image.open(path).size != projectiles.size(sprite):
+            err('projectile sprite %s is stale (run tools/make_art.py)' % sprite)
+        if not (hw < projectiles.size(sprite)[0] and hh <= projectiles.size(sprite)[1]):
+            err('projectile %s hitbox %dx%d is not inside its sprite' % (bank, hw, hh))
+    entry = re.compile(r'Entry\(kin, "(\w+)", "(\w+)", (\d+), (\d+), (\d+), (\d+), (true|false)\)')
+    seen = set()
+    for f in sorted(os.listdir(os.path.join(PROJECT, 'src'))):
+        if not f.endswith('.cs'):
+            continue
+        for m in entry.finditer(open(os.path.join(PROJECT, 'src', f)).read()):
+            name, sprite, w, h, hw, hh, rot = m.groups()
+            seen.add(name)
+            want = projectiles.BANK.get(name)
+            if want is None or (sprite, int(hw), int(hh), rot == 'true') != want or (int(w), int(h)) != projectiles.size(sprite):
+                err('%s: bank entry %s does not match tools/projectiles.py BANK' % (f, name))
+    if seen != set(projectiles.BANK):
+        err('bank names registered in C# %s != projectiles.BANK %s' % (sorted(seen), sorted(projectiles.BANK)))
+    ok('projectiles: %d sprites, bank entries match' % len(projectiles.BANK))
 
 
 def dll_manifest():
@@ -229,7 +265,7 @@ def check_dll(man):
     ok('DLL embeds %d PNGs' % man.count('.png'))
 
 
-CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_boss, check_cast]
+CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_boss, check_cast, check_projectiles]
 
 
 def main():

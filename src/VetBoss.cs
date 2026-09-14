@@ -48,8 +48,8 @@ namespace PlutoVetVisit
             hh.SetHealthMaximum(PastConfig.BossHealth);
             // Boss card, boss bar and actor name all go through StringTableManager.GetEnemiesString, so the
             // names must be string-table KEYS (a raw name shows as an error). MtG API lets us add keys.
-            ETGMod.Databases.Strings.Enemies.Set(NAME_KEY, "The Vet");
-            ETGMod.Databases.Strings.Enemies.Set(SUBTITLE_KEY, "Doctor's Orders");
+            ETGMod.Databases.Strings.Enemies.Set(NAME_KEY, "THE VET");   // capitals: the boss card title font has no glyphs for some lowercase letters ("Te Vet" in 0.11.1)
+            ETGMod.Databases.Strings.Enemies.Set(SUBTITLE_KEY, "DOCTOR'S ORDERS!");
             ETGMod.Databases.Strings.Enemies.Set(QUOTE_KEY, "Just a little snip.");
             hh.overrideBossName = NAME_KEY;
             actor.OverrideDisplayName = NAME_KEY;
@@ -99,10 +99,15 @@ namespace PlutoVetVisit
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
-            bank.Bullets.Add(Entry(kin, "syringe", "vet_syringe_001", 12, 4));
-            bank.Bullets.Add(Entry(kin, "droplet", "vet_droplet_001", 5, 5));
-            bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 8, 4));
-            bank.Bullets.Add(Entry(kin, "cloud", "vet_cloud_001", 14, 14));
+            // name, sprite, sprite size, hitbox size, points along travel: tools/projectiles.py BANK owns these (test_projectiles checks)
+            bank.Bullets.Add(Entry(kin, "syringe", "vet_syringe_001", 14, 6, 10, 4, true));
+            bank.Bullets.Add(Entry(kin, "vaccine", "vet_vaccine_001", 8, 8, 6, 6, false));
+            bank.Bullets.Add(Entry(kin, "droplet", "vet_droplet_001", 9, 7, 7, 5, true));
+            bank.Bullets.Add(Entry(kin, "pill", "vet_pill_001", 10, 6, 8, 4, true));
+            bank.Bullets.Add(Entry(kin, "tablet", "vet_tablet_001", 7, 7, 5, 5, false));
+            bank.Bullets.Add(Entry(kin, "scalpel", "vet_scalpel_001", 14, 5, 10, 3, true));
+            bank.Bullets.Add(Entry(kin, "stitch", "vet_stitch_001", 9, 9, 5, 5, false));
+            bank.Bullets.Add(Entry(kin, "cloud", "vet_cloud_001", 16, 16, 12, 12, false));
 
             GameObject shootPoint = VetTech.ShootPoint(Prefab, actor, CastLayout.VET_SHOOT_X, CastLayout.VET_SHOOT_Y, CastLayout.VET_W, CastLayout.VET_H, "syringe_tip"); // the needle tip
             bs.TargetBehaviors = new List<TargetBehaviorBase>
@@ -209,7 +214,7 @@ namespace PlutoVetVisit
         }
 
         /// <summary>The sprite recipe and the live projectile object per bank name, so a broken entry can be rebuilt.</summary>
-        private class BulletRecipe { public string Sprite; public int W, H; public GameObject Object; }
+        private class BulletRecipe { public string Sprite; public int W, H, HitW, HitH; public bool Rotates; public GameObject Object; }
         private static readonly Dictionary<string, BulletRecipe> Recipes = new Dictionary<string, BulletRecipe>();
 
         /// <summary>A copy of a vanilla bullet-bank entry whose projectile prefab wears one of our sprites.
@@ -219,7 +224,7 @@ namespace PlutoVetVisit
         /// world that flew out of range and destroyed itself, leaving BulletObject null. AIBulletBank.
         /// CreateProjectileFromBank then falls back to aiShooter.CurrentGun, and our actors have no AIShooter:
         /// the NullReferenceException on every enemy shot since 0.3.0. So: one copy, kept inactive.</summary>
-        public static AIBulletBank.Entry Entry(AIBulletBank.Entry template, string name, string sprite, int w, int h)
+        public static AIBulletBank.Entry Entry(AIBulletBank.Entry template, string name, string sprite, int w, int h, int hitW, int hitH, bool pointsAlongTravel)
         {
             AIBulletBank.Entry e = EnemyBuildingTools.CopyBulletBankEntry(template, name, "DNC");
             // The Bullet Kin's entry ships with PlayAudio off; the King's banks set the magnum shot on theirs.
@@ -240,29 +245,32 @@ namespace PlutoVetVisit
             // hitbox as a BagelCollider from the frame "10x10_projectile_dubred_dark_001" of its OWN collection; that
             // lookup now fails and PixelCollider.RegenerateEmptyCollider makes it 0x0: the 0.10.1 bullets flew through
             // Pluto. Give every copy a manual box sized to our sprite, centred on the projectile (sprite anchored middle).
-            ManualHitbox(p, w, h);
+            ManualHitbox(p, hitW, hitH);
+            // Long sprites (needle, dart, scalpel, droplet, pill) are drawn facing right: the bank spawns them rotated to their
+            // direction (AIBulletBank: Quaternion.Euler(0, 0, direction)), and a Manual collider regenerates with the transform's
+            // rotation, so the box turns with the art. Round sprites keep the template's setting.
+            if (pointsAlongTravel) p.shouldRotate = true;
             p.collidesWithPlayer = true;
             p.collidesWithEnemies = false;
             p.collidesWithProjectiles = false;
             p.baseData.damage = 0.5f;   // every vanilla enemy bullet takes half a heart
             e.preloadCount = 0;   // AIBulletBank.Awake preloads BulletObject when this is > 0; nothing to preload
             BulletRecipe prior;
-            if (Recipes.TryGetValue(name, out prior) && (prior.Sprite != sprite || prior.W != w || prior.H != h))
+            if (Recipes.TryGetValue(name, out prior) && (prior.Sprite != sprite || prior.W != w || prior.H != h || prior.HitW != hitW || prior.HitH != hitH))
                 PastPlugin.Log("warning: bank name '" + name + "' is built with two different sprites; one name must mean one sprite, or a repair picks the last");
-            Recipes[name] = new BulletRecipe { Sprite = sprite, W = w, H = h, Object = bullet };
+            Recipes[name] = new BulletRecipe { Sprite = sprite, W = w, H = h, HitW = hitW, HitH = hitH, Rotates = pointsAlongTravel, Object = bullet };
             LogBullet("bank " + name, p);
             return e;
         }
 
         private static int bulletCopyCount;
 
-        /// <summary>A manual box collider on the Projectile layer, a little smaller than a sprite of 8 px or more (vanilla
-        /// hitboxes sit inside the art), centred on the projectile position.</summary>
-        public static void ManualHitbox(Projectile p, int w, int h)
+        /// <summary>A manual box collider on the Projectile layer of hw x hh pixels, centred on the projectile position. The sizes
+        /// come from tools/projectiles.py BANK: a little smaller than the art (vanilla hitboxes sit inside the sprite).</summary>
+        public static void ManualHitbox(Projectile p, int hw, int hh)
         {
             SpeculativeRigidbody body = p != null ? p.specRigidbody : null;
             if (body == null || body.PixelColliders == null) { PastPlugin.Log("warning: projectile without a rigidbody, cannot set its hitbox"); return; }
-            int hw = w >= 8 ? w - 2 : w, hh = h >= 8 ? h - 2 : h;
             foreach (PixelCollider pc in body.PixelColliders)
             {
                 pc.ColliderGenerationMode = PixelCollider.PixelColliderGeneration.Manual;
@@ -368,7 +376,7 @@ namespace PlutoVetVisit
                         if (r.Object == null || r.Object.GetComponent<Projectile>() == null)
                         {
                             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
-                            Entry(kin, e.Name, r.Sprite, r.W, r.H);
+                            Entry(kin, e.Name, r.Sprite, r.W, r.H, r.HitW, r.HitH, r.Rotates);
                             r = Recipes[e.Name];
                         }
                         e.BulletObject = r.Object;

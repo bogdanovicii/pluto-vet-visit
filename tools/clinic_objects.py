@@ -692,10 +692,8 @@ for y in range(1, 9):
 _ps = overlay(_ps, ['.!!.', '!!!!', '!!!!', '.!!.'], 6, 3)
 PREP_SIGN = R(_ps)
 
-# ------------------------------------------------------------------ surgical lamp (v0.10): three flat pieces.
-# pluto_lamp_head 48x40 hangs OVER the actors (height off ground +2): a round steel dish seen from below-front, five 'K' bulbs
-# behind '^' glass, a stem at the top where the arm joins. pluto_lamp_arm 48x40 (+0.5) runs from a wall mount at its top-left
-# down-right to the head's stem. pluto_lamp_pool 64x24 (-1.4) is the pale light pool on the floor, dithered so it reads translucent.
+# ------------------------------------------------------------------ lamp light pool 64x24 (v0.10, -1.4): the pale light pool on the
+# floor, dithered so it reads translucent. (0.12.0: the flat lamp head and arm are gone; see pluto_op_lamp.)
 def _ellipse(w, h, cx, cy, rx, ry, rings):
     """rings: [(max_d, key), ...] from the outside in; d = normalised squared distance from the centre."""
     rows = []
@@ -715,28 +713,6 @@ def _ellipse(w, h, cx, cy, rx, ry, rings):
         rows.append(''.join(row))
     return rows
 
-
-_lh = ['.' * 48] * 40
-_dish = _ellipse(48, 40, 24.0, 22.0, 22.5, 16.5, [(0.86, 'o'), (0.62, '%'), (0.50, '&'), (0.0, '^')])
-for bx, by in ((24, 22), (15, 17), (33, 17), (15, 27), (33, 27)):
-    _dish = overlay(_dish, _ellipse(9, 9, 4.5, 4.5, 4.4, 4.4, [(0.5, '&'), (0.0, 'K')]), bx - 4, by - 4)
-_lh = overlay(_lh, _dish, 0, 0)
-_lh = overlay(_lh, ['..oooo..', '.o%%%%o.', 'o%&&&&%o', 'o%&&&&%o', 'o%%%%%%o', '.oooooo.'], 20, 0)   # stem / handle
-LAMP_HEAD = R(_lh)
-
-_la = ['.' * 48] * 40
-_la = overlay(_la, box(10, 10, '#', top='%'), 0, 0)                   # wall mount plate (top-left)
-_la = overlay(_la, ['o%o', 'o%o'], 3, 2)                               # screw
-_la = overlay(_la, ['oooo', 'o%&o', 'o%&o', 'o%&o', 'oooo'], 8, 3)    # first joint
-# upper arm: 12 px across, 4 px thick, sloping down to the elbow
-for i in range(13):
-    _la = overlay(_la, ['o', '&', '%', 'o'], 11 + i, 5 + (i * 4) // 12)
-_la = overlay(_la, ['oooooo', 'o%&&%o', 'o%&&%o', 'o%&&%o', 'oooooo'], 22, 7)   # elbow knob
-# lower arm: from the elbow down-right to the head's stem at the bottom-right corner
-for i in range(24):
-    _la = overlay(_la, ['o&%o'], 26 + (i * 18) // 24, 11 + i)
-_la = overlay(_la, ['oooo', 'o&%o', 'oooo'], 44, 35)                  # pin into the stem
-LAMP_ARM = R(_la)
 
 _lp = ['.' * 64] * 24
 _pool = _ellipse(64, 24, 32.0, 12.0, 31.5, 11.5, [(0.0, '8')])
@@ -846,14 +822,19 @@ _cw[53] = 'o' + '#' * 62 + 'o'
 _cw[54] = 'o' + '#' * 62 + 'o'
 CABINET_WIDE = R(_cw)
 
-# ------------------------------------------------------------------ wall face 480x48 (v0.10.1): the south face of a zone wall, three
+# ------------------------------------------------------------------ wall face 576x48 (v0.10.1, 480 wide until 0.12.0): the south face of a zone wall, three
 # cells tall and STANDING (tiles_and_walls concept), so it sorts in front of the tileset's own wall face (see WALL_HOG below).
 # Top to bottom: 'o', dark steel top with a '%' highlight, teal stripe, '~', a '0' shadow row, the white '_' panel with '0'
 # seams every 32 px, teal skirting, '~', '#', 'o'. The gapped variant is open at px 224..255 in its bottom 32 rows (the door is
 # two cells tall); the top 16 rows run on as a lintel and a steel frame lines the opening.
 WALL_FACE_H = 48
 WALL_PANEL = (9, 38)        # sprite rows (from the top) of the '0' shadow row .. the last white panel row
-WALL_BASES = (13.0, 32.0, 52.0)
+# v0.12.0: the room grew from 30 x 54 to 36 x 63 (clinic_room.WIDTH/HEIGHT read these); door gaps at cells 17..18
+ROOM_W = 36
+ROOM_H = 63
+DOOR_GAP_X = 17
+DOOR_GAP_PX = DOOR_GAP_X * 16
+WALL_BASES = (16.0, 38.0, 61.0)
 WALL_HOG = -0.2
 
 
@@ -861,7 +842,7 @@ def wall_face(door_gap):
     rows = []
     for y in range(WALL_FACE_H):
         row = []
-        for x in range(480):
+        for x in range(ROOM_W * 16):
             if y == 0:
                 ch = 'o'
             elif y == 2:
@@ -887,11 +868,12 @@ def wall_face(door_gap):
             row.append(ch)
         rows.append(''.join(row))
     if door_gap:
+        g = DOOR_GAP_PX
         frame = ['o' * 40, 'o' + '&' * 38 + 'o', 'o' + '%' * 38 + 'o', 'o' + '&' * 38 + 'o'] + ['o&%o' + '.' * 32 + 'o%&o'] * 32
-        rows = overlay(rows, frame, 220, 12)
+        rows = overlay(rows, frame, g - 4, 12)
         for y in range(16, WALL_FACE_H):
-            rows[y] = rows[y][:224] + '.' * 32 + rows[y][256:]
-        rows[WALL_FACE_H - 1] = rows[WALL_FACE_H - 1][:220] + 'oooo' + '.' * 32 + 'oooo' + rows[WALL_FACE_H - 1][260:]
+            rows[y] = rows[y][:g] + '.' * 32 + rows[y][g + 32:]
+        rows[WALL_FACE_H - 1] = rows[WALL_FACE_H - 1][:g - 4] + 'oooo' + '.' * 32 + 'oooo' + rows[WALL_FACE_H - 1][g + 36:]
     return R(rows)
 
 
@@ -912,6 +894,9 @@ WALL_DECOR_OFFSET = {
     'pluto_xray_box': 0.75, 'pluto_prep_sign': 1.25, 'pluto_wall_shelf': 0.75,
     # v0.11
     'pluto_notice_board': 0.75, 'pluto_sign_waiting': 1.5, 'pluto_sign_ward': 1.5, 'pluto_sign_surgery': 1.5,
+    # v0.12.0 vet-clinic wall art
+    'pluto_xray_cat': 0.75, 'pluto_anatomy_poster': 0.75, 'pluto_vaccine_chart': 0.75, 'pluto_healthy_pets': 0.75,
+    'pluto_diploma': 0.75, 'pluto_weight_chart': 0.75, 'pluto_flea_poster': 0.75, 'pluto_whiteboard': 0.75, 'pluto_pet_photos': 0.75,
 }
 
 
@@ -974,9 +959,9 @@ FLOOR_LIMITS = {'drain': 3, 'paw': 2, 'crack': 2}
 
 # zone floor -> (lower-left cell y, cells high, how many of each variant)
 FLOOR_ZONES = {
-    'pluto_floor_waiting': (0, 13, {'drain': 2, 'paw': 1, 'crack': 1}),
-    'pluto_floor_ward': (15, 17, {'drain': 3, 'paw': 2, 'crack': 2}),
-    'pluto_floor_theatre': (34, 18, {'drain': 2, 'paw': 2, 'crack': 1}),
+    'pluto_floor_waiting': (0, 16, {'drain': 2, 'paw': 1, 'crack': 1}),
+    'pluto_floor_ward': (18, 20, {'drain': 3, 'paw': 2, 'crack': 2}),
+    'pluto_floor_theatre': (40, 21, {'drain': 2, 'paw': 2, 'crack': 1}),
 }
 
 
@@ -998,7 +983,7 @@ def floor(cells_wide, cells_high, variants, tone=('_', '0'), stripe_px=None):
 
 
 FLOOR_TONES = {'pluto_floor_waiting': ('4', 'i'), 'pluto_floor_ward': ('_', '0'), 'pluto_floor_theatre': ('k', 'n')}
-WARD_STRIPE_PX = 240          # the ward's guide stripe is centred on the door gaps' centre line (x 15 cells)
+WARD_STRIPE_PX = (DOOR_GAP_X + 1) * 16   # the ward's guide stripe is centred on the door gaps' centre line (x 18 cells)
 
 
 # ================================================================== v0.11: the structured, animated, examinable clinic
@@ -1016,6 +1001,7 @@ FONT = {
     'R': ["##.", "#.#", "##.", "#.#", "#.#"], 'S': [".##", "#..", ".#.", "..#", "##."],
     'T': ["###", ".#.", ".#.", ".#.", ".#."], 'U': ["#.#", "#.#", "#.#", "#.#", "###"],
     'W': ["#.#", "#.#", "#.#", "###", "#.#"], 'Y': ["#.#", "#.#", ".#.", ".#.", ".#."],
+    'P': ["##.", "#.#", "##.", "#..", "#.."], 'L': ["#..", "#..", "#..", "#..", "###"],   # v0.12.0: the whiteboard's PLUTO
     ' ': ["...", "...", "...", "...", "..."],
 }
 
@@ -1664,92 +1650,337 @@ STOOL = R([
     "............",
 ])
 
+# ================================================================== v0.12.0: vet-clinic wall art and the standing op lamp
+# Hand-drawn wall decor for the three north walls (each hangs 0.75 cells above its wall face's base, inside the white panel) and
+# one standing surgical lamp that replaces the flat lamp head + arm (the flat head at height +2 drew over the Vet's spawn).
+def _blank(w, h):
+    return ['.' * w] * h
+
+
+def _frame(w, h, fill, rim='&', shade='%'):
+    """Outlined frame: 'o' edge, a light rim on top/left, a shade rim bottom/right, the fill inside."""
+    rows = ['o' * w, 'o' + rim * (w - 2) + 'o']
+    rows += ['o' + rim + fill * (w - 4) + shade + 'o' for _ in range(h - 4)]
+    rows += ['o' + shade * (w - 2) + 'o', 'o' * w]
+    return rows
+
+
+# ------------------------------------------------------------------ cat X-ray light box 32x24: steel box, two lit films on clips.
+# Left film: a cat skull from the front (ears, eye sockets, nose, teeth). Right film: a cat's front paw, four toes of bones.
+_xc = _frame(32, 24, '#', rim='%', shade='#')
+_SKULL = [
+    "/////////////",
+    "/&K///////K&/",
+    "/KK&/////&KK/",
+    "/KKKKKKKKKKK/",
+    "/KK/&KKK&/KK/",
+    "/KK//KKK//KK/",
+    "/KKK&KKK&KKK/",
+    "//KKKK/KKKK//",
+    "//KKK/K/KKK//",
+    "///KKKKKKK///",
+    "///K&K&K&K///",
+    "////KKKKK////",
+    "/////&K&/////",
+    "/////////////",
+    "/////////////",
+    "//&////////&/",
+    "/////////////",
+    "/////////////",
+]
+_PAW = [
+    "/////////////",
+    "/K//K//K//K//",
+    "/K//K//K//K//",
+    "/&//&//&//&//",
+    "/K//K//K//K//",
+    "/K//K//K//K//",
+    "/&//&//&//&//",
+    "//K/K//K/K///",
+    "//K/K//K/K///",
+    "//&&KKKK&&///",
+    "///KKKKKK////",
+    "///K&KK&K////",
+    "////KKKK/////",
+    "////K//K/////",
+    "////K//K/////",
+    "////&//&/////",
+    "////K//K/////",
+    "/////////////",
+]
+_xc = overlay(_xc, ['^' * 28] * 20, 2, 2)                                 # the lit panel behind the films
+_xc = overlay(_xc, _SKULL, 2, 4)
+_xc = overlay(_xc, _PAW, 17, 4)
+_xc = overlay(_xc, ['o&&o'], 6, 3)                                         # film clips
+_xc = overlay(_xc, ['o&&o'], 22, 3)
+XRAY_CAT = R(_xc)
+
+# ------------------------------------------------------------------ cat anatomy poster 24x24: white sheet, teal title bar, a grey
+# cat in profile with its organs (pink lungs, red heart, orange stomach, yellow gut) and label lines on '#' leaders
+_ap = box(24, 24, '_', top='0')
+_ap = overlay(_ap, ['$' * 22, '$W$WW$WWW$W$WW$WWW$W$$', '~' * 22], 1, 1)
+_CAT = [
+    "o...o.............o.",
+    "oZ.oZo...........oZo",
+    "oZZZZo...........oZo",
+    "oZeZeZo..........oZo",
+    "oZZZZZoooooooooooZo.",
+    ".oZZZZHHHZZZZZZZZZo.",
+    "..oZZHH!HZ??Z::ZZZo.",
+    "..oZZZHHHZ??Z::ZZZo.",
+    "...oZZZZZZZZZZZZZo..",
+    "...oZo.oZo..oZo.oZo.",
+    "...oo..oo...oo..oo..",
+]
+_ap = overlay(_ap, _CAT, 2, 5)
+for lx, ly in ((3, 17), (9, 17), (15, 17)):
+    _ap = overlay(_ap, ['#', '#', '%%%%'], lx + 3, ly)
+_ap = overlay(_ap, ['0' * 18], 3, 21)
+ANATOMY_POSTER = R(_ap)
+
+# ------------------------------------------------------------------ vaccination schedule 32x24: warm paper, teal header with a
+# syringe, a 4 x 5 grid ('0' rules) with a cat head and a dog head in the first column, green ticks and one red cross
+_vc = box(32, 24, '4', top='i')
+_vc = overlay(_vc, ['$' * 30, '$' * 30, '~' * 30], 1, 1)
+_vc = overlay(_vc, ['.o.......', 'o*****&##', '.o.......'], 3, 1)         # syringe in the header
+_vc = overlay(_vc, ['WW.WWW.W.WW.WWW'], 14, 2)                             # header text
+for gy in (5, 9, 13, 17, 21):
+    _vc = overlay(_vc, ['i' * 30], 1, gy)
+for gx in (8, 13, 18, 23, 28):
+    for y in range(5, 22):
+        _vc = overlay(_vc, ['i'], gx, y)
+_CATHEAD = ['o.o', 'BBB', 'BeB']
+_DOGHEAD = ['o.o', '\\\\\\', '\\g\\']
+for i, head in enumerate((_CATHEAD, _DOGHEAD, _CATHEAD, _DOGHEAD)):
+    _vc = overlay(_vc, head, 3, 6 + 4 * i)
+_TICK = ['...5', '5.5.', '.5..']
+_CROSS = ['!.!', '.!.', '!.!']
+marks = [(0, 0, _TICK), (1, 0, _TICK), (2, 0, _TICK), (3, 0, _TICK),
+         (0, 1, _TICK), (1, 1, _TICK), (2, 1, _CROSS),
+         (0, 2, _TICK), (1, 2, _TICK), (2, 2, _TICK), (3, 2, _TICK),
+         (0, 3, _TICK), (1, 3, _CROSS)]
+for cx, cy, mark in marks:
+    _vc = overlay(_vc, mark, 9 + 5 * cx, 6 + 4 * cy)
+VACCINE_CHART = R(_vc)
+
+# ------------------------------------------------------------------ "healthy pets" poster 16x24: teal border, a red heart with a
+# white paw in it, two dark text bars under it
+_hp = ['o' * 16, 'o' + '$' * 14 + 'o'] + ['o$' + 'K' * 12 + '~o'] * 20 + ['o' + '~' * 14 + 'o', 'o' * 16]
+_hp = overlay(_hp, [
+    ".ooo..ooo.",
+    "o!H!oo!!!o",
+    "o!HW!W!W!o",
+    "o!!!!!!!!o",
+    ".o!!WWW!o.",
+    "..o!WWW!o.",
+    "...o!!!o..",
+    "....o!o...",
+    ".....o....",
+], 3, 3)
+_hp = overlay(_hp, ['#' * 10, '.' * 10, '%' * 8], 3, 14)
+_hp = overlay(_hp, ['$' * 6], 5, 19)
+HEALTHY_PETS = R(_hp)
+
+# ------------------------------------------------------------------ framed vet diploma 16x20: dark wood frame with a light top edge,
+# warm paper, a dark title line and grey text lines, a red wax seal with orange ribbon tails
+_dp = ['o' * 16, 'o' + '\\' * 14 + 'o'] + ['o\\' + '4' * 12 + '+o'] * 16 + ['o' + '+' * 14 + 'o', 'o' * 16]
+_dp = overlay(_dp, ['#' * 8], 4, 4)
+for ly, lw in ((7, 10), (9, 8), (11, 10)):
+    _dp = overlay(_dp, ['i' * lw], 3, ly)
+_dp = overlay(_dp, ['.oo.', 'o!!o', 'o!Ho', '.oo.', '?..?'], 9, 12)
+_dp = overlay(_dp, ['%%%%'], 3, 15)
+DIPLOMA = R(_dp)
+
+# ------------------------------------------------------------------ pet weight chart 16x24: white sheet, a dark axis, four bars
+# rising green -> yellow -> orange -> red, a round cat face on top of the red bar
+_wc = box(16, 24, '_', top='0')
+_wc = overlay(_wc, ['$' * 14, '~' * 14], 1, 1)
+_wc = overlay(_wc, ['.oo.', 'oBBo', 'oeeo', '.oo.'], 11, 4)
+for bx, top, key in ((3, 16, '5'), (6, 13, ':'), (9, 10, '?'), (12, 8, '!')):
+    for y in range(top, 20):
+        _wc = overlay(_wc, ['o' + key], bx - 1, y)
+for y in range(5, 21):
+    _wc = overlay(_wc, ['#'], 1, y)
+_wc = overlay(_wc, ['#' * 14], 1, 20)
+WEIGHT_CHART = R(_wc)
+
+# ------------------------------------------------------------------ flea & heartworm poster 24x24: yellow warning border with an
+# orange shade, a white field, a brown flea under a red "no" ring and slash, two text bars
+_fp = ['o' * 24, 'o' + ':' * 22 + 'o'] + ['o:' + 'K' * 20 + '?o'] * 20 + ['o' + '?' * 22 + 'o', 'o' * 24]
+_ring = _ellipse(16, 14, 8.0, 7.0, 7.9, 6.9, [(0.72, '!'), (0.0, '.')])
+_fp = overlay(_fp, _ring, 4, 3)
+_fp = overlay(_fp, [
+    "..o...o...",
+    "...o.o....",
+    "..o+++o...",
+    ".o+\\\\\\+o..",
+    "o+\\\\++\\+o.",
+    ".o+\\\\\\++o.",
+    "o.o+++++o.",
+    ".o.o.o.o.o",
+], 7, 5)
+for i in range(10):
+    _fp = overlay(_fp, ['!!'], 7 + i, 5 + (i * 8) // 10)              # the slash
+_fp = overlay(_fp, ['#' * 14, '.' * 14, '%' * 10], 5, 18)
+FLEA_POSTER = R(_fp)
+
+# ------------------------------------------------------------------ appointments whiteboard 32x24: steel frame, white board with blue
+# marker scribbles, PLUTO in red letters inside a red ring, a marker tray with a red and a blue marker
+_wb = _frame(32, 22, 'K', rim='&', shade='%')
+for ly, x0, lw in ((3, 3, 12), (3, 17, 8), (5, 3, 9), (5, 14, 12), (7, 3, 14)):
+    _wb = overlay(_wb, ['*' * lw], x0, ly)
+_wb = overlay(_wb, ['00'], 26, 3)
+_ink = ['.'.join(FONT[c][y] for c in 'PLUTO') for y in range(5)]
+for y in range(5):
+    _wb = overlay(_wb, [_ink[y].replace('#', '!')], 6, 12 + y)
+_wb = overlay(_wb, ['!!!'], 26, 6)                                           # a red tick by the last line
+_wb = overlay(_wb, ['..' + '!' * 21 + '..', '.!' + '.' * 21 + '!.'] + ['!' + '.' * 23 + '!'] * 5
+               + ['.!' + '.' * 21 + '!.', '..' + '!' * 21 + '..'], 3, 10)
+_wb = _wb + ['.' * 32, '.' * 32]
+_wb = overlay(_wb, ['.' + 'o' * 30 + '.', 'o' + '%' * 30 + 'o', '.' + 'o' * 30 + '.'], 0, 21)
+_wb = overlay(_wb, ['o!!!!o'], 6, 21)
+_wb = overlay(_wb, ['o****o'], 20, 21)
+WHITEBOARD = R(_wb)
+
+# ------------------------------------------------------------------ pet photo board 32x24: cork board, dark wood frame, four pinned
+# polaroids (a ginger cat, a brown dog, a white rabbit, a goldfish) with coloured pins
+_pb = ['o' * 32, 'o' + '+' * 30 + 'o'] + ['o+' + 'b' * 28 + '+o'] * 20 + ['o' + '+' * 30 + 'o', 'o' * 32]
+_pb = _b(_pb)
+_pb = overlay(_pb, _b(["b+bbbbbbbbbbbbbbbbbbbbbbbb", "bbbbbbbbbbbbbbbbbbbb+bbbbb"]), 3, 18)
+
+
+def polaroid(photo):
+    rows = ['o' * 9] + ['oWWWWWWWo'] + ['oW' + p + 'Wo' for p in photo] + ['oWWWWWWWo', 'oWWWWWWWo', 'o' * 9]
+    return rows
+
+
+_P_CAT = ["o...o", "?o.o?", "?????", "?e?e?", ".?!?."]
+_P_DOG = ["\\\\.\\\\", "\\\\\\\\\\", "\\g\\g\\", "\\\\o\\\\", ".\\\\\\."]
+_P_BUN = ["w.w..", "w.w..", "WWW..", "WgWW.", ".WWW."]
+_P_FISH = ["*****", "*??.*", "?:??*", "*??.*", "*****"]
+for (px, py), photo, pin in (((2, 2), _P_CAT, '!'), ((11, 3), _P_DOG, '*'), ((21, 2), _P_BUN, ':'), ((12, 13), _P_FISH, '!')):
+    ph = [''.join('k' if c == '.' else c for c in r) for r in photo]
+    _pb = overlay(_pb, polaroid(ph), px, py)
+    _pb = overlay(_pb, [pin], px + 4, py)
+_pb = overlay(_pb, ['_____', '_00__', '_____', '_0___'], 3, 15)            # a thank-you note
+_pb = overlay(_pb, ['.H.H.', 'HHHHH', '.HHH.', '..H..'], 24, 14)            # a paper heart
+PET_PHOTOS = R(_pb)
+
+# ------------------------------------------------------------------ op lamp 80x56 (replaces the flat lamp head + arm): one STANDING
+# sprite that stands at the exam table's base row and sorts just in front of the table. A wheeled base and a pole at the table's
+# front-left corner, a boom across to a small round lamp dish hanging over the far half of the table.
+_ol = _blank(80, 56)
+_dish = _ellipse(32, 20, 16.0, 11.0, 15.5, 8.8, [(0.80, 'o'), (0.58, '%'), (0.44, '&'), (0.0, '^')])
+for bx, by in ((16, 11), (10, 9), (22, 9), (10, 13), (22, 13)):
+    _dish = overlay(_dish, ['KK', 'KK'], bx - 1, by - 1)
+_ol = overlay(_ol, _dish, 48, 4)
+# the boom: pole top to the stem, 4 px thick
+for x in range(4, 64):
+    _ol = overlay(_ol, ['o', '&', '%', 'o'], x, 1)
+_ol = overlay(_ol, ['oooo', 'o&%o', 'o&%o', 'o&%o', 'o&%o'], 62, 1)          # the stem down to the dish
+_ol = overlay(_ol, ['.oooooo.', 'o%&&&&%o', '.oooooo.'], 60, 5)              # the dish's hub
+_ol = overlay(_ol, ['oooooo', 'o&&%%o', 'o&&%%o', 'o&&%%o', 'oooooo'], 1, 0)    # top joint
+for y in range(5, 50):
+    _ol = overlay(_ol, ['o&%o'], 2, y)                                       # the pole
+_ol = overlay(_ol, ['o&&&%o', 'o%%%%o', 'oooooo'], 1, 47)                    # the pole's collar
+_ol = overlay(_ol, ['.oooooooooo.', 'o&&&&&&&&%%o', 'o%%%%%%%%##o', '.oooooooooo.'], 0, 50)   # base
+_ol[54] = '.oo......oo.' + _ol[54][12:]
+_ol[55] = '.oo......oo.' + _ol[55][12:]
+OP_LAMP = R(_ol)
+OP_LAMP_HOG = 0.05          # stands on the exam table's base row: 0.05 in front of the table at every pixel
+
+
 # Placements (game cells) by zone. The sprite's lower-left corner sits on the cell.
-# v0.11 structured layout. Every zone is planned on the cell grid in functional groups, mirrored about the door centre line
-# (x 15; the theatre's table group about the table centre x 14.5) wherever the concept is symmetric.
-# Waiting room y 0..12: seating group x 1..13 (two rows of five chairs on a 1.5-cell pitch facing a coffee table, on a rug, a carrier
-#   at each end), a clear centre aisle x 13..17 from the south exit to the ward door with plants framing the exit, reception group
-#   x 17..29 (one straight counter centred on x 23.5 with the back cabinet behind it and the mat in front; cooler and tank on the
-#   east wall).
-# Ward y 15..31: kennel banks on both long walls; the nurse-station island on the centre line with a stool behind it and the
-#   medicine trolley / food bowls at its ends; the north wall mirrored about x 15: supply shelf | sharps bin | IV stand | door |
+# v0.12.0 structured layout on the 36 x 63 room. Every zone is planned on the cell grid in functional groups, mirrored about the door
+# centre line (x 18) wherever the concept is symmetric.
+# Waiting room y 0..15: seating group x 1..14 (two rows of five chairs on a 1.5-cell pitch facing a coffee table, on a rug, a carrier
+#   at each end), a clear centre aisle x 15..21 from the south exit to the ward door with plants framing the exit, reception group
+#   x 23..36 (one straight counter with the back cabinet behind it and the mat in front; cooler and tank on the east wall).
+# Ward y 18..37: kennel banks on both long walls; the nurse-station island on the centre line with a stool behind it and the
+#   medicine trolley / food bowls at its ends; the north wall mirrored about x 18: supply shelf | sharps bin | IV stand | door |
 #   IV stand | litter box | scrubs rack; a teal guide stripe on the floor from door to door.
-# Theatre y 34..51: the north wall mirrored (cabinet, cabinet | sink, fridge, cabinet); the table centred under the lamp on its
-#   mat with an instrument trolley at each side, the anaesthesia machine and heart monitor at its head, the IV stand and syringe cart
-#   beyond them; side counters against the west and east walls; toys in the south corners. Everything within 5 x 4 cells of the
-#   Vet is low (bullets fly over) so the boss arena stays open.
-# The zone wall faces stand on the '#' rows of the map (base y 13, 32, 52); wall decor hangs inside their white panel.
+# Theatre y 40..60: the north wall mirrored (cabinet, cabinet | sink, fridge, cabinet); the exam table centred on its mat with the
+#   standing op lamp over it and an instrument trolley at each side; the Vet's stage is the open floor NORTH of the table (his
+#   48x40 sprite at y 49.8..52.3 touches no prop), with the anaesthesia machine / heart monitor and the IV stand / cart flanking it
+#   2+ cells to either side; side counters against the west and east walls; toys in the south corners.
+# The zone wall faces stand on the '#' rows of the map (base y 16, 38, 61); wall decor (signs, clinic posters, charts, diplomas, the
+# X-ray box, the whiteboard) hangs inside their white panel.
 CHAIR_PITCH = 1.5
-CHAIR_XS = [3.25 + CHAIR_PITCH * i for i in range(5)]
-CHAIR_ROWS = (5.25, 9.25)                      # south row, north row (Rex and Grandma sit on the north row)
+CHAIR_XS = [3.75 + CHAIR_PITCH * i for i in range(5)]
+CHAIR_ROWS = (5.75, 9.75)                      # south row, north row (Rex and Grandma sit on the north row)
+TABLE_AT = (15.5, 46.0)                        # the exam table (80 px = 5 cells wide, centred on x 18)
 
 PROPS = [
-    ('pluto_floor_waiting', (0.0, 0.0)), ('pluto_floor_ward', (0.0, 15.0)), ('pluto_floor_theatre', (0.0, 34.0)),
-    ('pluto_wall_face', (0.0, 13.0)), ('pluto_wall_face', (0.0, 32.0)), ('pluto_wall_face_solid', (0.0, 52.0)),
+    ('pluto_floor_waiting', (0.0, 0.0)), ('pluto_floor_ward', (0.0, 18.0)), ('pluto_floor_theatre', (0.0, 40.0)),
+    ('pluto_wall_face', (0.0, 16.0)), ('pluto_wall_face', (0.0, 38.0)), ('pluto_wall_face_solid', (0.0, 61.0)),
     # --- waiting room: flat decor first
-    ('pluto_rug', (2.75, 4.75)),
-    ('pluto_paw_prints', (14.0, 3.0)),
-    ('pluto_floor_mat', (22.0, 7.0)),
-    ('pluto_toy_mouse', (1.25, 7.5)),
+    ('pluto_rug', (3.25, 5.0)),
+    ('pluto_paw_prints', (17.25, 3.0)),
+    ('pluto_floor_mat', (28.0, 10.0)),
+    ('pluto_toy_mouse', (1.25, 8.0)),
     # seating group
     ('pluto_carrier', (1.5, 2.5)),
 ] + [('pluto_chair', (x, y)) for y in CHAIR_ROWS for x in CHAIR_XS] + [
-    ('pluto_coffee_table', (5.5, 7.25)),
-    ('pluto_carrier_open', (11.0, 9.25)),
+    ('pluto_coffee_table', (6.0, 7.75)),
+    ('pluto_carrier_open', (11.75, 9.75)),
     # aisle
-    ('pluto_plant', (12.0, 0.25)), ('pluto_plant', (17.0, 0.25)),
-    ('pluto_wet_floor_sign', (17.75, 4.0)),
+    ('pluto_plant', (15.0, 0.25)), ('pluto_plant', (20.0, 0.25)),
+    ('pluto_wet_floor_sign', (20.75, 5.0)),
     # reception group
-    ('pluto_reception_desk', (20.0, 10.0)),
-    ('pluto_back_cabinet', (21.5, 11.75)),
-    ('pluto_fish_tank', (27.5, 4.5)),
-    ('pluto_water_cooler', (28.25, 1.0)),
-    # the waiting room's north wall: window, room sign, clock and notice board over the seating; the WARD sign and the intercom
-    # beside the door; the TV over the counter and a poster
-    on_wall('pluto_window', 1.0, 13.0), on_wall('pluto_sign_waiting', 3.5, 13.0), on_wall('pluto_clock', 7.75, 13.0),
-    on_wall('pluto_notice_board', 9.75, 13.0),
-    on_wall('pluto_intercom', 16.375, 13.0), on_wall('pluto_sign_ward', 17.25, 13.0),
-    on_wall('pluto_wall_tv', 22.5, 13.0), on_wall('pluto_poster', 27.0, 13.0),
-    # --- ward: two kennel banks of five stacked units, bottom to top. They start at y 16, not 15: the waiting room's standing
-    # wall face (base 13, three cells tall) covers the ward's first row and would hide the bottom unit's lower cage.
-    ('pluto_kennel_cat', (0.5, 16.0)), ('pluto_kennel_open_r', (0.5, 19.0)), ('pluto_kennel_cone', (0.5, 22.0)),
-    ('pluto_kennel_dog', (0.5, 25.0)), ('pluto_kennel_cat', (0.5, 28.0)),
-    ('pluto_kennel_dog', (27.0, 16.0)), ('pluto_kennel_cat', (27.0, 19.0)), ('pluto_kennel_open_l', (26.25, 22.0)),
-    ('pluto_kennel_cat', (27.0, 25.0)), ('pluto_kennel_cone', (27.0, 28.0)),
+    ('pluto_reception_desk', (26.0, 13.0)),
+    ('pluto_back_cabinet', (27.5, 14.75)),
+    ('pluto_fish_tank', (33.5, 4.5)),
+    ('pluto_water_cooler', (34.25, 1.0)),
+    # the waiting room's north wall: window, room sign, clock, notice board, the healthy-pets poster and the weight chart over the
+    # seating; the intercom and the WARD sign beside the door; the vaccination schedule, the TV over the counter and a poster
+    on_wall('pluto_window', 1.0, 16.0), on_wall('pluto_sign_waiting', 3.5, 16.0), on_wall('pluto_clock', 7.75, 16.0),
+    on_wall('pluto_notice_board', 9.75, 16.0), on_wall('pluto_healthy_pets', 12.25, 16.0), on_wall('pluto_weight_chart', 14.25, 16.0),
+    on_wall('pluto_intercom', 19.375, 16.0), on_wall('pluto_sign_ward', 20.25, 16.0), on_wall('pluto_vaccine_chart', 23.0, 16.0),
+    on_wall('pluto_wall_tv', 28.5, 16.0), on_wall('pluto_poster', 33.0, 16.0),
+    # --- ward: two kennel banks of five stacked units, bottom to top. They start at y 19, not 18: the waiting room's standing
+    # wall face (base 16, three cells tall) covers the ward's first row and would hide the bottom unit's lower cage.
+    ('pluto_kennel_cat', (0.5, 19.0)), ('pluto_kennel_open_r', (0.5, 22.0)), ('pluto_kennel_cone', (0.5, 25.0)),
+    ('pluto_kennel_dog', (0.5, 28.0)), ('pluto_kennel_cat', (0.5, 31.0)),
+    ('pluto_kennel_dog', (33.0, 19.0)), ('pluto_kennel_cat', (33.0, 22.0)), ('pluto_kennel_open_l', (32.25, 25.0)),
+    ('pluto_kennel_cat', (33.0, 28.0)), ('pluto_kennel_cone', (33.0, 31.0)),
     # the island
-    ('pluto_food_bowls', (18.375, 23.0)),
-    ('pluto_med_trolley', (10.25, 23.0)),
-    ('pluto_nurse_station', (12.0, 23.0)),
-    ('pluto_stool', (14.625, 24.25)),
-    # the north wall group, mirrored about x 15
-    ('pluto_supply_shelf', (5.5, 30.0)), ('pluto_sharps_bin', (9.5, 30.0)), ('pluto_iv_stand', (12.5, 30.0)),
-    ('pluto_iv_stand', (16.5, 30.0)), ('pluto_litter_box', (19.5, 30.0)), ('pluto_scrubs_rack', (21.5, 30.0)),
-    on_wall('pluto_xray_box', 6.25, 32.0), on_wall('pluto_sign_surgery', 11.25, 32.0), on_wall('pluto_prep_sign', 17.125, 32.0),
-    on_wall('pluto_wall_shelf', 22.0, 32.0),
-    # --- operating theatre: the north wall, mirrored about x 15
-    ('pluto_cabinet_wide', (1.0, 49.0)), ('pluto_cabinet_wide', (5.5, 49.0)),
-    ('pluto_sink', (20.5, 49.0)), ('pluto_vaccine_fridge', (23.0, 49.0)), ('pluto_cabinet_wide', (25.0, 49.0)),
-    on_wall('pluto_poster', 10.25, 52.0), on_wall('pluto_clock', 14.0, 52.0), on_wall('pluto_wall_tv', 17.25, 52.0),
-    ('pluto_scale', (21.0, 47.5)),
-    # the table group, mirrored about the table centre x 14.5
-    ('pluto_table_mat', (10.0, 40.25)),
-    ('pluto_lamp_pool', (12.5, 40.75)),
-    ('pluto_exam_table', (12.0, 41.0)),
-    ('pluto_instrument_trolley', (10.25, 41.0)), ('pluto_instrument_trolley', (17.25, 41.0)),
-    ('pluto_anaesthesia_machine', (10.0, 43.75)), ('pluto_monitor_cart', (17.25, 43.75)),
-    ('pluto_iv_stand', (8.5, 43.75)), ('pluto_cart', (19.25, 43.75)),
-    ('pluto_lamp_arm', (11.5, 45.5)),
-    ('pluto_lamp_head', (13.0, 43.0)),
+    ('pluto_food_bowls', (21.375, 27.0)),
+    ('pluto_med_trolley', (13.25, 27.0)),
+    ('pluto_nurse_station', (15.0, 27.0)),
+    ('pluto_stool', (17.625, 28.25)),
+    # the north wall group, mirrored about x 18
+    ('pluto_supply_shelf', (6.5, 36.0)), ('pluto_sharps_bin', (11.5, 36.0)), ('pluto_iv_stand', (14.5, 36.0)),
+    ('pluto_iv_stand', (20.5, 36.0)), ('pluto_litter_box', (23.5, 36.0)), ('pluto_scrubs_rack', (26.5, 36.0)),
+    on_wall('pluto_anatomy_poster', 1.5, 38.0), on_wall('pluto_xray_box', 7.0, 38.0), on_wall('pluto_flea_poster', 10.25, 38.0),
+    on_wall('pluto_sign_surgery', 14.25, 38.0), on_wall('pluto_prep_sign', 19.5, 38.0), on_wall('pluto_wall_shelf', 21.5, 38.0),
+    on_wall('pluto_pet_photos', 26.5, 38.0), on_wall('pluto_poster', 32.5, 38.0),
+    # --- operating theatre: the north wall, mirrored about x 18
+    ('pluto_cabinet_wide', (1.0, 58.0)), ('pluto_cabinet_wide', (5.5, 58.0)),
+    ('pluto_sink', (26.5, 58.0)), ('pluto_vaccine_fridge', (29.0, 58.0)), ('pluto_cabinet_wide', (31.0, 58.0)),
+    # behind the Vet: a poster, the appointments whiteboard, three diplomas centred on x 18, the clock and the cat X-ray box
+    on_wall('pluto_poster', 10.5, 61.0), on_wall('pluto_whiteboard', 12.25, 61.0),
+    on_wall('pluto_diploma', 16.0, 61.0), on_wall('pluto_diploma', 17.5, 61.0), on_wall('pluto_diploma', 19.0, 61.0),
+    on_wall('pluto_clock', 21.0, 61.0), on_wall('pluto_xray_cat', 23.0, 61.0),
+    ('pluto_scale', (27.0, 56.0)),
+    # the table group, mirrored about x 18
+    ('pluto_table_mat', (13.5, 45.25)),
+    ('pluto_lamp_pool', (16.0, 45.75)),
+    ('pluto_exam_table', TABLE_AT),
+    ('pluto_op_lamp', (14.0, TABLE_AT[1])),
+    ('pluto_instrument_trolley', (12.0, 46.0)), ('pluto_instrument_trolley', (22.5, 46.0)),
+    ('pluto_anaesthesia_machine', (12.0, 49.0)), ('pluto_monitor_cart', (22.25, 49.0)),
+    ('pluto_iv_stand', (9.5, 49.0)), ('pluto_cart', (25.25, 49.0)),
     # side counters, the bin, the east side door
-    ('pluto_counter_towels', (1.0, 45.0)), ('pluto_counter_printer', (26.0, 45.0)), ('pluto_biohazard_bin', (24.5, 45.0)),
-    ('pluto_side_door', (29.0, 39.5)),
+    ('pluto_counter_towels', (1.0, 50.0)), ('pluto_counter_printer', (32.0, 50.0)), ('pluto_biohazard_bin', (30.5, 50.0)),
+    ('pluto_side_door', (35.0, 45.5)),
     # toys in the south corners
-    ('pluto_toy_mouse', (2.5, 37.5)), ('pluto_toy_ball', (4.0, 36.5)), ('pluto_feather_wand', (3.0, 39.0)),
-    ('pluto_scratch_post', (24.0, 36.0)),
+    ('pluto_toy_mouse', (2.5, 42.5)), ('pluto_toy_ball', (4.0, 41.5)), ('pluto_feather_wand', (3.0, 44.0)),
+    ('pluto_scratch_post', (30.0, 42.0)),
 ]
 
 PROP_OBJECTS = [
-    Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 4, 0, 72, 16), comment='Straps. That is a hard no from me.'),
+    # v0.12.0: the collider covers the slab's footprint (28 px deep), so nobody stands where the slab hides them
+    Obj('pluto_exam_table', 'exam_table', EXAM_TABLE, ('low', 4, 0, 72, 28), comment='Straps. That is a hard no from me.'),
     Obj('pluto_cabinet', 'cabinet', CABINET, ('high', 0, 0, 32, 20)),
     Obj('pluto_cart', 'cart', CART, ('low', 0, 0, 24, 14)),
     Obj('pluto_sink', 'sink', SINK, ('high', 0, 0, 32, 20)),
@@ -1786,15 +2017,13 @@ PROP_OBJECTS = [
     Obj('pluto_nurse_station', 'nurse_station', NURSE_STATION, ('high', 0, 0, 96, 12), comment='Treat jar. Locked. Of course.'),
     # v0.6: theatre kit, wall decor, the side door (v0.11: the monitor cart is redrawn as the animated heart monitor)
     Obj('pluto_prep_sign', 'prep_sign', PREP_SIGN, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_prep_sign']), stand=True),
-    Obj('pluto_monitor_cart', 'monitor_cart', None, ('low', 4, 0, 16, 6), frames=HEART_MONITOR_FRAMES, fps=6.0,
+    Obj('pluto_monitor_cart', 'monitor_cart', None, ('low', 4, 0, 16, 10), frames=HEART_MONITOR_FRAMES, fps=6.0,
         comment='Beep. Still alive. Good.'),
     Obj('pluto_vaccine_fridge', 'vaccine_fridge', VACCINE_FRIDGE, ('high', 0, 0, 24, 16), comment='Cold needles. Hard pass.'),
     Obj('pluto_intercom', 'intercom', INTERCOM, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_intercom']), stand=True),
     Obj('pluto_wall_tv', 'wall_tv', WALL_TV, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_wall_tv']), stand=True),
     Obj('pluto_side_door', 'side_door', SIDE_DOOR, None, 0.5),
-    # v0.10: the lamp in three layers (the head hangs over the actors), the wide cabinet
-    Obj('pluto_lamp_head', 'lamp_head', LAMP_HEAD, None, 2.0),
-    Obj('pluto_lamp_arm', 'lamp_arm', LAMP_ARM, None, 0.5),
+    # v0.10: the lamp's light pool on the floor, the wide cabinet (0.12.0: the flat head + arm became the standing pluto_op_lamp)
     Obj('pluto_lamp_pool', 'lamp_pool', LAMP_POOL, None, -1.4),
     Obj('pluto_cabinet_wide', 'cabinet_wide', CABINET_WIDE, ('high', 0, 0, 64, 20)),
     # v0.10.1: standing wall faces, the wall shelf, the kennel bank
@@ -1821,13 +2050,32 @@ PROP_OBJECTS = [
     Obj('pluto_scrubs_rack', 'scrubs_rack', SCRUBS_RACK, ('high', 0, 0, 48, 12), comment='Tiny blue pyjamas for villains.'),
     Obj('pluto_med_trolley', 'med_trolley', MED_TROLLEY, ('low', 0, 0, 24, 8), comment='Pills in cheese. Nice try.'),
     Obj('pluto_stool', 'stool', STOOL, ('low', 2, 0, 8, 4)),
-    Obj('pluto_anaesthesia_machine', 'anaesthesia_machine', None, ('low', 0, 0, 32, 10), frames=ANAESTHESIA_FRAMES, fps=2.0,
+    Obj('pluto_anaesthesia_machine', 'anaesthesia_machine', None, ('low', 0, 0, 32, 16), frames=ANAESTHESIA_FRAMES, fps=2.0,
         comment='It breathes for you. Creepy.'),
     Obj('pluto_instrument_trolley', 'instrument_trolley', INSTRUMENT_TROLLEY, ('low', 0, 0, 24, 8)),
     Obj('pluto_counter_towels', 'counter_towels', COUNTER_TOWELS, ('high', 0, 0, 48, 12), comment='The cone of shame. Never again.'),
     Obj('pluto_counter_printer', 'counter_printer', COUNTER_PRINTER, ('high', 0, 0, 48, 12)),
     Obj('pluto_biohazard_bin', 'biohazard_bin', BIOHAZARD_BIN, ('low', 1, 0, 12, 6), comment='Smells like the vet. Exactly.'),
     Obj('pluto_table_mat', 'table_mat', TABLE_MAT, None, -3.0),
+    # v0.12.0: the standing op lamp (placed on the table's base row, OP_LAMP_HOG in front of it) and the vet-clinic wall art
+    Obj('pluto_op_lamp', 'op_lamp', OP_LAMP, ('low', 0, 0, 12, 5), OP_LAMP_HOG),
+    Obj('pluto_xray_cat', 'xray_cat', XRAY_CAT, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_xray_cat']), stand=True,
+        comment='My X-ray. Nothing inside. Nothing at all.'),
+    Obj('pluto_anatomy_poster', 'anatomy_poster', ANATOMY_POSTER, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_anatomy_poster']),
+        stand=True, comment='They know where everything is. Unsettling.'),
+    Obj('pluto_vaccine_chart', 'vaccine_chart', VACCINE_CHART, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_vaccine_chart']),
+        stand=True, comment='Booster due today. Not if I can help it.'),
+    Obj('pluto_healthy_pets', 'healthy_pets', HEALTHY_PETS, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_healthy_pets']), stand=True),
+    Obj('pluto_diploma', 'diploma', DIPLOMA, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_diploma']), stand=True,
+        comment='Doctor of Veterinary Villainy. Framed.'),
+    Obj('pluto_weight_chart', 'weight_chart', WEIGHT_CHART, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_weight_chart']),
+        stand=True, comment='That chart is lying. I am fluffy.'),
+    Obj('pluto_flea_poster', 'flea_poster', FLEA_POSTER, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_flea_poster']), stand=True,
+        comment='Fleas? Never met them. Scratch. Scratch.'),
+    Obj('pluto_whiteboard', 'whiteboard', WHITEBOARD, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_whiteboard']), stand=True,
+        comment='PLUTO. Circled. In red.'),
+    Obj('pluto_pet_photos', 'pet_photos', PET_PHOTOS, None, wall_decor_hog(WALL_DECOR_OFFSET['pluto_pet_photos']), stand=True,
+        comment='A wall of happy patients. Suspicious.'),
 ]
 
 
@@ -1853,8 +2101,8 @@ def floor_variants(name):
     def clear(cx, cy):
         return all(not (cx - 1 < x1 and x0 < cx + 2 and cy - 1 < y1 and y0_ < cy + 2) for x0, y0_, x1, y1 in rects)
 
-    stripe = (14, 15) if name == 'pluto_floor_ward' else ()     # never under the ward's guide stripe
-    candidates = [(tx, ty) for ty in range(1, cells_high - 1) for tx in range(1, 29) if clear(tx, y0 + ty) and tx not in stripe]
+    stripe = (DOOR_GAP_X, DOOR_GAP_X + 1) if name == 'pluto_floor_ward' else ()     # never under the ward's guide stripe
+    candidates = [(tx, ty) for ty in range(1, cells_high - 1) for tx in range(1, ROOM_W - 1) if clear(tx, y0 + ty) and tx not in stripe]
     rnd = random.Random(name)
     rnd.shuffle(candidates)
     chosen = {}
@@ -1868,9 +2116,9 @@ def floor_variants(name):
 
 
 FLOOR_VARIANTS = {name: floor_variants(name) for name in FLOOR_ZONES}
-FLOOR_WAITING = floor(30, 13, FLOOR_VARIANTS['pluto_floor_waiting'], FLOOR_TONES['pluto_floor_waiting'])    # y 0..12
-FLOOR_WARD = floor(30, 17, FLOOR_VARIANTS['pluto_floor_ward'], FLOOR_TONES['pluto_floor_ward'], WARD_STRIPE_PX)   # y 15..31
-FLOOR_THEATRE = floor(30, 18, FLOOR_VARIANTS['pluto_floor_theatre'], FLOOR_TONES['pluto_floor_theatre'])    # y 34..51
+FLOOR_WAITING = floor(ROOM_W, 16, FLOOR_VARIANTS['pluto_floor_waiting'], FLOOR_TONES['pluto_floor_waiting'])    # y 0..15
+FLOOR_WARD = floor(ROOM_W, 20, FLOOR_VARIANTS['pluto_floor_ward'], FLOOR_TONES['pluto_floor_ward'], WARD_STRIPE_PX)   # y 18..37
+FLOOR_THEATRE = floor(ROOM_W, 21, FLOOR_VARIANTS['pluto_floor_theatre'], FLOOR_TONES['pluto_floor_theatre'])    # y 40..60
 
 OBJECTS = PROP_OBJECTS + [
     Obj('pluto_floor_waiting', 'floor_waiting', FLOOR_WAITING, None, -4.0),

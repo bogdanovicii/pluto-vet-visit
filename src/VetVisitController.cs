@@ -328,13 +328,13 @@ namespace PlutoVetVisit
 
         private void SpawnCritters()
         {
-            for (int i = 0; i < CRITTERS.Length; i++)
+            for (int i = 0; i < CRITTERS.Length && i < ClinicLayout.CritterSpots.Length; i++)
             {
                 try
                 {
                     AIActor prefab = ResolveEnemy(CRITTERS[i]);
                     if (prefab == null) continue;
-                    Vector2 cell = new Vector2(8f + 4f * i, 5f + (i % 2) * 2f);
+                    Vector2 cell = ClinicLayout.CritterSpots[i];
                     AIActor a = AIActor.Spawn(prefab, World(cell), room, true, AIActor.AwakenAnimationType.Default, true);
                     if (a != null) { a.IgnoreForRoomClear = true; a.CanDropCurrency = false; }
                 }
@@ -349,8 +349,8 @@ namespace PlutoVetVisit
             {
                 PickupObject heart = PickupObjectDatabase.GetById(85);   // Heart
                 if (heart == null) return;
-                LootEngine.SpawnItem(heart.gameObject, World(new Vector2(14.5f, 24.6f)), Vector2.zero, 0f, true, false, false);
-                LootEngine.SpawnItem(heart.gameObject, World(new Vector2(16.5f, 24.6f)), Vector2.zero, 0f, true, false, false);
+                foreach (Vector2 spot in ClinicLayout.HeartSpots)
+                    LootEngine.SpawnItem(heart.gameObject, World(spot), Vector2.zero, 0f, true, false, false);
                 PastPlugin.Log("hearts on the nurse station");
             }
             catch (Exception e) { PastPlugin.Log("no hearts: " + e.Message); }

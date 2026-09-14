@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+- Readable bullets. Every attack family has its own hand-drawn bullet: syringes, tranquilizer darts, vaccine orbs, teal droplets, green tranquilizer bubbles, red-and-white pills that burst into tablets, scalpels, red stitches, the Nurse's net and anesthesia clouds. Long bullets point where they fly, and each hitbox matches its sprite.
+- Fairer hard patterns. Dense patterns start after a short tell, rings and walls always leave a gap, the Syringe Tech no longer fires point-blank as it lands from a lunge, and fans fill their gaps with a slower second volley. New `[Patterns]` config knobs set every speed, spread and gap.
+- The boss card: a full-body Vet lunging toward Pluto with his syringe pistol and a raised scalpel, closed by its own outline so it never ends in a straight cut. The name and subtitle are in capitals because the card's title font lacks some lowercase letters ("Te Vet").
+- The Vet no longer spawns buried under the operating table and lamp. He stands on open floor north of the table, the lamp is a single standing prop that stays in front of the table, and the table is deeper so nobody hides behind it.
+- A bigger clinic (36 x 63 cells) re-laid out on a symmetric grid, with vet-clinic wall art Pluto can examine: a cat X-ray, an anatomy poster, a vaccination chart, a weight chart, a flea poster, a cork board of happy patients, framed diplomas and a whiteboard with PLUTO circled in red.
+
 ## 0.11.1
 - The Vet redrawn in Enter the Gungeon's boss style: a big head with a swept quiff and glinting round glasses, a one-sided grin, a wide stance, and a proper syringe pistol (plunger ring, glass barrel, long needle). New animations: a crouching wind-up with the syringe whipped up beside his head, a recoil with a star-shaped muzzle flash, an intro where he flicks a drop off the needle and levels it at Pluto, and a death where he drops the gun, kneels and falls on his back. All frames hand-drawn; Gemini images were used as references only.
 - His hitbox and the point his shots leave from now come from the art itself, so they match the new sprite.

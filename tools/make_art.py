@@ -34,6 +34,7 @@ def main():
         print('card      ', p)
     for p in projectiles.write(PROJECT):
         print('projectile', p)
+    print('preview   ', projectiles.preview(PROJECT))
     print('tech      ', len(tech_poses.write(PROJECT)), 'frames', tech_poses.preview(PROJECT))
     print('nurse     ', len(nurse_poses.write(PROJECT)), 'frames', nurse_poses.preview(PROJECT))
     print('npcs      ', len(npc_poses.write(PROJECT)), 'frames', npc_poses.preview(PROJECT))

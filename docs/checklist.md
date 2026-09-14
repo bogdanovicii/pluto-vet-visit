@@ -277,3 +277,86 @@ Balance knobs (no rebuild): `[Balance] BulletSpeedScale`, `BossCooldownScale`, `
 Same steps as milestone 11. Also check: the Vet's new sprite in the theatre (tell crouch, star flash on firing, the intro flick, the death),
 that his shots leave from the needle tip and that Pluto's shots hit his body but not the air in front of the gun.
 Log: `The Vet prefab bank: ...`, `the Vet first shot: ... built ...`.
+
+## 0.12.0 — readable bullets
+
+Delete `BepInEx/config/bogdan.etg.plutovetvisit.cfg` once (new `[Patterns]` section). Preview of every bullet with its hitbox:
+`docs/preview/projectiles-sheet.png`.
+
+Bullets: one hand-drawn sprite per attack family, vanilla-sized with a dark outline, a bright core and their own colour. Long ones
+point along their flight (`shouldRotate` on; the Manual hitbox turns with them). Hitboxes are a little smaller than the art.
+
+| Bank | Sprite | Hitbox | Look | Used by |
+|---|---|---|---|---|
+| syringe | 14x6 | 10x4 | steel barrel, blue dose, needle forward | Vet Booster Shot, Snip Time, follow-ups; Tech burst; Syringe Tech shotgun |
+| dart | 13x5 | 9x3 | orange tuft, red body, steel tip | Vet Tech dart rifle |
+| vaccine | 8x8 | 6x6 | bright blue orb | Cone of Shame, Vaccination Spiral, Snip Time ring |
+| droplet | 9x7 | 7x5 | teal teardrop | Spray Bottle, Droplet Wall, the Nurse's fan |
+| tranq | 7x7 | 5x5 | lime green bubble | the Nurse's tranquilizer hose and IV line |
+| pill | 10x6 | 8x4 | red/white capsule | Pill Time |
+| tablet | 7x7 | 5x5 | white tablet, red cross | what a pill bursts into |
+| scalpel | 14x5 | 10x3 | teal handle, steel blade | scalpel ring |
+| stitch | 9x9 | 5x5 | red suture X | stitches |
+| net | 14x14 | 10x10 | orange hoop, steel mesh | the Nurse's net |
+| cloud | 16x16 | 12x12 | white puff, plum rim | anesthesia |
+
+Patterns (speeds in tiles/s before `BulletSpeedScale`; old -> new):
+
+| Enemy | Pattern | Change |
+|---|---|---|
+| Vet Tech | 3-round burst | speed 8 -> 9 (`TechBurstSpeed`) |
+| Vet Tech | dart rifle | darts instead of syringes; 12 (`TechDartSpeed`), second dart 8 -> 12 frames later |
+| Syringe Tech | shotgun | 5 at 9 over 36 deg -> 5 at 8 over 40 deg (`SyringeFanSpeed`, `SyringeFanSpread`), re-pump 4 at 6 in the gaps 24 frames later; waits the lead-in first (the lunge-landing fan was point-blank) |
+| Nurse | fan | 7+7 at 8 over 50 deg -> 6 at 7 over 60 deg, then 5 in the gaps re-aimed 32 frames later (`NurseFanSpeed`, `NurseFanSpread`) |
+| Nurse | net | 5 -> 6 (`NurseNetSpeed`), settles at 2.5 |
+| Nurse | tranquilizer hose | 14 droplets every 3 frames over 70 deg at 8 -> lead-in, 12 green bubbles every 4 frames over 80 deg at 9 (`NurseSpraySpeed`) |
+| Nurse | IV line | 7 -> 6.5, green bubbles (`IVLineSpeed`) |
+| Vet p1 | Booster Shot | 10 -> 11, 6 -> 7 frames apart (`BoosterSpeed`) |
+| Vet p1 | Spray Bottle | 9+9 at 7 over 80 deg -> lead-in, 7 at 7 over 84 deg, then 6 at 5.25 in the gaps (`SprayBottleSpeed`, `SprayBottleSpread`) |
+| Vet p1 | Pill Time | pills 8 frames apart, burst after 50 (was 40) frames into 6 tablets at 5.5 (was 6) (`PillBurstSpeed`) |
+| Vet p2/p3 | Cone of Shame | 16+16 syringe rings, no gap -> lead-in, 20-orb rings with a 3-slot (54 deg) hole, second ring half-offset through the same hole, 28 frames apart (`RingSpeed`, `RingGapSlots`) |
+| Vet p2/p3 | Droplet Wall | lead-in; gap width is a knob (`WallGapSlots`, 3 of 15), waves 30 -> 34 frames (hard wall 26 -> 28, +1 speed) (`WallSpeed`) |
+| Vet p2/p3 | Vaccination Spiral | lead-in; orbs; 5 -> 5.5 (`SpiralSpeed`) |
+| Vet p2/p3 | Scalpel ring | lead-in; 24 scalpels at 6 with a 60 deg hole 45-90 deg off Pluto (`ScalpelSpeed`, `ScalpelGapDegrees`); follow-up syringes at 10 |
+| Vet p2/p3 | Stitches | sutures; fan 100 -> 110 deg; re-aim ripple 5 -> 6 frames apart at 9 (`StitchSpeed`) |
+| Vet p2/p3 | Anesthesia | unchanged clouds; follow-up syringes at 10 |
+| Vet p3 | Snip Time | 5 syringes at 12, 5 -> 6 frames apart (`SnipSpeed`); ring of 12 droplets -> 16 orbs with a 3-slot hole at 6 |
+
+`PatternLeadIn` (8 frames) is the pause after the tell before a ring, wall, spiral, the spray bottle, the Syringe Tech shotgun or the
+tranquilizer hose.
+
+Log lines to look for:
+- At launch, one per bank entry: `bank syringe: ... colliders 1 [Projectile Manual manual 10x4 at -5,-2 ...]`, `bank dart ... 9x3 at -4,-1`,
+  `bank vaccine ... 6x6`, `bank droplet ... 7x5`, `bank tranq ... 5x5`, `bank pill ... 8x4`, `bank tablet ... 5x5`, `bank scalpel ... 10x3`,
+  `bank stitch ... 5x5`, `bank net ... 10x10`, `bank cloud ... 12x12`.
+- `The Vet prefab bank: syringe ok inactive, vaccine ok inactive, droplet ok inactive, pill ok inactive, tablet ok inactive, scalpel ok inactive, stitch ok inactive, cloud ok inactive`;
+  `Vet Tech prefab bank: syringe ok inactive, dart ok inactive`; `The Nurse prefab bank: droplet ok inactive, tranq ok inactive, net ok inactive`.
+- No `warning: projectile sprite ... is not in ProjectileCollection`, no `built 0x0`, no `Duplicate prefab name`, no `BROKEN`.
+
+Steps (what the tester should see):
+1. Ward, Vet Tech: blue-dosed syringes in threes, needle first; every few seconds a single red dart with an orange tuft, then a second.
+   Syringe Tech: a short pause after its tell or lunge, then a 5-syringe fan and a slower 4 in the gaps.
+2. Theatre, the Nurse: teal droplet fan of 6, then 5 re-aimed in the gaps; an orange net that stops and drifts; a sweeping hose of
+   green bubbles; below half her health, braided green IV lines.
+3. The Vet, phase 1: fast blue syringe triplets; when close, a teal spray in two layers; red/white pills that burst into white tablets.
+   Phase 2-3: blue orb rings with one clear hole, teal walls with a hole near Pluto that walks, a 4-arm blue spiral, a ring of scalpels
+   with a wide hole beside Pluto, red X sutures that stop and re-aim one by one, white clouds.
+4. Every long bullet points where it flies (a syringe going down points down). A bullet grazing the outline of its sprite does not hit;
+   the core does. Every bullet still takes half a heart.
+5. Difficulty report as in milestone 11: hearts lost, time to kill the Vet, any pattern with no visible hole or no pause after its tell.
+
+Knobs (`[Patterns]`, no rebuild): `PatternLeadIn` (8), `TechBurstSpeed` (9), `TechDartSpeed` (12), `SyringeFanSpeed` (8), `SyringeFanSpread` (40),
+`NurseFanSpeed` (7), `NurseFanSpread` (60), `NurseSpraySpeed` (9), `NurseNetSpeed` (6), `IVLineSpeed` (6.5), `BoosterSpeed` (11),
+`SprayBottleSpeed` (7), `SprayBottleSpread` (84), `PillBurstSpeed` (5.5), `RingSpeed` (5.5), `RingGapSlots` (3), `WallSpeed` (6),
+`WallGapSlots` (3), `SpiralSpeed` (5.5), `SnipSpeed` (12), `ScalpelSpeed` (6), `ScalpelGapDegrees` (60), `StitchSpeed` (9).
+Harder: `PatternLeadIn = 4`, `RingGapSlots = 2`, `WallGapSlots = 2`. Easier: `PatternLeadIn = 14`, `BulletSpeedScale = 0.9`.
+
+**Result:** pending
+
+### 0.12.0 — boss card, theatre and room
+- [ ] Boss intro: title reads "THE VET", subtitle "DOCTOR'S ORDERS!" with every letter present; the Vet is a full-body figure lunging left with a syringe pistol and scalpel, no straight cut edge anywhere on him.
+- [ ] Theatre entry: the Vet stands north of the operating table, fully visible; no lamp disc or table drawn over him during "Right on time, Pluto."
+- [ ] Fight: walking behind the table or past the anaesthesia machine never hides him or Pluto for more than the feet.
+- [ ] Log: `clinic room 36x63`, the Vet spawns at (29.0, 62.0) world with origin (11, 11).
+- [ ] Walls: X-ray, anatomy poster, vaccination chart, weight chart, flea poster, cork board, diplomas, whiteboard hang on the north walls and give thoughts when examined.
+- [ ] Room feels roomier: doors centred, Rex and Grandma on chairs, receptionist behind the counter, kennels on both ward walls, waves spawn off the kennels.

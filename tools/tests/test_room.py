@@ -74,11 +74,11 @@ class RoomTests(unittest.TestCase):
 
     def test_wall_faces_sit_on_the_wall_rows(self):
         faces = [(n, c) for n, c in C.PLACEABLES if n.startswith('pluto_wall_face')]
-        self.assertEqual(faces, [('pluto_wall_face', (0.0, 13.0)), ('pluto_wall_face', (0.0, 32.0)), ('pluto_wall_face_solid', (0.0, 52.0))])
+        self.assertEqual(faces, [('pluto_wall_face', (0.0, 16.0)), ('pluto_wall_face', (0.0, 38.0)), ('pluto_wall_face_solid', (0.0, 61.0))])
         for _, (x, y) in faces:
             self.assertFalse(C.is_floor(x, y))
             self.assertFalse(C.is_floor(x, y + 1))
-        self.assertEqual(C.HEIGHT, 54)
+        self.assertEqual(C.HEIGHT, 63)
 
     def test_named_cells_on_floor(self):
         for name, (x, y) in C.NAMED.items():
@@ -89,17 +89,17 @@ class RoomTests(unittest.TestCase):
     def test_zone_walls_and_door_gaps(self):
         # two-cell-thick dividers with a two-cell gap on the centre line, everything else floor
         for y in range(C.HEIGHT):
-            wall_row = y in (13, 14, 32, 33)
+            wall_row = y in (16, 17, 38, 39)
             for x in range(C.WIDTH):
-                expect_wall = (wall_row and x not in (14, 15)) or y >= 52    # y 52..53: the theatre's solid north wall
+                expect_wall = (wall_row and x not in (17, 18)) or y >= 61    # y 61..62: the theatre's solid north wall
                 self.assertEqual(C.cell(x, y) == '#', expect_wall, (x, y))
-        self.assertEqual(C.ZONES, {'WARD_MIN_Y': 15, 'THEATRE_MIN_Y': 34})
-        self.assertLess(C.NAMED['Spawn'][1], 13)
+        self.assertEqual(C.ZONES, {'WARD_MIN_Y': 18, 'THEATRE_MIN_Y': 40})
+        self.assertLess(C.NAMED['Spawn'][1], 16)
         self.assertGreater(C.NAMED['Vet'][1], C.ZONES['THEATRE_MIN_Y'])
 
     def test_doors_stand_in_the_gaps(self):
         doors = [cell for name, cell in C.PLACEABLES if name == C.DOOR]
-        self.assertEqual(doors, [(14.0, 13.0), (14.0, 32.0)])
+        self.assertEqual(doors, [(17.0, 16.0), (17.0, 38.0)])
         for x, y in doors:
             self.assertTrue(C.is_floor(x, y) and C.is_floor(x + 1, y) and C.is_floor(x, y + 1) and C.is_floor(x + 1, y + 1))
             self.assertFalse(C.is_floor(x - 1, y) or C.is_floor(x + 2, y))
@@ -107,7 +107,7 @@ class RoomTests(unittest.TestCase):
     def test_wave_spawns_in_the_ward_on_floor(self):
         for name, cells in C.SPAWNS.items():
             self.assertGreaterEqual(len(cells), 3, name)
-            lo, hi = (C.ZONES['THEATRE_MIN_Y'], C.HEIGHT) if name.startswith('Theatre') else (C.ZONES['WARD_MIN_Y'], 32)
+            lo, hi = (C.ZONES['THEATRE_MIN_Y'], C.HEIGHT) if name.startswith('Theatre') else (C.ZONES['WARD_MIN_Y'], 38)
             for x, y in cells:
                 self.assertTrue(C.is_floor(x, y), (name, x, y))
                 self.assertTrue(lo <= y < hi, (name, x, y))
@@ -117,7 +117,7 @@ class RoomTests(unittest.TestCase):
         self.assertEqual(names, ['pluto_npc_owner', 'pluto_npc_receptionist', 'pluto_npc_rex', 'pluto_npc_grandma'])
         for name, (x, y) in C.NPCS:
             self.assertTrue(C.is_floor(x, y), name)
-            self.assertLess(y, 13, name)
+            self.assertLess(y, 16, name)
         seats = {(x, y) for n, (x, y) in C.O.PROPS if n == 'pluto_chair'}
         for who in ('pluto_npc_rex', 'pluto_npc_grandma'):
             x, y = dict(C.NPCS)[who]
@@ -130,7 +130,7 @@ class RoomTests(unittest.TestCase):
         cs = C.layout_cs()
         for name in C.ZONES:
             self.assertIn('public const float %s = ' % name, cs)
-        for name in C.SPAWNS:
+        for name in list(C.SPAWNS) + list(C.SPOTS):
             self.assertIn('public static readonly Vector2[] %s = { new Vector2(' % name, cs)
 
     def test_exit_on_south_border(self):
@@ -186,6 +186,29 @@ class RoomTests(unittest.TestCase):
                 _, ox, oy, w, h = col
                 inside = px + ox / 16.0 <= x < px + (ox + w) / 16.0 and py + oy / 16.0 <= y < py + (oy + h) / 16.0
                 self.assertFalse(inside, (name, prop))
+
+    def test_room_is_a_little_bigger(self):
+        """0.12.0: 36 x 63 (was 30 x 54): each zone 3 rows taller, the door gaps still centred."""
+        self.assertEqual((C.WIDTH, C.HEIGHT), (36, 63))
+        heights = [16 - 0, 38 - 18, 61 - 40]
+        self.assertEqual(heights, [13 + 3, 17 + 3, 18 + 3])
+        self.assertEqual(C.GAP * 2 + 2, C.WIDTH)                           # the two-cell gap sits on the centre line
+        self.assertEqual(C.EXITS[0][0][0], C.GAP)
+
+    def test_controller_spots(self):
+        """The critters roam the waiting room's open floor; the hearts lie on the nurse station."""
+        self.assertEqual(len(C.SPOTS['CritterSpots']), 3)
+        for x, y in C.SPOTS['CritterSpots']:
+            self.assertTrue(C.is_floor(x, y) and y < 16, (x, y))
+        (sx, sy), = [c for n, c in C.O.PROPS if n == 'pluto_nurse_station']
+        for x, y in C.SPOTS['HeartSpots']:
+            self.assertTrue(sx < x < sx + 6 and sy < y < sy + 2, (x, y))
+
+    def test_vet_sprite_rect_follows_the_unit_centre(self):
+        x0, y0, x1, y1 = C.vet_sprite_rect()
+        self.assertEqual((x1 - x0, y1 - y0), (3.0, 2.5))
+        self.assertAlmostEqual(x0 + (7 + 10) / 16.0, C.NAMED['Vet'][0])
+        self.assertAlmostEqual(y0 + 19.5 / 16.0, C.NAMED['Vet'][1])
 
     def test_preview_image_size(self):
         im = C.preview_image()

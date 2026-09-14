@@ -355,6 +355,17 @@ SPRITE_PROMPTS = [
       'skin with a three tone ramp. RIGHT, his oversized syringe pistol facing right in side view: steel plunger ring, '
       'glass barrel with glowing blue liquid #4FA8E8 and measure marks, steel collar, long needle, pistol grip with a '
       'teal-gloved hand, plus the same gun firing with a small star-shaped muzzle flash at the needle tip. ', VET_REF),
+    # v0.11.x boss card redraw reference (composition only; the card stays hand-drawn row strings in tools/vet_card.py)
+    P('card_vet_lunge', '16:9', SHEET_BG +
+      'EXCEPTION to the camera rule for this one image: an Enter the Gungeon boss intro card portrait, like the vanilla '
+      'Beholster or Gatling Gull cards: one big full-body figure filling the right 60 percent of the frame, the left '
+      'third left empty. The veterinarian lunges toward the LEFT in a dramatic diagonal three-quarter pose, front knee '
+      'bent, back leg stretched, aiming an oversized syringe pistol at the viewer\'s left with a glowing blue barrel '
+      '#4FA8E8, a drop falling from the needle tip and a small glint star; the other hand raised beside his head holding '
+      'a steel scalpel. Menacing toothy grin, round glasses with a white glint hiding the eyes, slicked dark quiff, '
+      'stethoscope swinging, white lab coat over teal scrubs #3F9E8F flaring back behind him in sharp tails. Thick dark '
+      'outline around the whole silhouette, cel shading with three to four tones per material, blue rim light from the '
+      'syringe on the left edges. ', VET_REF),
 ]
 
 # ---------------------------------------------------------------- generation

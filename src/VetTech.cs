@@ -38,7 +38,8 @@ namespace PlutoVetVisit
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(BULLET_KIN).bulletBank.GetBullet("default");
-            bank.Bullets.Add(VetBoss.Entry(kin, "syringe", "vet_syringe_001", 12, 4));
+            bank.Bullets.Add(VetBoss.Entry(kin, "syringe", "vet_syringe_001", 14, 6, 10, 4, true));
+            bank.Bullets.Add(VetBoss.Entry(kin, "dart", "vet_dart_001", 13, 5, 9, 3, true));
 
             GameObject shootPoint = ShootPoint(Prefab, actor, CastLayout.TECH_SHOOT_X, CastLayout.TECH_SHOOT_Y, CastLayout.TECH_W, CastLayout.TECH_H, "syringe_tip");
             BehaviorSpeculator bs = Prefab.GetComponent<BehaviorSpeculator>();
@@ -224,7 +225,7 @@ namespace PlutoVetVisit
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(VetTech.BULLET_KIN).bulletBank.GetBullet("default");
-            bank.Bullets.Add(VetBoss.Entry(kin, "syringe", "vet_syringe_001", 12, 4));
+            bank.Bullets.Add(VetBoss.Entry(kin, "syringe", "vet_syringe_001", 14, 6, 10, 4, true));
 
             GameObject shootPoint = VetTech.ShootPoint(Prefab, actor, CastLayout.STECH_SHOOT_X, CastLayout.STECH_SHOOT_Y, CastLayout.STECH_W, CastLayout.STECH_H, "syringe_tip");
             BehaviorSpeculator bs = Prefab.GetComponent<BehaviorSpeculator>();
@@ -314,8 +315,9 @@ namespace PlutoVetVisit
 
             AIBulletBank bank = Prefab.GetComponent<AIBulletBank>();
             AIBulletBank.Entry kin = EnemyDatabase.GetOrLoadByGuid(VetTech.BULLET_KIN).bulletBank.GetBullet("default");
-            bank.Bullets.Add(VetBoss.Entry(kin, "droplet", "vet_droplet_001", 5, 5));
-            bank.Bullets.Add(VetBoss.Entry(kin, "net", "vet_net_001", 12, 12));
+            bank.Bullets.Add(VetBoss.Entry(kin, "droplet", "vet_droplet_001", 9, 7, 7, 5, true));
+            bank.Bullets.Add(VetBoss.Entry(kin, "tranq", "vet_tranq_001", 7, 7, 5, 5, false));
+            bank.Bullets.Add(VetBoss.Entry(kin, "net", "vet_net_001", 14, 14, 10, 10, false));
 
             GameObject shootPoint = VetTech.ShootPoint(Prefab, actor, CastLayout.NURSE_SHOOT_X, CastLayout.NURSE_SHOOT_Y, CastLayout.NURSE_W, CastLayout.NURSE_H, "syringe_tip");
             BehaviorSpeculator bs = Prefab.GetComponent<BehaviorSpeculator>();

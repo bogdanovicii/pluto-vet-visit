@@ -24,11 +24,11 @@ EXPECTED_SIZES = {
     'pluto_vaccine_fridge': (24, 40), 'pluto_intercom': (10, 12), 'pluto_wall_tv': (32, 20),
     'pluto_side_door': (16, 32),
     # v0.10
-    'pluto_lamp_head': (48, 40), 'pluto_lamp_arm': (48, 40), 'pluto_lamp_pool': (64, 24),
+    'pluto_lamp_pool': (64, 24),
     'pluto_cabinet_wide': (64, 56),
-    'pluto_floor_waiting': (480, 208), 'pluto_floor_ward': (480, 272), 'pluto_floor_theatre': (480, 288),
+    'pluto_floor_waiting': (576, 256), 'pluto_floor_ward': (576, 320), 'pluto_floor_theatre': (576, 336),
     # v0.10.1
-    'pluto_wall_face': (480, 48), 'pluto_wall_face_solid': (480, 48), 'pluto_wall_shelf': (32, 24),
+    'pluto_wall_face': (576, 48), 'pluto_wall_face_solid': (576, 48), 'pluto_wall_shelf': (32, 24),
     'pluto_kennel_cat': (40, 48), 'pluto_kennel_dog': (40, 48), 'pluto_kennel_cone': (40, 48),
     'pluto_kennel_open_r': (52, 48), 'pluto_kennel_open_l': (52, 48),
     # v0.11
@@ -37,11 +37,18 @@ EXPECTED_SIZES = {
     'pluto_sign_surgery': (36, 12), 'pluto_supply_shelf': (48, 40), 'pluto_scrubs_rack': (48, 40), 'pluto_med_trolley': (24, 32),
     'pluto_stool': (12, 14), 'pluto_anaesthesia_machine': (32, 48), 'pluto_instrument_trolley': (24, 24),
     'pluto_counter_towels': (48, 32), 'pluto_counter_printer': (48, 32), 'pluto_biohazard_bin': (14, 18), 'pluto_table_mat': (144, 96),
+    # v0.12.0
+    'pluto_op_lamp': (80, 56), 'pluto_xray_cat': (32, 24), 'pluto_anatomy_poster': (24, 24), 'pluto_vaccine_chart': (32, 24),
+    'pluto_healthy_pets': (16, 24), 'pluto_diploma': (16, 20), 'pluto_weight_chart': (16, 24), 'pluto_flea_poster': (24, 24),
+    'pluto_whiteboard': (32, 24), 'pluto_pet_photos': (32, 24),
 }
 WALL_FACES = {'pluto_wall_face', 'pluto_wall_face_solid'}
 WALL_DECOR = {'pluto_wall_tv', 'pluto_window', 'pluto_clock', 'pluto_poster', 'pluto_intercom',
               'pluto_xray_box', 'pluto_prep_sign', 'pluto_wall_shelf',
               'pluto_notice_board', 'pluto_sign_waiting', 'pluto_sign_ward', 'pluto_sign_surgery'}
+WALL_ART = {'pluto_xray_cat', 'pluto_anatomy_poster', 'pluto_vaccine_chart', 'pluto_healthy_pets', 'pluto_diploma',
+            'pluto_weight_chart', 'pluto_flea_poster', 'pluto_whiteboard', 'pluto_pet_photos'}
+WALL_DECOR |= WALL_ART
 V011_NEW = {n for n in EXPECTED_SIZES if n in (
     'pluto_rug', 'pluto_coffee_table', 'pluto_carrier_open', 'pluto_back_cabinet', 'pluto_water_cooler', 'pluto_notice_board',
     'pluto_sign_waiting', 'pluto_sign_ward', 'pluto_sign_surgery', 'pluto_supply_shelf', 'pluto_scrubs_rack', 'pluto_med_trolley',
@@ -49,7 +56,7 @@ V011_NEW = {n for n in EXPECTED_SIZES if n in (
     'pluto_biohazard_bin', 'pluto_table_mat')}
 ANIMATED = {'pluto_fish_tank': 4, 'pluto_monitor_cart': 6, 'pluto_clock': 2, 'pluto_reception_desk': 2, 'pluto_iv_stand': 3,
             'pluto_anaesthesia_machine': 3}
-VET = (14.5, 44.5)
+VET = C.NAMED['Vet']
 KENNELS = {'pluto_kennel_cat': 4, 'pluto_kennel_dog': 2, 'pluto_kennel_cone': 2, 'pluto_kennel_open_r': 1, 'pluto_kennel_open_l': 1}
 
 
@@ -98,7 +105,7 @@ class ObjectTests(unittest.TestCase):
                                     'pluto_coffee_table', 'pluto_carrier_open', 'pluto_back_cabinet', 'pluto_water_cooler',
                                     'pluto_supply_shelf', 'pluto_scrubs_rack', 'pluto_med_trolley', 'pluto_stool',
                                     'pluto_anaesthesia_machine', 'pluto_instrument_trolley', 'pluto_counter_towels',
-                                    'pluto_counter_printer', 'pluto_biohazard_bin'} | set(KENNELS))
+                                    'pluto_counter_printer', 'pluto_biohazard_bin', 'pluto_op_lamp'} | set(KENNELS))
 
     def test_stand_flag(self):
         """Standing = has a collider, except the wall faces and the wall decor, which stand without one."""
@@ -114,10 +121,17 @@ class ObjectTests(unittest.TestCase):
                 self.assertEqual(o.stand, o.collider is not None, o.name)
 
     def test_v010_depth(self):
-        """The lamp head hangs over the actors; the pool, mats and floors go under everything; the wall faces stand at -0.2."""
+        """0.12.0: the op lamp STANDS on the exam table's base row just in front of it (the flat head at +2 drew over the Vet);
+        the pool, mats and floors go under everything; the wall faces stand at -0.2."""
         hog = {o.name: o.height_off_ground for o in O.OBJECTS}
-        self.assertEqual(hog['pluto_lamp_head'], 2.0)
-        self.assertEqual(hog['pluto_lamp_arm'], 0.5)
+        self.assertTrue(spec('pluto_op_lamp').stand)
+        self.assertTrue(0.0 < hog['pluto_op_lamp'] < 0.2)
+        (lx, ly), = [c for n, c in O.PROPS if n == 'pluto_op_lamp']
+        (tx, ty), = [c for n, c in O.PROPS if n == 'pluto_exam_table']
+        self.assertEqual(ly, ty)
+        self.assertLess(2 * ly - hog['pluto_op_lamp'], 2 * ty - hog['pluto_exam_table'])        # in front of the table
+        for o in O.OBJECTS:
+            self.assertFalse(not o.stand and o.height_off_ground > 0.5, o.name)           # nothing flat hangs over the actors
         self.assertEqual(O.WALL_HOG, -0.2)
         for name in WALL_FACES:
             self.assertEqual(hog[name], -0.2, name)
@@ -151,18 +165,20 @@ class ObjectTests(unittest.TestCase):
     def test_wall_face_door_gap(self):
         face = spec('pluto_wall_face')
         solid = spec('pluto_wall_face_solid')
+        g = O.DOOR_GAP_PX
+        self.assertEqual(g, 17 * 16)
         for y, row in enumerate(face.rows):
             if y < 16:
                 self.assertNotIn('.', row, y)                                # the lintel runs across
             else:
-                self.assertEqual(row[224:256], '.' * 32, y)
-                self.assertNotIn('.', row[:224] + row[256:], y)
+                self.assertEqual(row[g:g + 32], '.' * 32, y)
+                self.assertNotIn('.', row[:g] + row[g + 32:], y)
         for y in range(12, 16):
-            self.assertIn(face.rows[y][240], 'o&%', y)                       # the frame's top bar across the lintel
+            self.assertIn(face.rows[y][g + 16], 'o&%', y)                    # the frame's top bar across the lintel
         for y in range(16, 48):
-            self.assertNotIn(face.rows[y][220], '._$', y)                    # steel frame down both sides of the opening
-            self.assertIn(face.rows[y][221], '&o', y)
-            self.assertIn(face.rows[y][258], '&o', y)
+            self.assertNotIn(face.rows[y][g - 4], '._$', y)                  # steel frame down both sides of the opening
+            self.assertIn(face.rows[y][g - 3], '&o', y)
+            self.assertIn(face.rows[y][g + 34], '&o', y)
         for row in solid.rows:
             self.assertNotIn('.', row)
         self.assertEqual(set(solid.rows[0]), {'o'})
@@ -170,7 +186,7 @@ class ObjectTests(unittest.TestCase):
 
     def test_floors_cover_their_zones_edge_to_edge(self):
         floors = {name: (x, y) for name, (x, y) in O.PROPS if name.startswith('pluto_floor_') and name != 'pluto_floor_mat'}
-        self.assertEqual(floors, {'pluto_floor_waiting': (0.0, 0.0), 'pluto_floor_ward': (0.0, 15.0), 'pluto_floor_theatre': (0.0, 34.0)})
+        self.assertEqual(floors, {'pluto_floor_waiting': (0.0, 0.0), 'pluto_floor_ward': (0.0, 18.0), 'pluto_floor_theatre': (0.0, 40.0)})
         sizes = {o.name: o.size for o in O.OBJECTS}
         for name, (x, y) in floors.items():
             w, h = sizes[name]
@@ -243,17 +259,17 @@ class ObjectTests(unittest.TestCase):
         placed = [(n, c) for n, c in O.PROPS if n.startswith('pluto_kennel')]
         self.assertEqual(len(placed), 10)
         self.assertEqual({n: sum(1 for m, _ in placed if m == n) for n in KENNELS}, KENNELS)
-        for side, x_box in (('west', 0.5), ('east', 27.0)):
-            units = sorted((collider_box(n, x, y), n) for n, (x, y) in placed if (x < 15) == (side == 'west'))
+        for side, x_box in (('west', 0.5), ('east', 33.0)):
+            units = sorted((collider_box(n, x, y), n) for n, (x, y) in placed if (x < 18) == (side == 'west'))
             self.assertEqual(len(units), 5, side)
             for (x0, y0, x1, y1), n in units:
                 self.assertEqual((x0, x1 - x0, y1 - y0), (x_box, 2.5, 3.0), (side, n))
             for (a, _), (b, _) in zip(units, units[1:]):
                 self.assertEqual(b[1], a[3], side)                          # stacked touching, no gaps
-            self.assertGreaterEqual(units[0][0][1], 16.0, side)             # clear of the waiting room's standing face
-            self.assertLessEqual(units[-1][0][3], 32.0, side)               # under the north wall
-        self.assertIn(('pluto_kennel_open_r', (0.5, 19.0)), placed)
-        self.assertIn(('pluto_kennel_open_l', (26.25, 22.0)), placed)
+            self.assertGreaterEqual(units[0][0][1], 19.0, side)             # clear of the waiting room's standing face
+            self.assertLessEqual(units[-1][0][3], 38.0, side)               # under the north wall
+        self.assertIn(('pluto_kennel_open_r', (0.5, 22.0)), placed)
+        self.assertIn(('pluto_kennel_open_l', (32.25, 25.0)), placed)
         for name in ('pluto_kennel_open_r', 'pluto_kennel_open_l'):
             rows = spec(name).rows
             door = [r[40:] for r in rows] if name.endswith('_r') else [r[:12] for r in rows]
@@ -265,13 +281,13 @@ class ObjectTests(unittest.TestCase):
 
     def test_no_ward_side_doors(self):
         doors = [c for n, c in O.PROPS if n == 'pluto_side_door']
-        self.assertEqual(doors, [(29.0, 39.5)])
+        self.assertEqual(doors, [(35.0, 45.5)])
 
     def test_removed_props_are_gone(self):
         names = {o.name for o in O.OBJECTS}
         placed = {n for n, _ in O.PROPS}
         for gone in ('pluto_surgical_lamp', 'pluto_strap_table_pad', 'pluto_floor_strip', 'pluto_floor_strip_1',
-                     'pluto_kennel', 'pluto_kennel_open', 'pluto_med_shelf'):
+                     'pluto_kennel', 'pluto_kennel_open', 'pluto_med_shelf', 'pluto_lamp_head', 'pluto_lamp_arm'):
             self.assertNotIn(gone, names)
         self.assertFalse(hasattr(O, 'FLOOR'))
         for kept_but_unplaced in ('pluto_treat_jar', 'pluto_syringe_tray', 'pluto_cabinet', 'pluto_cone'):
@@ -279,17 +295,17 @@ class ObjectTests(unittest.TestCase):
             self.assertNotIn(kept_but_unplaced, placed)
         self.assertEqual(sum(1 for n, _ in O.PROPS if n == 'pluto_chair'), 10)
         litter = [c for n, c in O.PROPS if n == 'pluto_litter_box']
-        self.assertEqual(litter, [(19.5, 30.0)])                            # under the north wall, not mid-floor
+        self.assertEqual(litter, [(23.5, 36.0)])                            # under the north wall, not mid-floor
 
     def test_theatre_toys_in_the_south_corners(self):
         for name in ('pluto_toy_mouse', 'pluto_toy_ball', 'pluto_feather_wand'):
-            cells = [c for n, c in O.PROPS if n == name and c[1] >= 34]
+            cells = [c for n, c in O.PROPS if n == name and c[1] >= 40]
             self.assertEqual(len(cells), 1, name)
             x, y = cells[0]
-            self.assertTrue(x <= 6.0 and y <= 42.0, name)
+            self.assertTrue(x <= 6.0 and y <= 48.0, name)
         posts = [c for n, c in O.PROPS if n == 'pluto_scratch_post']
         self.assertEqual(len(posts), 1)
-        self.assertTrue(posts[0][0] >= 20.0 and 34 <= posts[0][1] <= 42.0)     # south-east corner
+        self.assertTrue(posts[0][0] >= 26.0 and 40 <= posts[0][1] <= 48.0)     # south-east corner
         for y, row in enumerate(O.CONE):                                        # the cone now sits on the west counter
             for x, ch in enumerate(row):
                 if ch != '.':
@@ -357,7 +373,7 @@ class ObjectTests(unittest.TestCase):
 
     def test_comments(self):
         commented = [o for o in O.OBJECTS if o.comment]
-        self.assertTrue(12 <= len(commented) <= 20, len(commented))
+        self.assertTrue(12 <= len(commented) <= 30, len(commented))
         placed = {n for n, _ in O.PROPS}
         for o in commented:
             self.assertLess(len(o.comment), 60, o.name)
@@ -379,11 +395,13 @@ class ObjectTests(unittest.TestCase):
         self.assertEqual(set(''.join(O.FLOOR_WAITING)) & {'_', '0'}, set())
         self.assertEqual(set(''.join(O.FLOOR_THEATRE)) & {'_', '0'}, set())
         self.assertEqual(O.FLOOR_TONES['pluto_floor_ward'], ('_', '0'))
+        px = O.WARD_STRIPE_PX
+        self.assertEqual(px, 18 * 16)                                           # the door centre line
         for y, row in enumerate(O.FLOOR_WARD[2:], start=2):
-            self.assertEqual(row[236:244], '~$$$$$$~', y)
+            self.assertEqual(row[px - 4:px + 4], '~$$$$$$~', y)
         for name, variants in O.FLOOR_VARIANTS.items():
             if name == 'pluto_floor_ward':
-                self.assertFalse({tx for tx, _ in variants} & {14, 15})
+                self.assertFalse({tx for tx, _ in variants} & {17, 18})
 
     def high_boxes(self):
         for name, (x, y) in O.PROPS:
@@ -399,24 +417,25 @@ class ObjectTests(unittest.TestCase):
     def test_open_fight_areas(self):
         """The 10 x 8 cells around the Vet and the ward's middle hold no high blocker (the table and the station excepted)."""
         areas = [((VET[0] - 5, VET[1] - 4, VET[0] + 5, VET[1] + 4), {'pluto_exam_table'}),
-                 ((4.0, 17.0, 26.0, 29.0), {'pluto_nurse_station'})]
+                 ((4.0, 20.0, 32.0, 34.0), {'pluto_nurse_station'})]
         for (ax0, ay0, ax1, ay1), allowed in areas:
             for name, cell, (x0, y0, x1, y1) in self.high_boxes():
                 if name in allowed:
                     continue
                 self.assertFalse(x0 < ax1 and ax0 < x1 and y0 < ay1 and ay0 < y1, '%s at %s blocks a fight area' % (name, cell))
-        tx, ty = 14.5, 42.0
+        tx, ty = C.NAMED['Table']
         for name, cell, (x0, y0, x1, y1) in self.collider_boxes():
             if name != 'pluto_exam_table':
                 self.assertFalse(x0 < tx + 2.5 and tx - 2.5 < x1 and y0 < ty + 0.5 and ty - 1.0 < y1, (name, cell))
 
     def test_door_gaps_clear(self):
         """Nothing with a collider within half a cell of either door gap (x 14..16), on either side of the wall."""
-        for wall in (13.0, 32.0):
+        gx = O.DOOR_GAP_X
+        for wall in (16.0, 38.0):
             for name, cell, (x0, y0, x1, y1) in self.collider_boxes():
                 if name == 'pluto_clinic_door':
                     continue
-                self.assertFalse(x0 < 16.5 and 13.5 < x1 and y0 < wall + 3.0 and wall - 1.5 < y1,
+                self.assertFalse(x0 < gx + 2.5 and gx - 0.5 < x1 and y0 < wall + 3.0 and wall - 1.5 < y1,
                                  '%s at %s crowds the door at y %s' % (name, cell, wall))
 
     def test_waiting_room_chair_rows_are_aligned(self):
@@ -433,9 +452,9 @@ class ObjectTests(unittest.TestCase):
         self.assertTrue(rows[0] < ty < rows[1])
         (rx, ry), = [c for n, c in O.PROPS if n == 'pluto_rug']
         self.assertTrue(rx <= xs[0][0] and rx + 136 / 16.0 >= xs[0][-1] + 1.5 and ry <= rows[0] and ry + 104 / 16.0 >= rows[1] + 1.5)
-        plants = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_plant' and y < 13)
+        plants = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_plant' and y < 16)
         self.assertEqual(len(plants), 2)
-        self.assertAlmostEqual(plants[0] + plants[1], 30.0)                   # framing the exit, mirrored about x 15
+        self.assertAlmostEqual(plants[0] + plants[1], 36.0)                   # framing the exit, mirrored about x 18
 
     def assert_mirrored(self, a, b, axis, zone):
         def centre(name):
@@ -447,27 +466,76 @@ class ObjectTests(unittest.TestCase):
 
     def test_ward_north_wall_is_mirrored(self):
         for a, b in (('pluto_supply_shelf', 'pluto_scrubs_rack'), ('pluto_sharps_bin', 'pluto_litter_box')):
-            self.assert_mirrored(a, b, 15.0, (15, 32))
-        ivs = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_iv_stand' and 15 <= y < 32)
+            self.assert_mirrored(a, b, 18.0, (18, 38))
+        ivs = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_iv_stand' and 18 <= y < 38)
         self.assertEqual(len(ivs), 2)
-        self.assertAlmostEqual(ivs[0] + ivs[1], 30.0)
+        self.assertAlmostEqual(ivs[0] + ivs[1], 36.0)
         (sx, sy), = [c for n, c in O.PROPS if n == 'pluto_nurse_station']
-        self.assertEqual(sx + 3.0, 15.0)                                        # the island on the centre line
+        self.assertEqual(sx + 3.0, 18.0)                                        # the island on the centre line
 
     def test_theatre_table_group_is_symmetric(self):
-        axis = 14.5
+        axis = 18.0
         (tx, ty), = [c for n, c in O.PROPS if n == 'pluto_exam_table']
         self.assertEqual(tx + 2.5, axis)
-        for name in ('pluto_lamp_head', 'pluto_lamp_pool', 'pluto_table_mat'):
+        for name in ('pluto_lamp_pool', 'pluto_table_mat'):
             (x, y), = [c for n, c in O.PROPS if n == name]
             self.assertEqual(x + EXPECTED_SIZES[name][0] / 32.0, axis, name)
+        (lx, ly), = [c for n, c in O.PROPS if n == 'pluto_op_lamp']
+        dish = [i for i, ch in enumerate(O.OP_LAMP[12]) if ch != '.' and i >= 40]         # the dish's widest row
+        self.assertAlmostEqual(lx + (dish[0] + dish[-1] + 1) / 32.0, axis)           # the lamp dish hangs over the table centre
         trolleys = sorted(x + 0.75 for n, (x, y) in O.PROPS if n == 'pluto_instrument_trolley')
         self.assertAlmostEqual(trolleys[0] + trolleys[1], 2 * axis)
-        self.assert_mirrored('pluto_anaesthesia_machine', 'pluto_monitor_cart', axis, (34, 52))
-        self.assert_mirrored('pluto_iv_stand', 'pluto_cart', axis, (34, 52))
-        self.assert_mirrored('pluto_counter_towels', 'pluto_counter_printer', 15.0, (34, 52))
-        north = sorted((x, x + EXPECTED_SIZES[n][0] / 16.0) for n, (x, y) in O.PROPS if y == 49.0)
-        self.assertAlmostEqual(north[0][0] + north[-1][1], 30.0)               # the north wall row spans symmetric ends
+        self.assert_mirrored('pluto_anaesthesia_machine', 'pluto_monitor_cart', axis, (40, 61))
+        self.assert_mirrored('pluto_iv_stand', 'pluto_cart', axis, (40, 61))
+        self.assert_mirrored('pluto_counter_towels', 'pluto_counter_printer', axis, (40, 61))
+        north = sorted((x, x + EXPECTED_SIZES[n][0] / 16.0) for n, (x, y) in O.PROPS if y == 58.0)
+        self.assertAlmostEqual(north[0][0] + north[-1][1], 36.0)               # the north wall row spans symmetric ends
+        diplomas = sorted(x + 0.5 for n, (x, y) in O.PROPS if n == 'pluto_diploma')
+        self.assertEqual(len(diplomas), 3)
+        self.assertAlmostEqual(diplomas[1], axis)                               # the diplomas hang centred behind the Vet
+
+    def test_vet_stage_is_clear(self):
+        """0.12.0, the clipping bug: nothing may draw over the Vet's 48x40 sprite at his spawn. Every prop sprite within a quarter cell
+        of it must sort BEHIND him: a standing prop further north (base depth 2y - hog above his feet' 2*y0), a flat one under the
+        actors (negative height off ground)."""
+        vx0, vy0, vx1, vy1 = C.vet_sprite_rect()
+        m = 0.25
+        feet_z = 2 * vy0
+        for name, (x, y) in O.PROPS:
+            o = spec(name)
+            w, h = o.size
+            if not (x < vx1 + m and vx0 - m < x + w / 16.0 and y < vy1 + m and vy0 - m < y + h / 16.0):
+                continue
+            if o.stand:
+                self.assertGreater(2 * y - o.height_off_ground, feet_z, '%s at %s draws over the Vet' % (name, (x, y)))
+            else:
+                self.assertLess(o.height_off_ground, 0.0, '%s at %s lies over the Vet' % (name, (x, y)))
+        # and open floor around his feet: no collider within a cell of his body
+        hx, hy, hw, hh = __import__('vet_poses').HITBOX
+        bx0, bx1 = vx0 + hx / 16.0, vx0 + (hx + hw) / 16.0
+        for name, cell, (x0, y0, x1, y1) in self.collider_boxes():
+            self.assertFalse(x0 < bx1 + 1 and bx0 - 1 < x1 and y0 < vy0 + 1.5 and vy0 - 1 < y1, (name, cell))
+
+    def test_wall_art(self):
+        """0.12.0: nine hand-drawn clinic pieces, outlined, hung on the three north walls, most of them examinable."""
+        placed = [(n, c) for n, c in O.PROPS if n in WALL_ART]
+        self.assertEqual({n for n, _ in placed}, WALL_ART)
+        zones = {wall_base(y) for n, (x, y) in placed}
+        self.assertEqual(zones, set(O.WALL_BASES))                              # art on every zone's north wall
+        for name in WALL_ART:
+            rows = spec(name).rows
+            self.assertEqual(set(rows[0]) | set(rows[-1]) - {'.'}, set(rows[0]) | set(rows[-1]) - {'.'})
+            self.assertIn('o', rows[0], name)
+            self.assertGreaterEqual(len(set(''.join(rows)) - {'.'}), 5, name)  # outline plus a real ramp of colours
+        self.assertGreaterEqual(sum(1 for n in WALL_ART if spec(n).comment), 7)
+        for name, (x, y) in placed:
+            base = wall_base(y)
+            if base < 61.0:
+                gx = O.DOOR_GAP_X
+                self.assertFalse(x < gx + 2.25 and gx - 0.25 < x + spec(name).size[0] / 16.0, (name, x))   # not over a door
+        text = ''.join(O.WHITEBOARD)
+        self.assertIn('!', text)
+        self.assertIn('*', text)
 
     def test_props_placed_inside_room(self):
         sizes = {o.name: o.size for o in O.OBJECTS}

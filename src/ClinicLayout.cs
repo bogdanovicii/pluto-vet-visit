@@ -5,29 +5,31 @@ namespace PlutoVetVisit
 {
     public static class ClinicLayout
     {
-        public const int WIDTH = 30;
-        public const int HEIGHT = 54;
+        public const int WIDTH = 36;
+        public const int HEIGHT = 63;
         public const string CONTROLLER_OBJECT = "pluto_past_controller";
         public const string DOOR_OBJECT = "pluto_clinic_door";
         public static readonly Vector2 Spawn = new Vector2(5.0f, 2.5f);
-        public static readonly Vector2 Vet = new Vector2(14.5f, 44.5f);
-        public static readonly Vector2 Table = new Vector2(14.5f, 42.0f);
-        public static readonly Vector2 CameraFocus = new Vector2(14.5f, 41.5f);
-        public static readonly Vector2 Controller = new Vector2(14.0f, 1.0f);
-        public static readonly Vector2 WardDoor = new Vector2(14.0f, 13.0f);
-        public static readonly Vector2 TheatreDoor = new Vector2(14.0f, 32.0f);
-        public static readonly Vector2 IntroFocus = new Vector2(12.0f, 6.5f);
+        public static readonly Vector2 Vet = new Vector2(18.0f, 51.0f);
+        public static readonly Vector2 Table = new Vector2(18.0f, 47.0f);
+        public static readonly Vector2 CameraFocus = new Vector2(18.0f, 47.0f);
+        public static readonly Vector2 Controller = new Vector2(17.0f, 1.0f);
+        public static readonly Vector2 WardDoor = new Vector2(17.0f, 16.0f);
+        public static readonly Vector2 TheatreDoor = new Vector2(17.0f, 38.0f);
+        public static readonly Vector2 IntroFocus = new Vector2(15.0f, 7.5f);
         public static readonly Vector2 OwnerStart = new Vector2(3.5f, 2.5f);
-        public static readonly Vector2 OwnerExit = new Vector2(13.0f, -3.5f);
-        public static readonly Vector2 Intercom = new Vector2(14.5f, 12.5f);
-        public static readonly Vector2 GreeterSpot = new Vector2(14.5f, 19.5f);
-        public const float WARD_MIN_Y = 15.0f;
-        public const float THEATRE_MIN_Y = 34.0f;
-        public static readonly Vector2[] Wave1Spawns = { new Vector2(4.5f, 23.5f), new Vector2(25.5f, 23.5f), new Vector2(4.5f, 19.0f), new Vector2(25.5f, 27.5f) };
-        public static readonly Vector2[] Wave2Spawns = { new Vector2(4.5f, 17.5f), new Vector2(4.5f, 29.5f), new Vector2(25.5f, 17.5f), new Vector2(25.5f, 29.5f), new Vector2(14.5f, 29.0f), new Vector2(9.0f, 17.5f) };
-        public static readonly Vector2[] TheatreSpawns = { new Vector2(26.0f, 40.0f), new Vector2(26.5f, 37.5f), new Vector2(26.5f, 42.5f) };
+        public static readonly Vector2 OwnerExit = new Vector2(17.0f, -3.5f);
+        public static readonly Vector2 Intercom = new Vector2(17.5f, 15.5f);
+        public static readonly Vector2 GreeterSpot = new Vector2(17.5f, 22.5f);
+        public const float WARD_MIN_Y = 18.0f;
+        public const float THEATRE_MIN_Y = 40.0f;
+        public static readonly Vector2[] Wave1Spawns = { new Vector2(4.5f, 26.5f), new Vector2(31.5f, 26.5f), new Vector2(4.5f, 22.0f), new Vector2(31.5f, 30.5f) };
+        public static readonly Vector2[] Wave2Spawns = { new Vector2(4.5f, 20.5f), new Vector2(4.5f, 32.5f), new Vector2(31.5f, 20.5f), new Vector2(31.5f, 32.5f), new Vector2(18.0f, 33.0f), new Vector2(10.0f, 21.5f) };
+        public static readonly Vector2[] TheatreSpawns = { new Vector2(32.0f, 46.5f), new Vector2(32.5f, 44.0f), new Vector2(32.5f, 48.5f) };
+        public static readonly Vector2[] CritterSpots = { new Vector2(9.0f, 3.5f), new Vector2(14.0f, 12.0f), new Vector2(22.0f, 4.0f) };
+        public static readonly Vector2[] HeartSpots = { new Vector2(17.5f, 28.6f), new Vector2(19.5f, 28.6f) };
         public static readonly ObjectSpec[] OBJECTS = {
-            new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 4, 0, 72, 16, 0.0f, true, 1, 6.0f, "Straps. That is a hard no from me."),
+            new ObjectSpec("pluto_exam_table", "exam_table", ObjectSpec.Layer.Low, 4, 0, 72, 28, 0.0f, true, 1, 6.0f, "Straps. That is a hard no from me."),
             new ObjectSpec("pluto_cabinet", "cabinet", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_cart", "cart", ObjectSpec.Layer.Low, 0, 0, 24, 14, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_sink", "sink", ObjectSpec.Layer.High, 0, 0, 32, 20, 0.0f, true, 1, 6.0f, ""),
@@ -58,13 +60,11 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_clinic_door", "clinic_door", ObjectSpec.Layer.High, 0, 0, 32, 32, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_nurse_station", "nurse_station", ObjectSpec.Layer.High, 0, 0, 96, 12, 0.0f, true, 1, 6.0f, "Treat jar. Locked. Of course."),
             new ObjectSpec("pluto_prep_sign", "prep_sign", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.35f, true, 1, 6.0f, ""),
-            new ObjectSpec("pluto_monitor_cart", "monitor_cart", ObjectSpec.Layer.Low, 4, 0, 16, 6, 0.0f, true, 6, 6.0f, "Beep. Still alive. Good."),
+            new ObjectSpec("pluto_monitor_cart", "monitor_cart", ObjectSpec.Layer.Low, 4, 0, 16, 10, 0.0f, true, 6, 6.0f, "Beep. Still alive. Good."),
             new ObjectSpec("pluto_vaccine_fridge", "vaccine_fridge", ObjectSpec.Layer.High, 0, 0, 24, 16, 0.0f, true, 1, 6.0f, "Cold needles. Hard pass."),
             new ObjectSpec("pluto_intercom", "intercom", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.1f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_wall_tv", "wall_tv", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_side_door", "side_door", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f, false, 1, 6.0f, ""),
-            new ObjectSpec("pluto_lamp_head", "lamp_head", ObjectSpec.Layer.None, 0, 0, 0, 0, 2.0f, false, 1, 6.0f, ""),
-            new ObjectSpec("pluto_lamp_arm", "lamp_arm", ObjectSpec.Layer.None, 0, 0, 0, 0, 0.5f, false, 1, 6.0f, ""),
             new ObjectSpec("pluto_lamp_pool", "lamp_pool", ObjectSpec.Layer.None, 0, 0, 0, 0, -1.4f, false, 1, 6.0f, ""),
             new ObjectSpec("pluto_cabinet_wide", "cabinet_wide", ObjectSpec.Layer.High, 0, 0, 64, 20, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_wall_face", "wall_face", ObjectSpec.Layer.None, 0, 0, 0, 0, -0.2f, true, 1, 6.0f, ""),
@@ -88,12 +88,22 @@ namespace PlutoVetVisit
             new ObjectSpec("pluto_scrubs_rack", "scrubs_rack", ObjectSpec.Layer.High, 0, 0, 48, 12, 0.0f, true, 1, 6.0f, "Tiny blue pyjamas for villains."),
             new ObjectSpec("pluto_med_trolley", "med_trolley", ObjectSpec.Layer.Low, 0, 0, 24, 8, 0.0f, true, 1, 6.0f, "Pills in cheese. Nice try."),
             new ObjectSpec("pluto_stool", "stool", ObjectSpec.Layer.Low, 2, 0, 8, 4, 0.0f, true, 1, 6.0f, ""),
-            new ObjectSpec("pluto_anaesthesia_machine", "anaesthesia_machine", ObjectSpec.Layer.Low, 0, 0, 32, 10, 0.0f, true, 3, 2.0f, "It breathes for you. Creepy."),
+            new ObjectSpec("pluto_anaesthesia_machine", "anaesthesia_machine", ObjectSpec.Layer.Low, 0, 0, 32, 16, 0.0f, true, 3, 2.0f, "It breathes for you. Creepy."),
             new ObjectSpec("pluto_instrument_trolley", "instrument_trolley", ObjectSpec.Layer.Low, 0, 0, 24, 8, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_counter_towels", "counter_towels", ObjectSpec.Layer.High, 0, 0, 48, 12, 0.0f, true, 1, 6.0f, "The cone of shame. Never again."),
             new ObjectSpec("pluto_counter_printer", "counter_printer", ObjectSpec.Layer.High, 0, 0, 48, 12, 0.0f, true, 1, 6.0f, ""),
             new ObjectSpec("pluto_biohazard_bin", "biohazard_bin", ObjectSpec.Layer.Low, 1, 0, 12, 6, 0.0f, true, 1, 6.0f, "Smells like the vet. Exactly."),
             new ObjectSpec("pluto_table_mat", "table_mat", ObjectSpec.Layer.None, 0, 0, 0, 0, -3.0f, false, 1, 6.0f, ""),
+            new ObjectSpec("pluto_op_lamp", "op_lamp", ObjectSpec.Layer.Low, 0, 0, 12, 5, 0.05f, true, 1, 6.0f, ""),
+            new ObjectSpec("pluto_xray_cat", "xray_cat", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "My X-ray. Nothing inside. Nothing at all."),
+            new ObjectSpec("pluto_anatomy_poster", "anatomy_poster", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "They know where everything is. Unsettling."),
+            new ObjectSpec("pluto_vaccine_chart", "vaccine_chart", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "Booster due today. Not if I can help it."),
+            new ObjectSpec("pluto_healthy_pets", "healthy_pets", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, ""),
+            new ObjectSpec("pluto_diploma", "diploma", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "Doctor of Veterinary Villainy. Framed."),
+            new ObjectSpec("pluto_weight_chart", "weight_chart", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "That chart is lying. I am fluffy."),
+            new ObjectSpec("pluto_flea_poster", "flea_poster", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "Fleas? Never met them. Scratch. Scratch."),
+            new ObjectSpec("pluto_whiteboard", "whiteboard", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "PLUTO. Circled. In red."),
+            new ObjectSpec("pluto_pet_photos", "pet_photos", ObjectSpec.Layer.None, 0, 0, 0, 0, 1.35f, true, 1, 6.0f, "A wall of happy patients. Suspicious."),
             new ObjectSpec("pluto_floor_waiting", "floor_waiting", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false, 1, 6.0f, ""),
             new ObjectSpec("pluto_floor_ward", "floor_ward", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false, 1, 6.0f, ""),
             new ObjectSpec("pluto_floor_theatre", "floor_theatre", ObjectSpec.Layer.None, 0, 0, 0, 0, -4.0f, false, 1, 6.0f, ""),
