@@ -19,6 +19,7 @@ import tech_poses  # noqa: E402
 import nurse_poses  # noqa: E402
 import npc_poses  # noqa: E402
 import cast_layout  # noqa: E402
+import art_sources  # noqa: E402
 
 
 def main():
@@ -40,6 +41,8 @@ def main():
     for p in projectiles.write(PROJECT):
         print('projectile', p)
     print('preview   ', projectiles.preview(PROJECT))
+    for p in art_sources.install(PROJECT):   # approved Gemini-first art replaces the drawn stand-ins
+        print('art       ', p)
     print('done')
 
 

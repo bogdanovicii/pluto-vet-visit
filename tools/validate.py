@@ -277,7 +277,21 @@ def check_colliders():
         ok('colliders cover their drawings; no pockets behind furniture; the receptionist is out of reach')
 
 
-CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_colliders, check_boss, check_cast, check_projectiles]
+def check_art_sources():
+    import art_sources
+    bad = [p for piece in art_sources.PIECES for p in art_sources.check(piece) if ': missing ' not in p]
+    for p in bad:
+        err('art source ' + p)
+    todo = art_sources.missing()
+    if os.environ.get('VET_RELEASE') == '1':
+        for p in todo:
+            err('art source ' + p)
+    elif not bad:
+        total = sum(len(art_sources.source_paths(n)) for n in art_sources.PIECES)
+        ok('art sources: %d approved, %d still to make' % (total - len(todo), len(todo)))
+
+
+CHECKS = [check_thunderstore, check_room, check_objects, check_look, check_colliders, check_boss, check_cast, check_projectiles, check_art_sources]
 
 
 def main():
