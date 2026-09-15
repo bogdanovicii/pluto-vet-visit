@@ -14,8 +14,19 @@ namespace PlutoVetVisit
     //   teal droplets are fans and walls, green tranq is the Nurse's hose, scalpels are the scalpel ring, stitches hang;
     // - dense patterns (rings, walls, spirals, point-blank fans) wait PastConfig.PatternLeadIn frames after the tell, so a
     //   pattern never starts on top of Pluto the instant the tell ends (the Bullet King's Wait(10) before its bursts);
-    // - every ring and wall leaves a guaranteed gap (RingGapSlots, WallGapSlots, ScalpelGapDegrees);
-    // - aimed fast shots are narrow (3 bullets, a few degrees of jitter), wide patterns are slow.
+    // - every ring and wall leaves a guaranteed gap (RingGapSlots, WallGapSlots, ScalpelGapDegrees), and the gap is placed
+    //   where the arena has open floor Pluto can reach in time (ArenaProbe + GapScorer), not only by the numbers;
+    // - aimed fast shots are narrow (3 bullets, a few degrees of jitter), wide patterns are slow;
+    // - projectiles that change behaviour say so: the pill pulses before it bursts, a stitch pulls before it re-aims and
+    //   pops as it releases, a cloud blinks before it expires (ThreatReadability.FusePulse, existing sprites only).
+    //
+    // Blank and death contract (tools/tests/test_vet_brain.py pins it):
+    // - every Script sets EndOnBlank = true before its first yield: a blank ends the pattern, so no later wave, pump or
+    //   follow-up burst of that script fires after it (single-volley scripts set it too, so the rule has no exceptions);
+    // - bullets with their own Top (pill, stitch, cloud, curl, net) are ordinary projectiles to a blank: it destroys them with
+    //   spawning forbidden, and PillBullet only bursts when PillContract.Bursts allows it (never when preventSpawningProjectiles);
+    // - when the Vet dies or the encounter ends, VetVisitController.StopCombat force-stops every owner's BulletScriptSource
+    //   first and then kills their projectiles with DieInAir(allowProjectileSpawns: false): no script continues, no pill bursts.
     // The numbers are knobs in PastConfig ([Balance]); tools/tests/test_projectiles.py checks bank names against the art.
 
     public static class Pace
@@ -56,6 +67,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float speed = Pace.S(PastConfig.TechBurstSpeed);
             for (int i = 0; i < 3; i++)
             {
@@ -72,6 +84,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float speed = Pace.S(PastConfig.TechDartSpeed);
             Fire(new Direction(GetAimDirection(1f, speed), DirectionType.Absolute), new Speed(speed, SpeedType.Absolute), new DartBullet());
             yield return Wait(12);
@@ -86,6 +99,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             yield return Wait(Pace.LeadIn);
             float spread = PastConfig.SyringeFanSpread, speed = Pace.S(PastConfig.SyringeFanSpeed);
             float aim = GetAimDirection(0f, speed);
@@ -104,6 +118,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float spread = PastConfig.NurseFanSpread, speed = Pace.S(PastConfig.NurseFanSpeed);
             float aim = GetAimDirection(0f, speed);
             float step = spread / 5f;
@@ -121,6 +136,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             yield return Wait(10);
             float speed = Pace.S(PastConfig.NurseNetSpeed);
             Fire(new Direction(GetAimDirection(0.8f, speed), DirectionType.Absolute), new Speed(speed, SpeedType.Absolute), new NetBullet());
@@ -133,6 +149,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             yield return Wait(Pace.LeadIn);
             float speed = Pace.S(PastConfig.NurseSpraySpeed);
             float aim = GetAimDirection(0f, speed);
@@ -151,6 +168,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float speed = Pace.S(PastConfig.IVLineSpeed);
             float aim = GetAimDirection(0f, speed);
             for (int i = 0; i < 12; i++)
@@ -184,6 +202,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float speed = Pace.S(PastConfig.BoosterSpeed);
             for (int i = 0; i < 3; i++)
             {
@@ -201,6 +220,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             yield return Wait(Pace.LeadIn);
             float spread = PastConfig.SprayBottleSpread, speed = Pace.S(PastConfig.SprayBottleSpeed);
             float aim = GetAimDirection(0f, speed);
@@ -214,23 +234,49 @@ namespace PlutoVetVisit
     }
 
     /// <summary>A pill drifts for 50 frames (about three tiles), then bursts into six tablets at PillBurstSpeed (5.5), one heading
-    /// for Pluto, 60 degrees apart. Shooting it pops it early, the same choice the Bullet King's big bullet offers.</summary>
+    /// for Pluto, 60 degrees apart. For its last 24 frames it pulses (the fuse). Shooting it pops it early: a player shot that
+    /// touches it (ShotProbe, swept over the shot's last frame) bursts it where it is, the same choice the Bullet King's big
+    /// bullet offers, and the shot is spent unless it pierces. A blank, the Vet's death or the encounter clearing it forbid
+    /// spawns, and then it never bursts (PillContract).</summary>
     public class PillBullet : Bullet
     {
+        public const int Fuse = 50, FuseWarn = 24, FusePeriod = 8;
         private bool burst;
 
         public PillBullet() : base("pill", false, false, false) { }
 
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
-            yield return Wait(50);
-            Burst();
+            ProjectileLook.Reset(Projectile, "pill");
+            for (int left = Fuse; left > 0; left--)
+            {
+                if (PlayerShotTouches())
+                {
+                    if (PillContract.Bursts(PillEnd.PlayerShot, false)) Burst();
+                    Vanish(false);
+                    yield break;
+                }
+                ProjectileLook.SetScale(Projectile, "pill", FusePulse.Flash(left, FuseWarn, FusePeriod) ? 1.3f : 1f);
+                yield return Wait(1);
+            }
+            ProjectileLook.SetScale(Projectile, "pill", 1f);
+            if (PillContract.Bursts(PillEnd.Fuse, false)) Burst();
             Vanish(false);
         }
 
         public override void OnBulletDestruction(DestroyType destroyType, SpeculativeRigidbody hitRigidbody, bool preventSpawningProjectiles)
         {
-            if (!preventSpawningProjectiles) Burst();
+            ProjectileLook.Reset(Projectile, "pill");
+            if (PillContract.Bursts(PillEnd.Destroyed, preventSpawningProjectiles)) Burst();
+        }
+
+        private bool PlayerShotTouches()
+        {
+            if (Projectile == null) return false;
+            Projectile shot = ShotProbe.PlayerShotTouching(Position, ShotProbe.PillRadius);
+            if (shot == null) return false;
+            if (shot.GetComponent<PierceProjModifier>() == null) shot.DieInAir(false, true, true, false);
+            return true;
         }
 
         private void Burst()
@@ -249,6 +295,7 @@ namespace PlutoVetVisit
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float aim = GetAimDirection(0f, Pace.S(4f));
             for (int i = 0; i < 4; i++)
             {
@@ -266,10 +313,26 @@ namespace PlutoVetVisit
     {
         public static int GapSlots(int n) { return Mathf.Clamp(PastConfig.RingGapSlots, 1, n / 2); }
         public static bool InGap(int i, int gap, int slots, int n) { return ((i - gap) % n + n) % n < slots; }
+
+        /// <summary>The centre angle of every possible hole (index = its first skipped slot) of a ring fired with SubdivideCircle.</summary>
+        public static float[] GapCentres(float start, int n, int slots)
+        {
+            float[] centres = new float[n];
+            for (int g = 0; g < n; g++) centres[g] = start + (g + (slots - 1) / 2f) * 360f / n;
+            return centres;
+        }
+
+        /// <summary>A scored hole, or a random one when the arena cannot be read.</summary>
+        public static int PickGap(Bullet script, float start, int n, int slots, float speed)
+        {
+            int gap = ArenaProbe.PickGap(script, GapCentres(start, n, slots), speed);
+            return gap >= 0 ? gap : Random.Range(0, n);
+        }
     }
 
-    /// <summary>Cone of Shame: after the lead-in, a ring of twenty vaccine orbs with a RingGapSlots (3 = 54 degrees) hole at a
-    /// random angle, then a second ring offset by half a step through the same hole, 28 frames apart at RingSpeed (5.5).
+    /// <summary>Cone of Shame: after the lead-in, a ring of twenty vaccine orbs with a RingGapSlots (3 = 54 degrees) hole, then a
+    /// second ring offset by half a step through the same hole, 28 frames apart at RingSpeed (5.5). The hole opens where there is
+    /// open floor Pluto can reach in time (ArenaProbe.PickGap), at random among the good ones.
     /// Vanilla rings run 18 to 36 bullets at 5 to 8. Ends on a blank, like every vanilla ring.</summary>
     public class ConeOfShameScript : Script
     {
@@ -279,7 +342,7 @@ namespace PlutoVetVisit
             yield return Wait(Pace.LeadIn);
             const int n = 20;
             float start = RandomAngle(), speed = Pace.S(PastConfig.RingSpeed);
-            int slots = Ring.GapSlots(n), gap = Random.Range(0, n);
+            int slots = Ring.GapSlots(n), gap = Ring.PickGap(this, start, n, slots, speed);   // ArenaProbe.PickGap inside
             for (int ring = 0; ring < 2; ring++)
             {
                 for (int i = 0; i < n; i++)
@@ -291,8 +354,8 @@ namespace PlutoVetVisit
     }
 
     /// <summary>Droplet Wall: a 130-degree curtain of fifteen teal slots at WallSpeed (6) with a WallGapSlots (3, about 28 degrees)
-    /// hole. The hole opens near Pluto and walks two slots for the second wave, 34 frames later: find the hole, then follow it
-    /// (the Gorgun's scream rule: its gaps start at the player's angle and drift each wave).</summary>
+    /// hole. The hole opens near Pluto (of the three slots around him, the one with the most open floor) and walks two slots for
+    /// the second wave, 34 frames later: find the hole, then follow it (the Gorgun's scream rule).</summary>
     public class DropletWallScript : Script
     {
         protected virtual float SpeedBonus { get { return 0f; } }
@@ -306,7 +369,12 @@ namespace PlutoVetVisit
             float speed = Pace.S(PastConfig.WallSpeed + SpeedBonus);
             float aim = GetAimDirection(0.3f, speed);
             int slots = Mathf.Clamp(PastConfig.WallGapSlots, 2, 6);
-            int gap = Mathf.Clamp(7 - slots / 2 + Random.Range(-1, 2), 1, 14 - slots);   // centred on Pluto, give or take one slot
+            int centred = 7 - slots / 2;
+            int[] options = { Mathf.Clamp(centred - 1, 1, 14 - slots), Mathf.Clamp(centred, 1, 14 - slots), Mathf.Clamp(centred + 1, 1, 14 - slots) };
+            float[] centres = new float[options.Length];
+            for (int k = 0; k < options.Length; k++) centres[k] = aim - 65f + 130f * (options[k] + (slots - 1) / 2f) / 14f;
+            int pick = ArenaProbe.PickGap(this, centres, speed);
+            int gap = pick >= 0 ? options[pick] : Mathf.Clamp(centred + Random.Range(-1, 2), 1, 14 - slots);   // centred on Pluto, give or take one slot
             int walk = Random.value < 0.5f ? -2 : 2;
             for (int wave = 0; wave < 2; wave++)
             {
@@ -353,17 +421,22 @@ namespace PlutoVetVisit
     }
 
     /// <summary>The Vet: the scalpel ring. After the lead-in, twenty-four scalpels (15 degrees apart) at ScalpelSpeed (6) with a
-    /// ScalpelGapDegrees (60) hole placed 45-90 degrees off Pluto (never on him: walk to it), then three aimed syringes at
-    /// BoosterSpeed - 1 (10).</summary>
+    /// ScalpelGapDegrees (60) hole placed 45-90 degrees off Pluto (never on him: walk to it; of the eight candidate openings the
+    /// one with open floor he can reach), then three aimed syringes at BoosterSpeed - 1 (10).</summary>
     public class ScalpelRingScript : Script
     {
+        private static readonly float[] Offsets = { 45f, 60f, 75f, 90f, -45f, -60f, -75f, -90f };
+
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
             EndOnBlank = true;
             yield return Wait(Pace.LeadIn);
             float speed = Pace.S(PastConfig.ScalpelSpeed);
             float aim = GetAimDirection(0f, speed);
-            float gapCentre = aim + (Random.value < 0.5f ? 1f : -1f) * Random.Range(45f, 90f);
+            float[] centres = new float[Offsets.Length];
+            for (int k = 0; k < Offsets.Length; k++) centres[k] = aim + Offsets[k];
+            int pick = ArenaProbe.PickGap(this, centres, speed);
+            float gapCentre = pick >= 0 ? centres[pick] : aim + (Random.value < 0.5f ? 1f : -1f) * Random.Range(45f, 90f);
             float half = Mathf.Clamp(PastConfig.ScalpelGapDegrees, 20f, 120f) / 2f;
             for (int i = 0; i < 24; i++)
             {
@@ -381,21 +454,40 @@ namespace PlutoVetVisit
         }
     }
 
-    /// <summary>A suture that stops, hangs where Pluto can see it, then re-aims at him at StitchSpeed (9).</summary>
+    /// <summary>A suture that stops, hangs where Pluto can see it, then re-aims at him at StitchSpeed (9). For the last PullWindow
+    /// frames of the hang it pulses (the needle pulls), and it pops as it releases: the release rhythm is readable per stitch.</summary>
     public class StitchBullet : Bullet
     {
+        public const int PullWindow = 12, PullPeriod = 6, ReleasePop = 8;
         private readonly int hold;
 
         public StitchBullet(int hold) : base("stitch", false, false, false) { this.hold = hold; }
 
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            ProjectileLook.Reset(Projectile, "stitch");
             ChangeSpeed(new Speed(0f, SpeedType.Absolute), 20);
-            yield return Wait(20 + hold);
+            int hang = 20 + hold;
+            for (int f = 0; f < hang; f++)
+            {
+                ProjectileLook.SetScale(Projectile, "stitch", FusePulse.Flash(hang - f, PullWindow, PullPeriod) ? 1.2f : 1f);
+                yield return Wait(1);
+            }
             ChangeDirection(new Direction(0f, DirectionType.Aim), 1);
             ChangeSpeed(new Speed(Pace.S(PastConfig.StitchSpeed), SpeedType.Absolute), 12);
-            yield return Wait(240);
+            for (int f = 0; f < ReleasePop; f++)
+            {
+                ProjectileLook.SetScale(Projectile, "stitch", FusePulse.Pop(f, ReleasePop, 1.5f));
+                yield return Wait(1);
+            }
+            ProjectileLook.SetScale(Projectile, "stitch", 1f);
+            yield return Wait(240 - ReleasePop);
             Vanish(false);
+        }
+
+        public override void OnBulletDestruction(DestroyType destroyType, SpeculativeRigidbody hitRigidbody, bool preventSpawningProjectiles)
+        {
+            ProjectileLook.Reset(Projectile, "stitch");
         }
     }
 
@@ -413,16 +505,33 @@ namespace PlutoVetVisit
         }
     }
 
-    /// <summary>A big slow cloud that drifts to a near stop and lingers four seconds.</summary>
+    /// <summary>A big slow cloud that drifts to a near stop and lingers four seconds. It blinks (mostly visible, it still hurts)
+    /// for its last ExpiryWindow frames, and ring and wall openings avoid it while it lives (LingeringHazards).</summary>
     public class CloudBullet : Bullet
     {
+        public const int Life = 240, ExpiryWindow = 45;
+
         public CloudBullet() : base("cloud", false, false, false) { }
 
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            ProjectileLook.Reset(Projectile, "cloud");
+            LingeringHazards.Add(this);
             ChangeSpeed(new Speed(Pace.S(0.6f), SpeedType.Absolute), 60);
-            yield return Wait(240);
+            for (int left = Life; left > 0; left--)
+            {
+                ProjectileLook.SetVisible(Projectile, FusePulse.Visible(left, ExpiryWindow, 5, 2));
+                yield return Wait(1);
+            }
+            LingeringHazards.Remove(this);
+            ProjectileLook.SetVisible(Projectile, true);
             Vanish(false);
+        }
+
+        public override void OnBulletDestruction(DestroyType destroyType, SpeculativeRigidbody hitRigidbody, bool preventSpawningProjectiles)
+        {
+            LingeringHazards.Remove(this);
+            ProjectileLook.Reset(Projectile, "cloud");
         }
     }
 
@@ -449,11 +558,12 @@ namespace PlutoVetVisit
     // ------------------------------------------------------------------ phase 3 (last quarter): "Just a little snip"
 
     /// <summary>Snip Time: five fast leading syringes six frames apart at SnipSpeed (12, the King's quickshot speed), then, fourteen
-    /// frames later, a ring of sixteen vaccine orbs at RingSpeed + 0.5 with a RingGapSlots hole.</summary>
+    /// frames later, a ring of sixteen vaccine orbs at RingSpeed + 0.5 with a RingGapSlots hole on open floor.</summary>
     public class SnipTimeScript : Script
     {
         public override IEnumerator Top() // Bullet.Top is protected in the game but public in the publicized reference assembly
         {
+            EndOnBlank = true;
             float speed = Pace.S(PastConfig.SnipSpeed);
             for (int i = 0; i < 5; i++)
             {
@@ -464,7 +574,7 @@ namespace PlutoVetVisit
             yield return Wait(14);
             const int n = 16;
             float ring = RandomAngle(), ringSpeed = Pace.S(PastConfig.RingSpeed + 0.5f);
-            int slots = Ring.GapSlots(n), gap = Random.Range(0, n);
+            int slots = Ring.GapSlots(n), gap = Ring.PickGap(this, ring, n, slots, ringSpeed);   // ArenaProbe.PickGap inside
             for (int i = 0; i < n; i++)
                 if (!Ring.InGap(i, gap, slots, n))
                     Fire(new Direction(SubdivideCircle(ring, n, i), DirectionType.Absolute), new Speed(ringSpeed, SpeedType.Absolute), new VaccineBullet());
