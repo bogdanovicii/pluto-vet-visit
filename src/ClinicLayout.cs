@@ -122,18 +122,23 @@ namespace PlutoVetVisit
             new PropClip("pluto_kennel_cat", "idle", 4, 4.0f, true),
             new PropClip("pluto_kennel_cat", "react", 4, 8.0f, false),
             new PropClip("pluto_kennel_cat", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_cat", "freed", 2, 6.0f, false),
             new PropClip("pluto_kennel_dog", "idle", 4, 4.0f, true),
             new PropClip("pluto_kennel_dog", "react", 4, 8.0f, false),
             new PropClip("pluto_kennel_dog", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_dog", "freed", 2, 6.0f, false),
             new PropClip("pluto_kennel_cone", "idle", 4, 4.0f, true),
             new PropClip("pluto_kennel_cone", "react", 4, 8.0f, false),
             new PropClip("pluto_kennel_cone", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_cone", "freed", 2, 6.0f, false),
             new PropClip("pluto_kennel_open_r", "idle", 4, 4.0f, true),
             new PropClip("pluto_kennel_open_r", "react", 4, 8.0f, false),
             new PropClip("pluto_kennel_open_r", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_open_r", "freed", 2, 6.0f, false),
             new PropClip("pluto_kennel_open_l", "idle", 4, 4.0f, true),
             new PropClip("pluto_kennel_open_l", "react", 4, 8.0f, false),
             new PropClip("pluto_kennel_open_l", "rattle", 3, 10.0f, false),
+            new PropClip("pluto_kennel_open_l", "freed", 2, 6.0f, false),
         };
     }
 

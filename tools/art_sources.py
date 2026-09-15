@@ -13,7 +13,8 @@ import clinic_objects as O
 PROJECT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 ART_ROOT = 'reference/art'
 MAX_COLOURS = {'sprite': 40, 'card': 64, 'picture': 64}
-KENNEL_CLIPS = OrderedDict([('idle', 4), ('react', 4), ('rattle', 3)])
+KENNEL_CLIPS = OrderedDict([('idle', 4), ('react', 4), ('rattle', 3), ('freed', 2)])
+FREED_ANIMALS = ('cat', 'dog', 'cone')        # 0.14.2 rescue: the animals that run out of their cages
 KENNEL_STEMS = ('kennel_cat', 'kennel_dog', 'kennel_cone', 'kennel_open_r', 'kennel_open_l')
 MASK_CLIPS = OrderedDict([('mask_on', 5), ('mask_idle', 5), ('mask_move', 6), ('mask_tell', 4), ('mask_fire', 4), ('mask_die', 8)])
 ENDING_CLIPS = OrderedDict([('bianca', OrderedDict([('kneel', 3), ('carry', 2), ('carry_walk', 6)])),
@@ -42,6 +43,8 @@ def _pieces():
         for clip, n in KENNEL_CLIPS.items():
             p['%s_%s' % (stem, clip)] = dict(dest='Resources/Objects/%s_%s_f{k}.png' % (stem, clip),
                                              canvas=_size_of(stem), frames=n, kind='sprite')
+    for kind in FREED_ANIMALS:
+        p['freed_' + kind] = dict(dest='Resources/Objects/freed_%s_f{k}.png' % kind, canvas=O.freed_animal_size(kind), frames=2, kind='sprite')
     return p
 
 

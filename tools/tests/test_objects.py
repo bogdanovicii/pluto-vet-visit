@@ -657,7 +657,7 @@ class KennelClipTests(unittest.TestCase):
         kennels = [o for o in O.OBJECTS if o.png in art_sources.KENNEL_STEMS]
         self.assertEqual(sorted(set(o.png for o in kennels)), sorted(art_sources.KENNEL_STEMS))
         for o in kennels:
-            self.assertEqual(list(o.clips), ['idle', 'react', 'rattle'], o.name)
+            self.assertEqual(list(o.clips), ['idle', 'react', 'rattle', 'freed'], o.name)
             for clip, (frames, fps, loop) in o.clips.items():
                 self.assertEqual(frames, art_sources.KENNEL_CLIPS[clip], (o.name, clip))
             self.assertTrue(o.clips['idle'][2] and not o.clips['react'][2] and not o.clips['rattle'][2])
@@ -694,3 +694,23 @@ class KennelArtTests(unittest.TestCase):
         for stem in art_sources.KENNEL_STEMS:
             for clip, fs in O.kennel_frames(stem).items():
                 self.assertGreater(len(set(tuple(f) for f in fs)), 1, (stem, clip))
+
+
+class RescueArtTests(unittest.TestCase):
+    """0.14.2: the freed clip opens the occupied cage and ends empty; the freed animals have two running frames."""
+
+    def test_freed_clip_ends_with_an_empty_open_cage(self):
+        import art_sources
+        for stem in art_sources.KENNEL_STEMS:
+            idle, freed = O.kennel_frames(stem)['idle'][0], O.kennel_frames(stem)['freed']
+            self.assertEqual(len(freed), 2, stem)
+            self.assertNotEqual(list(freed[0]), list(idle), stem)          # the door is open
+            self.assertNotEqual(list(freed[0]), list(freed[1]), stem)      # the animal has left
+
+    def test_freed_animals(self):
+        import art_sources
+        for kind in art_sources.FREED_ANIMALS:
+            frames = O.freed_animal_frames(kind)
+            self.assertEqual(len(frames), 2, kind)
+            self.assertEqual((len(frames[0][0]), len(frames[0])), O.freed_animal_size(kind), kind)
+            self.assertNotEqual(list(frames[0]), list(frames[1]), kind)

@@ -626,7 +626,7 @@ _KW, _KH = 40, 48
 _CAGE_TOPS = (3, 23)                                                           # rail rows; interior rows top+1..top+16
 
 
-def _kennel_unit(upper=None, lower=None, open_lower=False, latch_dx=(0, 0)):
+def _kennel_unit(upper=None, lower=None, open_lower=False, latch_dx=(0, 0), open_cage=(False, False)):
     """upper/lower: (rows, x) of an occupant in that cage's 34x16 interior (bottom-aligned), 'blanket', or None."""
     rows = ['.' * _KW] * _KH
     rows[0] = 'o' * _KW
@@ -643,12 +643,14 @@ def _kennel_unit(upper=None, lower=None, open_lower=False, latch_dx=(0, 0)):
         elif content is not None:
             art, ox = content
             interior = overlay(interior, art, ox, 16 - len(art))
-        barred = not (ci == 1 and open_lower)
+        barred = not ((ci == 1 and open_lower) or open_cage[ci])
         if barred:
             interior = [''.join('o' if x % 4 == 2 else ch for x, ch in enumerate(r)) for r in interior]
         rows = overlay(rows, interior, 3, top + 1)
         if barred:
             rows = overlay(rows, ['oo', 'o&', 'o&', 'oo'], 34 + latch_dx[ci], top + 7)          # latch (rattle jolts it)
+        elif open_cage[ci]:
+            rows = overlay(rows, ['o' + '&' * 2 + 'o'] + ['o$$o'] * 14 + ['o~~o'], 33, top + 1)   # the wire door folded back against the frame
         rows[top + 17] = 'o&%' + 'o' * 34 + '%#o'                               # bottom rail
         rows[top + 18] = 'o' + '&' * 38 + 'o'                                   # ledge
         rows[top + 19] = 'o' + '#' * 38 + 'o'
@@ -686,7 +688,7 @@ def _kennel_open_r(upper, latch_dx=(0, 0)):
 
 
 # 0.14.0 living kennels: idle loop, react once, rattle once. Frame counts must match art_sources.KENNEL_CLIPS (a test checks).
-KENNEL_CLIPS = {'idle': (4, 4.0, True), 'react': (4, 8.0, False), 'rattle': (3, 10.0, False)}
+KENNEL_CLIPS = {'idle': (4, 4.0, True), 'react': (4, 8.0, False), 'rattle': (3, 10.0, False), 'freed': (2, 6.0, False)}
 KENNEL_CAT = R(_kennel_unit(upper=(TABBY_CURLED, 6), lower='blanket'))
 KENNEL_DOG = R(_kennel_unit(upper='blanket', lower=(DOG_SITTING, 10)))
 KENNEL_CONE = R(_kennel_unit(upper=(PATIENT_CONE, 11), lower='blanket'))
@@ -755,27 +757,55 @@ def _animal_clips(kind):
 def kennel_frames(stem):
     """{clip: [rows]} for one kennel PNG stem (kennel_cat, kennel_dog, kennel_cone, kennel_open_r, kennel_open_l)."""
     kind = {'kennel_cat': 'cat', 'kennel_dog': 'dog', 'kennel_cone': 'cone', 'kennel_open_r': 'dog', 'kennel_open_l': 'cat'}[stem]
+    clips = _animal_clips(kind)
+    base = clips['idle'][0][0]
+    clips['freed'] = [(base, 'open'), (None, 'open')]        # 0.14.2: the door flies open, then the cage is empty
     out = {}
-    for clip, frames in _animal_clips(kind).items():
+    for clip, frames in clips.items():
         rows = []
         for art, dx in frames:
+            opened = dx == 'open'
+            d = 0 if opened else dx
+            occ = (art, 0) if art is not None else None
             if stem == 'kennel_cat':
-                f = _kennel_unit(upper=(art, 6), lower='blanket', latch_dx=(dx, 0))
+                f = _kennel_unit(upper=(art, 6) if art is not None else 'blanket', lower='blanket', latch_dx=(d, 0), open_cage=(opened, False))
             elif stem == 'kennel_dog':
-                f = _kennel_unit(upper='blanket', lower=(art, 10), latch_dx=(0, dx))
+                f = _kennel_unit(upper='blanket', lower=(art, 10) if art is not None else 'blanket', latch_dx=(0, d), open_cage=(False, opened))
             elif stem == 'kennel_cone':
-                f = _kennel_unit(upper=(art, 11), lower='blanket', latch_dx=(dx, 0))
+                f = _kennel_unit(upper=(art, 11) if art is not None else 'blanket', lower='blanket', latch_dx=(d, 0), open_cage=(opened, False))
             elif stem == 'kennel_open_r':
-                f = _kennel_open_r(upper=(art, 16), latch_dx=(dx, 0))
+                f = [r + '.' * 12 for r in _kennel_unit(upper=(art, 16) if art is not None else 'blanket', lower='blanket', open_lower=True,
+                                                         latch_dx=(d, 0), open_cage=(opened, False))]
+                f = overlay(f, _swung_door(), 40, 24)
             else:
-                f = [r[::-1] for r in _kennel_open_r(upper=(art, 6), latch_dx=(dx, 0))]
+                f = [r + '.' * 12 for r in _kennel_unit(upper=(art, 6) if art is not None else 'blanket', lower='blanket', open_lower=True,
+                                                         latch_dx=(d, 0), open_cage=(opened, False))]
+                f = [r[::-1] for r in overlay(f, _swung_door(), 40, 24)]
             rows.append(R(f))
         out[clip] = rows
     return out
 
 
+def freed_animal_frames(kind):
+    """0.14.2 rescue: the occupant running free, two frames (on the ground, one pixel up) facing left; the game flips it."""
+    art = {'cat': TABBY_CURLED, 'dog': DOG_SITTING, 'cone': PATIENT_CONE}[kind]
+    blank = '.' * len(art[0])
+    return [R(['' + blank] + list(art)), R(list(art) + [blank])]
+
+
+def freed_animal_size(kind):
+    f = freed_animal_frames(kind)[0]
+    return (len(f[0]), len(f))
+
+
 def write_kennel_art(project):
     paths = []
+    for kind in ('cat', 'dog', 'cone'):
+        for i, f in enumerate(freed_animal_frames(kind), 1):
+            p = os.path.join(project, 'reference', 'art', 'freed_' + kind, 'final_%03d.png' % i)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            save(f, p)
+            paths.append(p)
     for stem in ('kennel_cat', 'kennel_dog', 'kennel_cone', 'kennel_open_r', 'kennel_open_l'):
         for clip, frames in kennel_frames(stem).items():
             for i, f in enumerate(frames, 1):
