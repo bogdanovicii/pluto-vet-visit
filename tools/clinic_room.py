@@ -10,6 +10,7 @@ room's bottom-left. ROOM_MAP is written top row first for readability and flippe
 """
 import json
 import os
+import re
 
 from PIL import Image, ImageDraw
 
@@ -349,7 +350,41 @@ def write(project):
     full.save(sprites)
     closeup = os.path.join(project, 'docs', 'preview', 'clinic-theatre-vet.png')
     theatre_closeup(full).save(closeup)
-    return room, cs, prev, sprites, closeup
+    lighting = os.path.join(project, 'docs', 'preview', 'clinic-theatre-lighting.png')
+    theatre_lighting(project, full).save(lighting)
+    return room, cs, prev, sprites, closeup, lighting
+
+
+def config_light(project, prefix):
+    """(r, g, b) multipliers from the float defaults in src/PastConfig.cs: 'Ambient' is the clinic's room ambient, 'MoodRed' the
+    theatre ambient in the Vet's last phase."""
+    with open(os.path.join(project, 'src', 'PastConfig.cs')) as fh:
+        source = fh.read()
+    return tuple(float(re.search(r'\b%s%s = ([0-9.]+)f' % (prefix, c), source).group(1)) for c in 'RGB')
+
+
+def lit(im, rgb):
+    """A flat multiply by an ambient colour: an approximation of the game's lighting (no lamp pools, no bloom)."""
+    r, g, b, a = im.convert('RGBA').split()
+    r, g, b = (band.point(lambda v, k=k: int(round(v * k))) for band, k in zip((r, g, b), rgb))
+    return Image.merge('RGBA', (r, g, b, a))
+
+
+def theatre_lighting(project, full, scale=2):
+    """QA sheet: the theatre's combat floor (x 4..32, y 40..60) at 2x under the room's normal ambient (left) and the approximate
+    red final-phase ambient (right)."""
+    x0, y0, x1, y1 = 4, 40, 32, 60
+    crop = full.crop((x0 * PX, (HEIGHT - y1) * PX, x1 * PX, (HEIGHT - y0) * PX))
+    crop = crop.resize((crop.width * scale, crop.height * scale), Image.NEAREST)
+    gap, label = 8, 14
+    sheet = Image.new('RGBA', (2 * crop.width + gap, crop.height + label), (0x2E, 0x2E, 0x3A, 255))
+    d = ImageDraw.Draw(sheet)
+    for i, (name, prefix) in enumerate((('normal ambient', 'Ambient'), ('final phase red ambient (approx.)', 'MoodRed'))):
+        rgb = config_light(project, prefix)
+        ox = i * (crop.width + gap)
+        sheet.alpha_composite(lit(crop, rgb), (ox, label))
+        d.text((ox + 2, 1), '%s %s' % (name, '/'.join('%g' % k for k in rgb)), fill=(255, 255, 255, 255))
+    return sheet
 
 
 def theatre_closeup(full, scale=3):

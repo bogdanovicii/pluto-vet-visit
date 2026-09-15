@@ -209,3 +209,47 @@ def preview(project, scale=6):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     sheet.save(path)
     return path
+
+
+def floor_preview(project, zoom=3):
+    """docs/preview/projectiles-on-floor.png: every bank sprite at 1x (rotating ones also at 45 and 90 degrees) on the ward floor,
+    the theatre floor and the theatre's table mat, each strip under the normal room ambient and the approximate red final-phase
+    ambient (clinic_room.lit). The top block is the true 1x image; below it the same block at 3x with labels."""
+    import clinic_room
+    objects = os.path.join(project, 'Resources', 'Objects')
+    shots = []
+    for bank, (sprite, hw, hh, rotates) in BANK.items():
+        for angle in ((0, 45, 90) if rotates else (0,)):
+            shots.append(image(SPRITES[sprite]).rotate(angle, resample=Image.NEAREST, expand=True))
+    step = 20
+    width = step * len(shots) + 8
+    grounds = [('ward floor', 'floor_ward.png', (32, 32)), ('theatre floor', 'floor_theatre.png', (32, 32)),
+               ('table mat', 'table_mat.png', (8, 8))]
+    lights = [('normal', clinic_room.config_light(project, 'Ambient')), ('red final phase', clinic_room.config_light(project, 'MoodRed'))]
+    strip_h = 24
+    block = Image.new('RGBA', (width, strip_h * len(grounds) * len(lights)), (0x2E, 0x2E, 0x3A, 255))
+    labels = []
+    y = 0
+    for gname, png, (gx, gy) in grounds:
+        src = Image.open(os.path.join(objects, png)).convert('RGBA')
+        tile = src.crop((gx, gy, gx + 64, gy + strip_h))
+        strip = Image.new('RGBA', (width, strip_h))
+        for x in range(0, width, 64):
+            strip.alpha_composite(tile, (x, 0))
+        for k, shot in enumerate(shots):
+            strip.alpha_composite(shot, (4 + k * step + (step - shot.width) // 2, (strip_h - shot.height) // 2))
+        for lname, rgb in lights:
+            block.alpha_composite(clinic_room.lit(strip, rgb), (0, y))
+            labels.append((y, '%s, %s' % (gname, lname)))
+            y += strip_h
+    big = block.resize((block.width * zoom, block.height * zoom), Image.NEAREST)
+    sheet = Image.new('RGBA', (big.width, block.height + 6 + big.height), (0x2E, 0x2E, 0x3A, 255))
+    sheet.alpha_composite(block, (0, 0))
+    sheet.alpha_composite(big, (0, block.height + 6))
+    d = ImageDraw.Draw(sheet)
+    for ly, text in labels:
+        d.text((2, block.height + 6 + ly * zoom + 1), text, fill=(0x1E, 0x16, 0x14, 255))
+    path = os.path.join(project, 'docs', 'preview', 'projectiles-on-floor.png')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    sheet.save(path)
+    return path
