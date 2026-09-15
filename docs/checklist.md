@@ -1,5 +1,7 @@
 # In-game checklist (Steam machine, SteamOS/Proton, r2modman)
 
+> **Historical record per milestone.** Pending items for older milestones are not current verification; record results per build.
+
 Nothing here can run on the build Mac. Each milestone is a test zip; send back `vet_check.sh` output and screenshots.
 
 ## Milestone 1 — plumbing (Pluto_Vet_Visit-0.1.0.zip)

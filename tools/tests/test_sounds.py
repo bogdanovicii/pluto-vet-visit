@@ -25,5 +25,6 @@ class SoundTests(unittest.TestCase):
         for name in os.listdir(SRC):
             if not name.endswith('.cs') or name == 'ClinicSound.cs':
                 continue
-            text = open(os.path.join(SRC, name), encoding='utf-8').read()
+            with open(os.path.join(SRC, name), encoding='utf-8') as fh:
+                text = fh.read()
             self.assertIsNone(re.search(r'AkSoundEngine\.PostEvent\(\s*"', text), name)

@@ -75,8 +75,10 @@ class PastConceptTests(unittest.TestCase):
             finally:
                 C.call_api, C.OUT_DIR = original, original_out
             self.assertEqual(out, os.path.join(d, p.name[:-4] + '_c2.png'))
-            self.assertEqual(open(out, 'rb').read(), b'\x89PNG fake')
-            side = json.load(open(out[:-4] + '.json'))
+            with open(out, 'rb') as fh:
+                self.assertEqual(fh.read(), b'\x89PNG fake')
+            with open(out[:-4] + '.json', encoding='utf-8') as fh:
+                side = json.load(fh)
         self.assertEqual(side['model'], 'model-x')
         self.assertEqual(side['candidate'], 2)
         self.assertEqual(side['prompt'], p.text)

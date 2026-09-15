@@ -1,5 +1,7 @@
 # Prompt: The Vet Visit 0.10 — make it play like a vanilla past
 
+> **Historical: session prompt for 0.10.** Superseded by later releases (see `thunderstore/CHANGELOG.md`).
+
 Paste everything below the line into a fresh Claude Code session opened in
 `/Users/bogdanionescu/Claude Code Projects/Enter the gungeon pluto mod`.
 

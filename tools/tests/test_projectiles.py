@@ -18,7 +18,9 @@ ENTRY_RE = re.compile(r'VetBoss\.Entry\(kin, "(\w+)", "(\w+)", (\d+), (\d+), (\d
 def cs_entries():
     found = []
     for path in glob.glob(os.path.join(PROJECT, 'src', '*.cs')):
-        for m in ENTRY_RE.finditer(open(path).read()):
+        with open(path, encoding='utf-8') as fh:
+            text = fh.read()
+        for m in ENTRY_RE.finditer(text):
             g = [x for x in m.groups() if x is not None]
             found.append((os.path.basename(path), g[0], g[1], int(g[2]), int(g[3]), int(g[4]), int(g[5]), g[6] == 'true'))
     return found
@@ -82,7 +84,8 @@ class BankEntryTests(unittest.TestCase):
         self.assertEqual({e[1] for e in cs_entries()}, set(PR.BANK))
 
     def test_scripts_only_use_registered_banks(self):
-        src = open(os.path.join(PROJECT, 'src', 'VetAttacks.cs')).read()
+        with open(os.path.join(PROJECT, 'src', 'VetAttacks.cs'), encoding='utf-8') as fh:
+            src = fh.read()
         used = set(re.findall(r'base\("(\w+)", false, false, false\)', src))
         self.assertTrue(used)
         self.assertEqual(used - set(PR.BANK), set())

@@ -23,6 +23,8 @@ def used_in_source(src=SRC):
     found = set()
     for name in os.listdir(src):
         if name.endswith('.cs'):
-            for m in _CALL.finditer(open(os.path.join(src, name), encoding='utf-8').read()):
+            with open(os.path.join(src, name), encoding='utf-8') as fh:
+                text = fh.read()
+            for m in _CALL.finditer(text):
                 found.update(g for g in m.groups() if g)
     return found

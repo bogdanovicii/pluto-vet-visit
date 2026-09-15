@@ -1,7 +1,11 @@
 # Pluto the Cat - The Vet Visit (test package)
 
-Pluto's past: a white veterinary clinic and The Vet, a doctor with a syringe gun. Install Pluto_The_Cat first
-(r2modman -> Settings -> Import local mod), then this zip. From the Breach, as Pluto, open the console and run
+Pluto's past: a white veterinary clinic (waiting room, ward, operating theatre) and The Vet, a doctor with a syringe
+gun.
+
+**Requires Pluto_The_Cat.** It is not listed as a manifest dependency (Pluto_The_Cat has no Thunderstore coordinate yet), so
+install it by hand: r2modman -> Settings -> Import local mod -> Pluto_The_Cat zip first (built against 2.16.2), then
+this zip. From the Breach, as Pluto, open the console and run
 `vet_visit` to jump straight into the past for testing.
 
 **Normal run:** play as Pluto, reach the Forge (chamber 5) and talk to the Blacksmith — she gives Pluto the
@@ -10,17 +14,8 @@ Ark; Pluto drops into his past, The Vet Visit. Run `vet_check.sh` after playing 
 
 ## Config
 
-Settings live in `BepInEx/config/bogdan.etg.plutovetvisit.cfg`:
-- `Enabled` - attach The Vet Visit to Pluto.
-- `GuaranteePastAccess` - when Pluto takes the bullet from the Blacksmith, set the flag the Ark needs so his past opens.
-- `BossHealth` - The Vet's health.
-- `BossDpsCap` - boss damage-per-second cap for the past level (-1 = none).
-- `BossMusic` - Wwise event played during the fight.
-- `RoomVisualSubtype` - override the room's visual subtype in the lab tileset (-1 = default).
-- `SkipIntro` - skip the dialogue before the fight.
-- `DebugEndAfterSeconds` - if > 0, the past ends by itself after this many seconds (tests the ending without a boss).
-- `Line1` - the Vet's first line.
-- `Line2` - the Vet's second line.
-- `Line3` - Pluto's answer.
+Settings live in `BepInEx/config/bogdan.etg.plutovetvisit.cfg`, in sections General (`Enabled`,
+`GuaranteePastAccess`), Boss, Balance, Patterns, Waves, Cast, Story (every dialogue line), Room, Mood, Props, Breach and
+Debug (`SkipIntro`, `SkipWaves`, `DebugEndAfterSeconds`). Each key has its description in the file.
 
 The plugin does nothing if Pluto_The_Cat is missing.

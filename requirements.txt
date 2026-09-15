@@ -1,0 +1,5 @@
+# Python dependencies for tools/ (art pipeline, validate.py, Gemini scripts) and tools/tests.
+# Pinned to the versions installed on the build Mac on 2026-09-15 (Python 3.11.5); the unit tests pass with them.
+# Everything else the tools import is the standard library; Gemini calls go through curl.
+# Install: python3 -m pip install -r requirements.txt
+Pillow==12.1.1
