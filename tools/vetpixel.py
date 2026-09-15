@@ -64,6 +64,10 @@ PALETTE.update({
     'i': (0xE6, 0xDC, 0xCE, 255),  # warm grout: the waiting-room floor's grout and shadow band
     'k': (0xEC, 0xF3, 0xF7, 255),  # cool tile: the operating-theatre floor
     'n': (0xCF, 0xDB, 0xE3, 255),  # cool grout: the operating-theatre floor's grout and shadow band
+    # combat-polish floor grid (digits the main mod uses for unrelated colours; not in test_palette.COPIED_FROM_MAIN, so no drift):
+    # the 1 px tile lines of the two combat floors sit halfway between tile and grout, so bullets, not the grid, read on the floor
+    '1': (0xE8, 0xEB, 0xEF, 255),  # ward tile line: between '_' and '0'
+    '3': (0xDE, 0xE8, 0xEE, 255),  # theatre tile line: between 'k' and 'n'
     '5': (0x5C, 0xD6, 0x6A, 255),  # LED green: ECG trace, machine lights
     't': (0x1C, 0x36, 0x33, 255),  # screen dark green-black: monitor and anaesthesia screens
     # v0.11 boss card ramps (symbols the main mod's pixel.PALETTE does not use)

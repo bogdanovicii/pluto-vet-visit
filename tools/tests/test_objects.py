@@ -213,12 +213,12 @@ class ObjectTests(unittest.TestCase):
                 for x0, y0_, x1, y1 in rects:
                     self.assertFalse(cx < x1 and x0 < cx + 1 and cy < y1 and y0_ < cy + 1, (name, kind, tx, ty))
             rows = spec(name).rows
-            tile, grout = O.FLOOR_TONES[name]
+            tile, grout, line = O.FLOOR_TONES[name]
             if name == 'pluto_floor_ward':                                  # the guide stripe is not a variant
                 rows = [r[:O.WARD_STRIPE_PX - 4] + r[O.WARD_STRIPE_PX + 4:] for r in rows]
             text = ''.join(rows)
             self.assertNotIn('B', text)
-            self.assertTrue(set(text) <= {tile, grout, '$', '%', '#'}, (name, set(text)))
+            self.assertTrue(set(text) <= {tile, grout, line, '$', '%', '#'}, (name, set(text)))
             self.assertLessEqual(text.count('$'), 2 * ''.join(O._TILE_PAW).count('$'), name)   # two paws at most
             tile_cells = (len(rows) // 16) * (len(rows[0]) // 16)
             self.assertLess(len(variants) / float(tile_cells), 0.03, name)
@@ -394,7 +394,7 @@ class ObjectTests(unittest.TestCase):
     def test_zone_floor_tones_and_the_ward_stripe(self):
         self.assertEqual(set(''.join(O.FLOOR_WAITING)) & {'_', '0'}, set())
         self.assertEqual(set(''.join(O.FLOOR_THEATRE)) & {'_', '0'}, set())
-        self.assertEqual(O.FLOOR_TONES['pluto_floor_ward'], ('_', '0'))
+        self.assertEqual(O.FLOOR_TONES['pluto_floor_ward'], ('_', '0', '1'))
         px = O.WARD_STRIPE_PX
         self.assertEqual(px, 18 * 16)                                           # the door centre line
         for y, row in enumerate(O.FLOOR_WARD[2:], start=2):
@@ -402,6 +402,22 @@ class ObjectTests(unittest.TestCase):
         for name, variants in O.FLOOR_VARIANTS.items():
             if name == 'pluto_floor_ward':
                 self.assertFalse({tx for tx, _ in variants} & {17, 18})
+
+    def test_combat_floor_lines_are_quieter_than_the_grout(self):
+        """Combat polish: under the fights (ward, theatre) the repeated tile lines sit between tile and grout in luminance, the shadow
+        band under the north wall keeps the full grout, and the table mat's rules are no darker than its steel field."""
+        def lum(key):
+            r, g, b, _ = V.PALETTE[key]
+            return 0.299 * r + 0.587 * g + 0.114 * b
+        for name, rows in (('pluto_floor_ward', O.FLOOR_WARD), ('pluto_floor_theatre', O.FLOOR_THEATRE)):
+            tile, grout, line = O.FLOOR_TONES[name]
+            self.assertLess(lum(tile) - lum(line), 0.6 * (lum(tile) - lum(grout)), name)
+            self.assertGreater(lum(tile) - lum(line), 6, name)                  # still a visible tile grid
+            self.assertEqual(set(rows[0] + rows[1]), {grout}, name)
+            self.assertEqual(rows[2 + 13][40], line, name)                      # a plain tile's bottom row (y 15) away from variants
+        field = set(''.join(r[4:-4] for r in O.TABLE_MAT[4:-4]))
+        self.assertEqual(field, {'&', 'n'})
+        self.assertGreaterEqual(lum('n'), lum('&'))
 
     def high_boxes(self):
         for name, (x, y) in O.PROPS:

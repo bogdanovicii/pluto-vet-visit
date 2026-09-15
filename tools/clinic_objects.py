@@ -1068,7 +1068,8 @@ WALL_SHELF = R(_ws)
 # ------------------------------------------------------------------ zone floors (v0.10.1): plain 16x16 white tiles with a pale
 # '0' grout line right and bottom; a few variant tiles per zone at fixed tiles chosen away from the props: small round drain
 # grates, teal paw prints (the concept's paw) and single '0' hairline cracks. The top two rows are a '0' shadow band under the
-# wall to the north.
+# wall to the north. Combat polish (2026-09-15): the repeated tile lines under the fights (ward, theatre) take a softer third tone;
+# the shadow band, drains and cracks keep the full grout so the detail stays at the perimeter and in the few variant tiles.
 _TILE = ['_' * 15 + '0'] * 15 + ['0' * 16]
 _TILE_DRAIN = overlay(_TILE, [
     "...0000...",
@@ -1111,10 +1112,11 @@ FLOOR_ZONES = {
 }
 
 
-def floor(cells_wide, cells_high, variants, tone=('_', '0'), stripe_px=None):
-    """variants: {(cell_x, cell_y_from_the_floor's_bottom): kind}. tone: the zone's (tile, grout) keys swapped in for '_'/'0'
-    (v0.11: the waiting room warmer, the theatre cooler). stripe_px: x of a painted 8 px teal guide stripe ('~' edges, '$' fill)
-    running the floor's full height (v0.11: the ward, door to door)."""
+def floor(cells_wide, cells_high, variants, tone=('_', '0', '0'), stripe_px=None):
+    """variants: {(cell_x, cell_y_from_the_floor's_bottom): kind}. tone: the zone's (tile, grout, grid line) keys; tile and grout
+    are swapped in for '_'/'0' (v0.11: the waiting room warmer, the theatre cooler), the grid line replaces the grout on each tile's
+    right column and bottom row below the shadow band (no variant detail reaches them). stripe_px: x of a painted 8 px teal guide
+    stripe ('~' edges, '$' fill) running the floor's full height (v0.11: the ward, door to door)."""
     rows = ['.' * (cells_wide * 16)] * (cells_high * 16)
     for ty in range(cells_high):
         for tx in range(cells_wide):
@@ -1124,11 +1126,13 @@ def floor(cells_wide, cells_high, variants, tone=('_', '0'), stripe_px=None):
     rows[1] = '0' * (cells_wide * 16)
     if stripe_px is not None:
         rows = [r[:stripe_px - 4] + '~' + '$' * 6 + '~' + r[stripe_px + 4:] if y >= 2 else r for y, r in enumerate(rows)]
-    swap = str.maketrans({'_': tone[0], '0': tone[1]})
-    return R([r.translate(swap) for r in rows])
+    swap = {'_': tone[0], '0': tone[1]}
+    return R([''.join(tone[2] if ch == '0' and y >= 2 and (x % 16 == 15 or y % 16 == 15) else swap.get(ch, ch)
+                      for x, ch in enumerate(r)) for y, r in enumerate(rows)])
 
 
-FLOOR_TONES = {'pluto_floor_waiting': ('4', 'i'), 'pluto_floor_ward': ('_', '0'), 'pluto_floor_theatre': ('k', 'n')}
+# (tile, grout, grid line): the waiting room has no fight and keeps its full-contrast lines
+FLOOR_TONES = {'pluto_floor_waiting': ('4', 'i', 'i'), 'pluto_floor_ward': ('_', '0', '1'), 'pluto_floor_theatre': ('k', 'n', '3')}
 WARD_STRIPE_PX = (DOOR_GAP_X + 1) * 16   # the ward's guide stripe is centred on the door gaps' centre line (x 18 cells)
 
 
@@ -1440,7 +1444,8 @@ COUNTER_TOWELS = R(overlay(overlay(_side_counter(), TOWELS, 4, 3), CONE, 30, 3))
 COUNTER_PRINTER = R(overlay(overlay(_side_counter(), PRINTER, 4, 2), SANITIZER, 34, 3))
 
 # ------------------------------------------------------------------ theatre floor mat 144x96 (flat, under the operating table and its
-# kit): a '~' teal border with a '$' inner line around a pale steel '&' field ruled into tiles by '%' lines
+# kit): a '~' teal border with a '$' inner line around a pale steel '&' field ruled into tiles by 'n' lines (combat polish: the
+# '%' steel-mid rules were the loudest grid under the Vet's fight; the teal border keeps the mat's edge)
 def _table_mat(w, h):
     rows = []
     for y in range(h):
@@ -1454,7 +1459,7 @@ def _table_mat(w, h):
             elif e == 3:
                 ch = '$'
             elif x % 16 == 7 or y % 16 == 7:
-                ch = '%'
+                ch = 'n'
             else:
                 ch = '&'
             row.append(ch)
