@@ -62,7 +62,7 @@ namespace PlutoVetVisit
                         VetBoss.Item("burst", 1.0f, burst),
                         VetBoss.Item("dart rifle", 0.6f, dart),
                         VetBoss.Item("sidestep", 0.5f, Hop(DashBehavior.DashDirection.PerpendicularToTarget, 3f, 0.3f, 4f, 1.5f, 2f, 0f, true)),
-                        VetBoss.Item("lunge", 0.3f, Hop(DashBehavior.DashDirection.KindaTowardTarget, 3.5f, 0.35f, 7f, 2f, 5f, 8f, false)),
+                        VetBoss.Item("lunge", 0.3f, Hop(DashBehavior.DashDirection.KindaTowardTarget, 3.5f, 0.35f, 7f, 2f, 5f, 8f, false, "tell")),   // crouches (tell) before it lunges; the sidestep stays an instant dodge
                     }
                 }
             };
@@ -164,36 +164,37 @@ namespace PlutoVetVisit
         }
 
         /// <summary>A quick hop (DashBehavior, the Gun Cultist's dodge roll without its clip). range 0 = any distance;
-        /// avoidTarget keeps the hop from heading at Pluto. Needs the actor's shadow (Body turns HasShadow on).</summary>
-        public static DashBehavior Hop(DashBehavior.DashDirection direction, float distance, float time, float cooldown, float variance, float initial, float range, bool avoidTarget)
+        /// avoidTarget keeps the hop from heading at Pluto. Needs the actor's shadow (Body turns HasShadow on).
+        /// chargeAnim: an existing clip (tell / mask_tell) DashBehavior plays to the end before it moves, the crouch that
+        /// announces a lunge; null keeps an instant dodge. into: a DashBehavior subclass to fill (CoordinatedHop).</summary>
+        public static DashBehavior Hop(DashBehavior.DashDirection direction, float distance, float time, float cooldown, float variance, float initial, float range, bool avoidTarget, string chargeAnim = null, DashBehavior into = null)
         {
-            return new DashBehavior
-            {
-                dashDirection = direction,
-                quantizeDirection = avoidTarget ? 0f : 25f,
-                dashDistance = distance,
-                dashTime = time,
-                postDashSpeed = 0f,
-                doubleDashChance = 0f,
-                avoidTarget = avoidTarget,
-                stopOnCollision = true,
-                chargeAnim = null,
-                dashAnim = null,
-                warpDashAnimLength = true,
-                doDodgeDustUp = true,
-                hideShadow = false,
-                hideGun = false,
-                toggleTrailRenderer = false,
-                enableShadowTrail = false,
-                Cooldown = cooldown,
-                CooldownVariance = variance,
-                InitialCooldown = initial,
-                AttackCooldown = 0.15f,
-                Range = range,
-                MinHealthThreshold = 0f,
-                MaxHealthThreshold = 1f,
-                RequiresLineOfSight = false,
-            };
+            DashBehavior d = into ?? new DashBehavior();
+            d.dashDirection = direction;
+            d.quantizeDirection = avoidTarget ? 0f : 25f;
+            d.dashDistance = distance;
+            d.dashTime = time;
+            d.postDashSpeed = 0f;
+            d.doubleDashChance = 0f;
+            d.avoidTarget = avoidTarget;
+            d.stopOnCollision = true;
+            d.chargeAnim = chargeAnim;
+            d.dashAnim = null;
+            d.warpDashAnimLength = true;
+            d.doDodgeDustUp = true;
+            d.hideShadow = false;
+            d.hideGun = false;
+            d.toggleTrailRenderer = false;
+            d.enableShadowTrail = false;
+            d.Cooldown = cooldown;
+            d.CooldownVariance = variance;
+            d.InitialCooldown = initial;
+            d.AttackCooldown = 0.15f;
+            d.Range = range;
+            d.MinHealthThreshold = 0f;
+            d.MaxHealthThreshold = 1f;
+            d.RequiresLineOfSight = false;
+            return d;
         }
     }
 
@@ -236,7 +237,7 @@ namespace PlutoVetVisit
             fan.RequiresLineOfSight = true;
             // A dash's own bulletScript is started and force-stopped in the same DashBehavior.EndState call, before the script
             // ticks: nothing fires at 60 fps. So the lunge and the fan are two steps of a sequence, like the Vet's leap and ring.
-            DashBehavior lunge = VetTech.Hop(DashBehavior.DashDirection.KindaTowardTarget, 4f, 0.35f, 5f, 1.5f, 3f, 10f, false);
+            DashBehavior lunge = VetTech.Hop(DashBehavior.DashDirection.KindaTowardTarget, 4f, 0.35f, 5f, 1.5f, 3f, 10f, false, "tell");
             ShootBehavior landingFan = VetBoss.Shoot(typeof(SyringeShotgunScript), shootPoint, 0f, 0f, 1f, 0f, 10f, 0.8f, 0f);
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
@@ -332,8 +333,12 @@ namespace PlutoVetVisit
             ShootBehavior farNet = VetBoss.Shoot(typeof(NetThrowScript), shootPoint, PastConfig.NurseNetCooldown, 0f, 1f, 5f, 14f, 0.8f, 2f);
             farNet.TellAnimation = string.Empty;
             farNet.FireAnimation = "net";
-            ShootBehavior tranquilizer = VetBoss.Shoot(typeof(TranquilizerSprayScript), shootPoint, PastConfig.NurseSprayCooldown, 0f, 1f, 3f, 11f, 0.6f, 3f);
-            ShootBehavior ivLine = VetBoss.Shoot(typeof(IVLineScript), shootPoint, PastConfig.NurseIVCooldown, 0f, 0.5f, 4f, 40f, 0.8f, 1f);
+            // Area pressure shares the encounter's threat budget with the Vet (AttackBrain): the hose and the IV line wait while
+            // his full course is live, and the Vet's next heavy wall waits for them. Same family, so they alternate.
+            ShootBehavior tranquilizer = VetBoss.Shoot(typeof(TranquilizerSprayScript), shootPoint, PastConfig.NurseSprayCooldown, 0f, 1f, 3f, 11f, 0.6f, 3f,
+                into: VetBoss.Plan(AttackFamily.Spray, 1f, 0.8f, 0f, 1.4f, RangeBand.Any));
+            ShootBehavior ivLine = VetBoss.Shoot(typeof(IVLineScript), shootPoint, PastConfig.NurseIVCooldown, 0f, 0.5f, 4f, 40f, 0.8f, 1f,
+                into: VetBoss.Plan(AttackFamily.Spray, 1f, 1.2f, 0f, 1.5f, RangeBand.Any));
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
                 new AttackBehaviorGroup
@@ -355,6 +360,7 @@ namespace PlutoVetVisit
                 }
             };
             Prefab.AddComponent<SelfEngage>();
+            Prefab.AddComponent<AttackBrain>();
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor);
             VetBoss.CheckBank(actor, "The Nurse prefab");
             PastPlugin.Log("The Nurse built: " + PastConfig.NurseHealth + " HP, console id " + CONSOLE_ID);

@@ -200,6 +200,7 @@ namespace PlutoVetVisit
             }
             Prefab.AddComponent<VetDeathHandler>();
             Prefab.AddComponent<VetReinforcements>();
+            Prefab.AddComponent<AttackBrain>();   // range band, repeat avoidance, recovery, shared threat budget, tell cues (VetAttackBrain.cs)
 
             Gungeon.Game.Enemies.Add(CONSOLE_ID, actor); // console: spawn pluto:the_vet
             CheckBank(actor, "The Vet prefab");
@@ -276,6 +277,13 @@ namespace PlutoVetVisit
         }
 
         private static int bulletCopyCount;
+
+        /// <summary>The inactive bank prefab's projectile for a bank name (never pulsed: ProjectileLook reads its base scale).</summary>
+        public static Projectile BankProjectile(string name)
+        {
+            BulletRecipe r;
+            return name != null && Recipes.TryGetValue(name, out r) && r.Object != null ? r.Object.GetComponent<Projectile>() : null;
+        }
 
         /// <summary>A manual box collider on the Projectile layer of hw x hh pixels, centred on the projectile position. The sizes
         /// come from tools/projectiles.py BANK: a little smaller than the art (vanilla hitboxes sit inside the sprite).</summary>
@@ -408,6 +416,23 @@ namespace PlutoVetVisit
         /// cooldowns with a longer breather (AttackCooldown) after them, a 2 s walk before the first tell, and the
         /// heavy patterns held back for the first seconds (InitialCooldown). Attacks are range-gated so the Vet uses
         /// the right tool for the distance: syringes lead the target at range, the spray bottle punishes hugging him.</summary>
+        // Attack plans (AttackCoordination.cs; VetAttackBrain.cs applies them). Cost: 0 light, 1 area pressure, 2 heavy, 3 the full
+        // course, against AttackBrain.ThreatCapacity 3 shared with the Nurse. Linger: seconds the bullets stay dangerous after the
+        // script ends. Recovery: seconds of light attacks only afterwards. Bands replace the old MinRange 4 / 5 gates with
+        // hysteresis (close below 4, until 5.5; far above 12, until 10); the spray bottle keeps its hard 8-tile Range.
+        private const RangeBand NotClose = RangeBand.Mid | RangeBand.Far;
+        private const RangeBand NotFar = RangeBand.Close | RangeBand.Mid;
+
+        private static CoordinatedShoot Booster() { return Plan(AttackFamily.Booster, 0f, 0f, 0f, 1.0f, NotClose); }
+        private static CoordinatedShoot Spray() { return Plan(AttackFamily.Spray, 1f, 0.8f, 0f, 1.3f, NotFar); }
+        private static CoordinatedShoot Pills() { return Plan(AttackFamily.Pill, 1f, 1.2f, 0f, 1.4f, NotClose); }
+        private static CoordinatedShoot Wall() { return Plan(AttackFamily.Wall, 2f, 1.8f, 1.2f, 1.8f, NotClose); }
+        private static CoordinatedShoot Spiral() { return Plan(AttackFamily.Spiral, 2f, 1.8f, 1.5f, 2.3f, RangeBand.Any); }
+        private static CoordinatedShoot RingPlan() { return Plan(AttackFamily.Ring, 2f, 1.6f, 1.2f, 1.6f, RangeBand.Any); }
+        private static CoordinatedShoot Stitches() { return Plan(AttackFamily.Stitches, 2f, 1.5f, 1.2f, 2.2f, RangeBand.Any); }
+        private static CoordinatedShoot Clouds() { return Plan(AttackFamily.Anesthesia, 2f, 3.5f, 1.2f, 1.5f, NotClose); }
+        private static CoordinatedShoot Snip() { return Plan(AttackFamily.Booster, 1f, 1.4f, 0f, 1.3f, RangeBand.Any); }
+
         private static List<AttackBehaviorGroup.AttackGroupItem> BuildAttacks(GameObject shootPoint)
         {
             float c = PastConfig.BossCooldownScale;
@@ -415,41 +440,44 @@ namespace PlutoVetVisit
             {
                 // Phase 1, 100-60 %: "Consultation". Aimed bursts (he plants for the tell, moves while firing), fans, slow
                 // pills, and a sidestep hop between attacks. About one pattern every 2.5 s.
-                Item("booster shot", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.6f * c, 0.6f, 1f, minRange: 4f, attackCooldown: 0.5f))),
-                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f * c, 0.6f, 1f, range: 8f, attackCooldown: 0.6f)),
-                Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.5f * c, 0.6f, 1f, attackCooldown: 0.8f, initialCooldown: 4f)),
-                Item("hop 1", 1.0f, BossHop(PastConfig.BossHopCooldown * 1.35f * c, 0.6f, 1f, 0f)),
+                Item("booster shot", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.6f * c, 0.6f, 1f, attackCooldown: 0.5f, into: Booster()))),
+                Item("spray bottle", 1.2f, Shoot(typeof(SprayBottleScript), shootPoint, 2.4f * c, 0.6f, 1f, range: 8f, attackCooldown: 0.6f, into: Spray())),
+                Item("pill time", 0.8f, Shoot(typeof(PillTimeScript), shootPoint, 3.5f * c, 0.6f, 1f, attackCooldown: 0.8f, initialCooldown: 4f, into: Pills())),
+                Item("hop 1", 1.0f, BossHop(PastConfig.BossHopCooldown * 1.35f * c, 0.6f, 1f, 0f, false)),
                 // Phase 2, 60-25 %: "Treatment". Quicker bursts, the droplet wall, the spiral, the cone, stitches that hang and
                 // re-aim, the scalpel ring with its gap, anesthesia clouds, and the leap-in ring.
-                Item("booster shot 2", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.1f * c, 0.25f, 0.6f, minRange: 4f, attackCooldown: 0.5f))),
-                Item("spray bottle 2", 1.0f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f * c, 0.25f, 0.6f, range: 8f, attackCooldown: 0.6f)),
-                Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f * c, 0.25f, 0.6f, minRange: 5f, attackCooldown: 0.8f)),
-                Item("vaccination spiral", 0.7f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
-                Item("cone of shame", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
-                Item("stitches", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 2f)),
-                Item("scalpel ring", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f)),
-                Item("anesthesia", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 6.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f)),
-                Item("hop 2", 1.2f, BossHop(PastConfig.BossHopCooldown * c, 0.25f, 0.6f, 0f)),
-                Item("leap and ring", 0.6f, LeapRing(shootPoint, 7f * c, 0f, 0.6f)),
+                Item("booster shot 2", 1.2f, Aimed(Shoot(typeof(BoosterShotScript), shootPoint, 1.1f * c, 0.25f, 0.6f, attackCooldown: 0.5f, into: Booster()))),
+                Item("spray bottle 2", 1.0f, Shoot(typeof(SprayBottleScript), shootPoint, 1.5f * c, 0.25f, 0.6f, range: 8f, attackCooldown: 0.6f, into: Spray())),
+                Item("droplet wall", 1.0f, Shoot(typeof(DropletWallScript), shootPoint, 3.0f * c, 0.25f, 0.6f, attackCooldown: 0.8f, into: Wall())),
+                Item("vaccination spiral", 0.7f, Shoot(typeof(VaccinationSpiralScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f, into: Spiral())),
+                Item("cone of shame", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f, into: RingPlan())),
+                Item("stitches", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 5.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 2f, into: Stitches())),
+                Item("scalpel ring", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.5f * c, 0.25f, 0.6f, attackCooldown: 0.8f, into: RingPlan())),
+                Item("anesthesia", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 6.0f * c, 0.25f, 0.6f, attackCooldown: 1.0f, initialCooldown: 3f, into: Clouds())),
+                Item("hop 2", 1.2f, BossHop(PastConfig.BossHopCooldown * c, 0.25f, 0.6f, 0f, false)),
+                // The leap ring was one item for 0-60 %; split at 25 % so the masked phase leaps and rings with mask_tell.
+                Item("leap and ring", 0.6f, LeapRing(shootPoint, 7f * c, 0.25f, 0.6f, false)),
                 // Phase 3, last quarter: "Just a little snip". Fast leading bursts, the hard wall, the full course (wall then
                 // spiral back to back), quicker stitches and rings, clouds, double hops.
-                Item("snip time", 1.5f, Aimed(Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f, masked: VetMask.Available))),
-                Item("cone of shame 3", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available)),
-                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 0.8f, masked: VetMask.Available)),
-                Item("stitches 3", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 3.5f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available)),
-                Item("scalpel ring 3", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available)),
-                Item("anesthesia 3", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 5.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available)),
-                Item("hop 3", 1.5f, BossHop(PastConfig.BossHopCooldown * 0.7f * c, 0f, 0.25f, 0.35f)),
+                Item("snip time", 1.5f, Aimed(Shoot(typeof(SnipTimeScript), shootPoint, 1.4f * c, 0f, 0.25f, attackCooldown: 0.5f, masked: VetMask.Available, into: Snip()))),
+                Item("cone of shame 3", 0.8f, Shoot(typeof(ConeOfShameScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available, into: RingPlan())),
+                Item("droplet wall 3", 1.0f, Shoot(typeof(DropletWallHardScript), shootPoint, 2.6f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available, into: Wall())),
+                Item("stitches 3", 0.9f, Shoot(typeof(StitchesScript), shootPoint, 3.5f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available, into: Stitches())),
+                Item("scalpel ring 3", 0.9f, Shoot(typeof(ScalpelRingScript), shootPoint, 3.0f * c, 0f, 0.25f, attackCooldown: 0.8f, masked: VetMask.Available, into: RingPlan())),
+                Item("anesthesia 3", 0.6f, Shoot(typeof(AnesthesiaCloudScript), shootPoint, 5.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available, into: Clouds())),
+                Item("hop 3", 1.5f, BossHop(PastConfig.BossHopCooldown * 0.7f * c, 0f, 0.25f, 0.35f, VetMask.Available)),
+                Item("leap and ring 3", 0.6f, LeapRing(shootPoint, 7f * c, 0f, 0.25f, VetMask.Available)),
                 new AttackBehaviorGroup.AttackGroupItem
                 {
                     NickName = "full course",
                     Probability = 1.0f,
-                    Behavior = new SequentialAttackBehaviorGroup
+                    Behavior = new CoordinatedSequence
                     {
+                        Family = AttackFamily.Course, ThreatCost = 3f, ThreatLinger = 1.8f, Recovery = 2.0f, ExpectedSeconds = 4.5f, Bands = NotClose,
                         RunInClass = false,
                         AttackBehaviors = new List<AttackBehaviorBase>
                         {
-                            Shoot(typeof(DropletWallScript), shootPoint, 4.0f * c, 0f, 0.25f, minRange: 5f, attackCooldown: 1.0f, masked: VetMask.Available),
+                            Shoot(typeof(DropletWallScript), shootPoint, 4.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available),
                             Shoot(typeof(VaccinationSpiralScript), shootPoint, 4.0f * c, 0f, 0.25f, attackCooldown: 1.0f, masked: VetMask.Available),
                         },
                         OverrideCooldowns = new List<float> { 0.4f },
@@ -458,6 +486,15 @@ namespace PlutoVetVisit
             };
         }
 
+        /// <summary>A ShootBehavior that carries an attack plan; pass it to Shoot(into:) to configure the rest.</summary>
+        public static CoordinatedShoot Plan(AttackFamily family, float cost, float linger, float recovery, float expectedSeconds, RangeBand bands)
+        {
+            return new CoordinatedShoot { Family = family, ThreatCost = cost, ThreatLinger = linger, Recovery = recovery, ExpectedSeconds = expectedSeconds, Bands = bands };
+        }
+
+        /// <summary>The existing tell clip for the phase: never the unmasked face once the mask is on.</summary>
+        private static string TellClip(bool masked) { return masked && VetMask.Available ? "mask_tell" : "tell"; }
+
         /// <summary>An aimed pattern: he stops for the tell, then keeps moving while the bullets go out (vanilla quickshots).</summary>
         private static ShootBehavior Aimed(ShootBehavior shoot)
         {
@@ -465,27 +502,34 @@ namespace PlutoVetVisit
             return shoot;
         }
 
-        /// <summary>A four-tile hop to Pluto's side, never toward him, between patterns (the Gun Cultist's roll without a clip).</summary>
-        private static DashBehavior BossHop(float cooldown, float minHealth, float maxHealth, float doubleChance)
+        /// <summary>A four-tile hop to Pluto's side, never toward him, between patterns (the Gun Cultist's roll without a clip).
+        /// Anticipation: the tell clip (mask_tell once masked, VetMask.Available ? "mask_tell" : "tell") plays before he moves,
+        /// with a short glint; recovery: the roll-landing dust-up and HopLanding seconds before his next pattern.</summary>
+        private static DashBehavior BossHop(float cooldown, float minHealth, float maxHealth, float doubleChance, bool masked)
         {
-            DashBehavior hop = VetTech.Hop(DashBehavior.DashDirection.PerpendicularToTarget, 4f, 0.3f, cooldown, 1f, 1.5f, 0f, true);
+            DashBehavior hop = VetTech.Hop(DashBehavior.DashDirection.PerpendicularToTarget, 4f, 0.3f, cooldown, 1f, 1.5f, 0f, true, TellClip(masked), new CoordinatedHop());
             hop.MinHealthThreshold = minHealth;
             hop.MaxHealthThreshold = maxHealth;
             hop.doubleDashChance = doubleChance;
-            hop.AttackCooldown = 0.2f;
+            hop.AttackCooldown = HopLanding;
             return hop;
         }
 
-        /// <summary>A five-tile leap in, then the scalpel ring from where he lands.</summary>
-        private static SequentialAttackBehaviorGroup LeapRing(GameObject shootPoint, float cooldown, float minHealth, float maxHealth)
+        /// <summary>Seconds after a hop lands before the Vet may start another pattern (was 0.2).</summary>
+        private const float HopLanding = 0.45f;
+
+        /// <summary>A five-tile leap in, then the scalpel ring from where he lands. The leap crouches first (tell / mask_tell) and
+        /// the pair is one heavy pattern for the attack brain, so no other heavy wall lands on top of the ring.</summary>
+        private static SequentialAttackBehaviorGroup LeapRing(GameObject shootPoint, float cooldown, float minHealth, float maxHealth, bool masked)
         {
-            DashBehavior leap = VetTech.Hop(DashBehavior.DashDirection.KindaTowardTarget, 5f, 0.35f, cooldown, 1f, 4f, 0f, false);
+            DashBehavior leap = VetTech.Hop(DashBehavior.DashDirection.KindaTowardTarget, 5f, 0.35f, cooldown, 1f, 4f, 0f, false, TellClip(masked));
             leap.MinHealthThreshold = minHealth;
             leap.MaxHealthThreshold = maxHealth;
-            return new SequentialAttackBehaviorGroup
+            return new CoordinatedSequence
             {
+                Family = AttackFamily.Leap, ThreatCost = 2f, ThreatLinger = 1.6f, Recovery = 1.5f, ExpectedSeconds = 2.5f, Bands = NotClose,
                 RunInClass = false,
-                AttackBehaviors = new List<AttackBehaviorBase> { leap, Shoot(typeof(ScalpelRingScript), shootPoint, 0f, minHealth, maxHealth, attackCooldown: 0.8f) },
+                AttackBehaviors = new List<AttackBehaviorBase> { leap, Shoot(typeof(ScalpelRingScript), shootPoint, 0f, minHealth, maxHealth, attackCooldown: 0.8f, masked: masked) },
                 OverrideCooldowns = new List<float> { 0.2f },
             };
         }
@@ -495,48 +539,48 @@ namespace PlutoVetVisit
             return new AttackBehaviorGroup.AttackGroupItem { NickName = nick, Probability = probability, Behavior = behavior };
         }
 
-        /// <summary>An attack usable while health is between minHealth and maxHealth (fractions of max).</summary>
-        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f, float attackCooldown = 0.4f, float initialCooldown = 1f, bool masked = false)
+        /// <summary>An attack usable while health is between minHealth and maxHealth (fractions of max). into: a CoordinatedShoot
+        /// from Plan() to fill instead of a plain ShootBehavior.</summary>
+        public static ShootBehavior Shoot(Type script, GameObject shootPoint, float cooldown, float minHealth, float maxHealth, float minRange = 0f, float range = 40f, float attackCooldown = 0.4f, float initialCooldown = 1f, bool masked = false, ShootBehavior into = null)
         {
-            return new ShootBehavior
-            {
-                ShootPoint = shootPoint,
-                BulletScript = new CustomBulletScriptSelector(script),
-                LeadAmount = 0f,
-                StopDuring = ShootBehavior.StopType.Attack,
-                ImmobileDuringStop = true,
-                LockFacingDirection = false,
-                ContinueAimingDuringTell = true,
-                ReaimOnFire = false,
-                RequiresTarget = true,
-                PreventTargetSwitching = true,
-                Uninterruptible = true,   // vanilla bosses and adds finish a pattern once it starts; a hit never cancels a tell
-                TellAnimation = masked ? "mask_tell" : "tell",
-                FireAnimation = masked ? "mask_fire" : "fire",
-                HideGun = false,
-                UseVfx = false,
-                Cooldown = cooldown,
-                CooldownVariance = 0.25f,
-                AttackCooldown = attackCooldown,
-                GlobalCooldown = 0f,
-                InitialCooldown = initialCooldown,
-                InitialCooldownVariance = 0f,
-                GroupName = null,
-                GroupCooldown = 0f,
-                MinRange = minRange,
-                Range = range,
-                MinWallDistance = 0f,
-                MaxEnemiesInRoom = 0f,
-                MinHealthThreshold = minHealth,
-                MaxHealthThreshold = maxHealth,
-                HealthThresholds = new float[0],
-                AccumulateHealthThresholds = true,
-                targetAreaStyle = null,
-                IsBlackPhantom = false,
-                resetCooldownOnDamage = null,
-                RequiresLineOfSight = false,
-                MaxUsages = 0,
-            };
+            ShootBehavior s = into ?? new ShootBehavior();
+            s.ShootPoint = shootPoint;
+            s.BulletScript = new CustomBulletScriptSelector(script);
+            s.LeadAmount = 0f;
+            s.StopDuring = ShootBehavior.StopType.Attack;
+            s.ImmobileDuringStop = true;
+            s.LockFacingDirection = false;
+            s.ContinueAimingDuringTell = true;
+            s.ReaimOnFire = false;
+            s.RequiresTarget = true;
+            s.PreventTargetSwitching = true;
+            s.Uninterruptible = true;   // vanilla bosses and adds finish a pattern once it starts; a hit never cancels a tell
+            s.TellAnimation = masked ? "mask_tell" : "tell";
+            s.FireAnimation = masked ? "mask_fire" : "fire";
+            s.HideGun = false;
+            s.UseVfx = false;
+            s.Cooldown = cooldown;
+            s.CooldownVariance = 0.25f;
+            s.AttackCooldown = attackCooldown;
+            s.GlobalCooldown = 0f;
+            s.InitialCooldown = initialCooldown;
+            s.InitialCooldownVariance = 0f;
+            s.GroupName = null;
+            s.GroupCooldown = 0f;
+            s.MinRange = minRange;
+            s.Range = range;
+            s.MinWallDistance = 0f;
+            s.MaxEnemiesInRoom = 0f;
+            s.MinHealthThreshold = minHealth;
+            s.MaxHealthThreshold = maxHealth;
+            s.HealthThresholds = new float[0];
+            s.AccumulateHealthThresholds = true;
+            s.targetAreaStyle = null;
+            s.IsBlackPhantom = false;
+            s.resetCooldownOnDamage = null;
+            s.RequiresLineOfSight = false;
+            s.MaxUsages = 0;
+            return s;
         }
     }
 
