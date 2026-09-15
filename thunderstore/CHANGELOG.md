@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.4 (test build, not released)
+- **The Vet keeps moving**: his two vanilla movement behaviours cancelled each other inside 10 tiles, so between attacks he mostly stood still (worse in 0.14.3 with the new tells and pauses). He now circles Pluto at 5.5-9 tiles, keeps clear of the operating table, avoids gas clouds, prefers spots with a line of sight, and turns round when blocked. Hops count as movement and are no longer held back by the repeat rule.
+- **The theatre really turns red** at 25 % health: the room light fades to deep red over 1.2 s and the operating lamp turns red too, released when the Vet falls. A killing blow from above 25 % skips the red room and the last reinforcements. New `[Mood]` config keys `LastPhaseR/G/B`, `LastPhaseLampR/G/B`, `MoodFadeSeconds`; the old `MoodRed*` keys are no longer read.
+- Diagnostic log lines every 4 s (`vet move: ...`, `The Vet brain: ...`) and on phase and mood changes.
+
 ## 0.14.3 (test build, not released)
 - **The Vet telegraphs**: each attack family tints him in its own rhythm on top of the tell (booster white glint, spray teal, pills red/white, rings blue, stitches red blinks, anesthesia plum). Hops and the leap crouch first and land with dust and a short pause; Tech lunges crouch too. The masked phase always uses the masked tell.
 - **Fairer pressure**: no attack family twice within 2 s, only light attacks for a moment after a heavy one, a shared Vet + Nurse threat budget so heavy walls do not stack, and ring/wall openings placed away from walls and clouds.
