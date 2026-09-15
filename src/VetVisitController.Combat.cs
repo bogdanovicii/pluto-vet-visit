@@ -86,6 +86,7 @@ namespace PlutoVetVisit
             ending = true;
             encounter.End();
             ClearFallbackTargets();
+            TheatreMood.Release();   // our own ambient override only
             if (GameManager.HasInstance)
             {
                 // No global override or time-scale resets: release only state owned by this controller.

@@ -140,6 +140,11 @@ namespace PlutoVetVisit
         }
 
         public bool IsHeavy { get { return Cost >= AttackCoordinator.HeavyCost; } }
+
+        /// <summary>Hops reposition the Vet: they are movement, not a threat family. The repeat guard never blocks them (a blocked
+        /// hop is a Vet standing still, and it cancelled DashBehavior's double hop) and a hop never overwrites the guard's memory
+        /// of the last real attack (booster, hop, booster would otherwise pass).</summary>
+        public bool IsMovement { get { return Family == AttackFamily.Hop; } }
     }
 
     /// <summary>Per-actor selection policy: range band, repeat avoidance, recovery after heavy patterns, shared threat budget.</summary>
@@ -172,15 +177,44 @@ namespace PlutoVetVisit
                 running = false;   // the end notification was lost (an interrupt): never block that family forever
                 repeat.Ended(runningFamily, giveUpAt);
             }
-            if (distance >= 0f && (band.Update(distance) & plan.Bands) == 0) return "band";
-            if (!repeat.Allows(plan.Family, now)) return "repeat";
-            if (plan.IsHeavy && recovery.Active(now)) return "recovery";
-            if (shared != null && !shared.CanAfford(plan.Cost, now)) return "budget";
-            return null;
+            string reason = null;
+            if (distance >= 0f && (band.Update(distance) & plan.Bands) == 0) reason = "band";
+            else if (!plan.IsMovement && !repeat.Allows(plan.Family, now)) reason = "repeat";
+            else if (plan.IsHeavy && recovery.Active(now)) reason = "recovery";
+            else if (shared != null && !shared.CanAfford(plan.Cost, now)) reason = "budget";
+            Count(reason);
+            return reason;
+        }
+
+        // Diagnostics: how often each gate said no since the last summary (IsReady asks several times a tick, so read the
+        // proportions, not the absolute numbers).
+        private int vetoBand, vetoRepeat, vetoRecovery, vetoBudget, allowed, starts;
+
+        private void Count(string reason)
+        {
+            if (reason == null) allowed++;
+            else if (reason == "band") vetoBand++;
+            else if (reason == "repeat") vetoRepeat++;
+            else if (reason == "recovery") vetoRecovery++;
+            else vetoBudget++;
+        }
+
+        /// <summary>"asked N: allowed a, band b, repeat r, recovery c, budget d; started s" since the last call, then resets;
+        /// null when nothing was asked.</summary>
+        public string DrainSummary()
+        {
+            int asked = allowed + vetoBand + vetoRepeat + vetoRecovery + vetoBudget;
+            if (asked == 0 && starts == 0) return null;
+            string s = "asked " + asked + ": allowed " + allowed + ", band " + vetoBand + ", repeat " + vetoRepeat + ", recovery " + vetoRecovery
+                + ", budget " + vetoBudget + "; started " + starts;
+            allowed = vetoBand = vetoRepeat = vetoRecovery = vetoBudget = starts = 0;
+            return s;
         }
 
         public void Started(AttackPlan plan, float now, float expectedSeconds)
         {
+            starts++;
+            if (plan.IsMovement) return;   // hops: no repeat memory, no budget, no recovery
             repeat.Started(plan.Family);
             running = true;
             runningFamily = plan.Family;
@@ -191,6 +225,7 @@ namespace PlutoVetVisit
 
         public void Ended(AttackPlan plan, float now)
         {
+            if (plan.IsMovement) return;
             running = false;
             repeat.Ended(plan.Family, now);
             if (shared != null && plan.Cost > 0f) shared.Settle(owner, now, plan.Linger);

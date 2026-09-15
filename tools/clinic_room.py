@@ -356,8 +356,8 @@ def write(project):
 
 
 def config_light(project, prefix):
-    """(r, g, b) multipliers from the float defaults in src/PastConfig.cs: 'Ambient' is the clinic's room ambient, 'MoodRed' the
-    theatre ambient in the Vet's last phase."""
+    """(r, g, b) multipliers from the float defaults in src/PastConfig.cs: 'Ambient' is the clinic's room ambient, 'LastPhase' the
+    theatre ambient in the Vet's last phase (TheatreMood.Red sets it through Dungeon.OverrideAmbientLight)."""
     with open(os.path.join(project, 'src', 'PastConfig.cs')) as fh:
         source = fh.read()
     return tuple(float(re.search(r'\b%s%s = ([0-9.]+)f' % (prefix, c), source).group(1)) for c in 'RGB')
@@ -379,7 +379,7 @@ def theatre_lighting(project, full, scale=2):
     gap, label = 8, 14
     sheet = Image.new('RGBA', (2 * crop.width + gap, crop.height + label), (0x2E, 0x2E, 0x3A, 255))
     d = ImageDraw.Draw(sheet)
-    for i, (name, prefix) in enumerate((('normal ambient', 'Ambient'), ('final phase red ambient (approx.)', 'MoodRed'))):
+    for i, (name, prefix) in enumerate((('normal ambient', 'Ambient'), ('final phase red ambient (approx.)', 'LastPhase'))):
         rgb = config_light(project, prefix)
         ox = i * (crop.width + gap)
         sheet.alpha_composite(lit(crop, rgb), (ox, label))

@@ -62,7 +62,9 @@ namespace PlutoVetVisit
         public static string RescueThink = "Everyone out. Nobody gets the snip today.";
         public static string EndingBianca = "There you are!", EndingBogdan = "Let's go home, buddy.", EndingThink = "Home.";
         public static float KennelReactRadius = 2.5f;
-        public static float LampIntensity = 2.5f, LampRadius = 6f, MoodRedR = 1f, MoodRedG = 0.55f, MoodRedB = 0.55f;
+        public static float LampIntensity = 2.5f, LampRadius = 6f;
+        // New keys (0.14.4): the old MoodRedR/G/B (1/0.55/0.55) were not visibly red under the lamp, and a saved config would keep them.
+        public static float LastPhaseR = 1f, LastPhaseG = 0.3f, LastPhaseB = 0.3f, LastPhaseLampR = 1f, LastPhaseLampG = 0.25f, LastPhaseLampB = 0.2f, MoodFadeSeconds = 1.2f;
         public static float TrophyX = 0f, TrophyY = 0f;
         public static bool ForceTrophy = false;
         public static string CommentTrophy = "The Vet's syringe. He won't need it.|Still sharp. Still mine.|No procedure today.";
@@ -213,9 +215,13 @@ namespace PlutoVetVisit
             CommentTrophy = cfg.Bind("Breach", "CommentTrophy", CommentTrophy, "What Pluto thinks when he examines the trophy (one per interaction; separate lines with |).").Value;
             LampIntensity = cfg.Bind("Mood", "LampIntensity", LampIntensity, "Operating lamp light intensity when the fight starts.").Value;
             LampRadius = cfg.Bind("Mood", "LampRadius", LampRadius, "Operating lamp light radius in tiles.").Value;
-            MoodRedR = cfg.Bind("Mood", "MoodRedR", MoodRedR, "Theatre ambient in the Vet's last phase (red).").Value;
-            MoodRedG = cfg.Bind("Mood", "MoodRedG", MoodRedG, "Theatre ambient in the Vet's last phase (green).").Value;
-            MoodRedB = cfg.Bind("Mood", "MoodRedB", MoodRedB, "Theatre ambient in the Vet's last phase (blue).").Value;
+            LastPhaseR = cfg.Bind("Mood", "LastPhaseR", LastPhaseR, "Theatre ambient in the Vet's last phase, red (set through Dungeon.OverrideAmbientLight).").Value;
+            LastPhaseG = cfg.Bind("Mood", "LastPhaseG", LastPhaseG, "Theatre ambient in the Vet's last phase, green (lower = redder).").Value;
+            LastPhaseB = cfg.Bind("Mood", "LastPhaseB", LastPhaseB, "Theatre ambient in the Vet's last phase, blue (lower = redder).").Value;
+            LastPhaseLampR = cfg.Bind("Mood", "LastPhaseLampR", LastPhaseLampR, "Operating lamp colour in the last phase, red.").Value;
+            LastPhaseLampG = cfg.Bind("Mood", "LastPhaseLampG", LastPhaseLampG, "Operating lamp colour in the last phase, green.").Value;
+            LastPhaseLampB = cfg.Bind("Mood", "LastPhaseLampB", LastPhaseLampB, "Operating lamp colour in the last phase, blue.").Value;
+            MoodFadeSeconds = cfg.Bind("Mood", "MoodFadeSeconds", MoodFadeSeconds, "Seconds the theatre takes to fade to red and back.").Value;
             KennelReactRadius = cfg.Bind("Mood", "KennelReactRadius", KennelReactRadius, "How close (tiles) Pluto gets before a caged animal reacts.").Value;
             EndingBianca = cfg.Bind("Story", "EndingBianca", EndingBianca, "Bianca, running into the theatre after the Vet falls.").Value;
             EndingBogdan = cfg.Bind("Story", "EndingBogdan", EndingBogdan, "Bogdan, patting Pluto in Bianca's arms.").Value;

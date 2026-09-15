@@ -225,7 +225,7 @@ def floor_preview(project, zoom=3):
     width = step * len(shots) + 8
     grounds = [('ward floor', 'floor_ward.png', (32, 32)), ('theatre floor', 'floor_theatre.png', (32, 32)),
                ('table mat', 'table_mat.png', (8, 8))]
-    lights = [('normal', clinic_room.config_light(project, 'Ambient')), ('red final phase', clinic_room.config_light(project, 'MoodRed'))]
+    lights = [('normal', clinic_room.config_light(project, 'Ambient')), ('red final phase', clinic_room.config_light(project, 'LastPhase'))]
     strip_h = 24
     block = Image.new('RGBA', (width, strip_h * len(grounds) * len(lights)), (0x2E, 0x2E, 0x3A, 255))
     labels = []

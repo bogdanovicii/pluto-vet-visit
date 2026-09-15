@@ -100,9 +100,20 @@ namespace PlutoVetVisit
             ApplyCue();
         }
 
+        private float nextSummary;
+
         private void Update()
         {
             if (cueStyle != CueStyle.None) ApplyCue();
+            // Throttled diagnostics: which gate held attacks back over the last few seconds (never per frame).
+            if (coordinator != null && Now >= nextSummary)
+            {
+                nextSummary = Now + 4f;
+                string s = coordinator.DrainSummary();
+                if (s != null && aiActor != null && aiActor.healthHaver != null && !aiActor.healthHaver.IsDead)
+                    PastPlugin.Log(aiActor.GetActorName() + " brain: " + s + ", shared load " + SharedBudget.Load(Now).ToString("0.0") + "/" + ThreatCapacity
+                        + ", dist " + TargetDistance().ToString("0.0"));
+            }
         }
 
         private void ApplyCue()

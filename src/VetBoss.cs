@@ -126,13 +126,18 @@ namespace PlutoVetVisit
             {
                 new TargetPlayerBehavior { Radius = 35f, LineOfSight = false, ObjectPermanence = true, SearchInterval = 0.25f, PauseOnTargetSwitch = false, PauseTime = 0.25f }
             };
-            // Vanilla floor bosses move with a Seek leash only (Beholster 10 tiles). The 0.10 FleeTargetBehavior fired on every
-            // hit and, with interruptible attacks, cancelled his tells: every shot Pluto landed stopped the pattern. Now: close
-            // to 10 tiles, then strafe to random cells on his side of Pluto; the hops in the attack table do the repositioning.
+            // The 0.10 FleeTargetBehavior fired on every hit and cancelled his tells. 0.11-0.14.3 used SeekTargetBehavior (stop at
+            // 10 tiles) + MoveErraticallyBehavior: inside 10 tiles Seek cleared the path every tick, so Erratically's legs never ran
+            // and he stood still between attacks (MovementPlanner.cs explains). Now one behaviour strafes around Pluto at 5.5-9
+            // tiles, off the operating-table group, and turns round when blocked; the hops still add the quick sidesteps.
             bs.MovementBehaviors = new List<MovementBehaviorBase>
             {
-                new SeekTargetBehavior { StopWhenInRange = true, CustomRange = 10f, LineOfSight = false, ReturnToSpawn = false, PathInterval = 0.5f },
-                new MoveErraticallyBehavior { PathInterval = 0.5f, PointReachedPauseTime = 0.25f, PreventFiringWhileMoving = false, InitialDelay = 0f, StayOnScreen = true, AvoidTarget = true, UseTargetsRoom = true },
+                new OrbitTargetBehavior
+                {
+                    PreferredMin = 5.5f, PreferredMax = 9f, IdleLimit = 0.8f,
+                    AnchorCellX = ClinicLayout.Table.x, AnchorCellY = ClinicLayout.Table.y, AnchorKeepOut = 2.5f,
+                    MinCellY = ClinicLayout.THEATRE_MIN_Y,
+                },
             };
             bs.AttackBehaviors = new List<AttackBehaviorBase>
             {
@@ -584,10 +589,13 @@ namespace PlutoVetVisit
         }
     }
 
-    /// <summary>Below half health the Vet calls the Nurse and two Techs, once (v2 design, act 3).</summary>
+    /// <summary>The fight's phase events by health (PhaseTracker): the phase-two line at 60 %, the Nurse and two Techs at 50 %, the
+    /// last phase (red room, mask, last reinforcements) at 25 %. Fed by OnDamaged and by a 0.25 s poll, so a damage path that never
+    /// raises OnDamaged still reaches the last phase; every event fires once and logs "vet phase: ...".</summary>
     public class VetReinforcements : BraveBehaviour
     {
-        private bool called, lastFifth, phaseTwo;
+        private readonly PhaseTracker phases = new PhaseTracker();
+        private float nextPoll;
 
         private void Start()
         {
@@ -596,23 +604,33 @@ namespace PlutoVetVisit
 
         private void OnDamaged(float resultValue, float maxValue, CoreDamageTypes damageTypes, DamageCategory damageCategory, Vector2 damageDirection)
         {
-            if (maxValue <= 0f || VetVisitController.Instance == null) return;
-            if (!phaseTwo && resultValue <= maxValue * 0.6f)
-            {
-                phaseTwo = true;
-                VetVisitController.Instance.PhaseLine(PastConfig.FightPhase2);
-            }
-            if (!called && PastConfig.BossReinforcements && resultValue <= maxValue * 0.5f)
-            {
-                called = true;
-                VetVisitController.Instance.CallReinforcements();
-            }
-            if (!lastFifth && resultValue <= maxValue * 0.25f)
-            {
-                lastFifth = true;
-                VetVisitController.Instance.LastFifth();
-                healthHaver.OnDamaged -= OnDamaged;
-            }
+            Apply(phases.Observe(resultValue, maxValue), "damage", resultValue, maxValue);
+        }
+
+        private void Update()
+        {
+            if (Time.time < nextPoll || healthHaver == null || healthHaver.IsDead) return;
+            nextPoll = Time.time + 0.25f;
+            float current = healthHaver.GetCurrentHealth(), max = healthHaver.GetMaxHealth();
+            Apply(phases.Observe(current, max), "health poll", current, max);
+        }
+
+        private void Apply(PhaseEvent events, string source, float current, float max)
+        {
+            if (events == PhaseEvent.None) return;
+            VetVisitController c = VetVisitController.Instance;
+            PastPlugin.Log("vet phase: " + events + " at " + current.ToString("0") + "/" + max.ToString("0") + " hp (" + (current / max * 100f).ToString("0") + " %, via " + source + ")"
+                + (c == null ? ", no controller: ignored" : ""));
+            if (c == null) return;
+            if ((events & PhaseEvent.PhaseTwo) != 0) c.PhaseLine(PastConfig.FightPhase2);
+            if ((events & PhaseEvent.Reinforcements) != 0 && PastConfig.BossReinforcements) c.CallReinforcements();
+            if ((events & PhaseEvent.LastPhase) != 0) c.LastFifth();
+        }
+
+        public override void OnDestroy()
+        {
+            if (healthHaver != null) healthHaver.OnDamaged -= OnDamaged;
+            base.OnDestroy();
         }
     }
 
