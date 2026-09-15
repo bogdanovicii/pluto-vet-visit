@@ -136,6 +136,10 @@ namespace PlutoVetVisit
             KennelCritter critter = go.AddComponent<KennelCritter>();
             critter.stem = spec.Png;
             critter.dog = spec.Png == "kennel_dog" || spec.Png == "kennel_open_r";
+            critter.kind = critter.dog ? "dog" : spec.Png == "kennel_cone" ? "cone" : "cat";
+            // cage centres in the 40x48 unit: upper cage (20, 36) px, lower cage (20, 16) px; kennel_open_l is mirrored on a 52 px canvas
+            float cx = spec.Png == "kennel_open_l" ? 32f : 20f;
+            critter.animalLocal = new Vector2(cx / 16f, (spec.Png == "kennel_dog" ? 12f : 32f) / 16f);
         }
 
         /// <summary>The zone door: the open frame joins the closed sprite's collection so ClinicDoor can swap them.</summary>

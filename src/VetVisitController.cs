@@ -104,6 +104,7 @@ namespace PlutoVetVisit
             inWaitingRoom = false;
 
             // Act 2: the ward. Sealed behind Pluto; two waves; the theatre door opens when the second is dead.
+            BringPartnersThrough(ClinicLayout.WARD_MIN_Y + 1.5f, "ward");
             SetDoor(wardDoor, false, "the ward door closes behind Pluto");
             if (PastConfig.SkipWaves) PastPlugin.Log("debug: waves skipped");
             else
@@ -126,6 +127,7 @@ namespace PlutoVetVisit
             yield return StartCoroutine(WaitForZone(ClinicLayout.THEATRE_MIN_Y + 1.5f));
 
             // Act 3: the operating theatre.
+            BringPartnersThrough(ClinicLayout.THEATRE_MIN_Y + 1.5f, "theatre");
             SetDoor(theatreDoor, false, "the theatre door closes behind Pluto");
             vet = SpawnVet();
             if (!PastConfig.SkipIntro) yield return StartCoroutine(Dialogue(player));
@@ -140,6 +142,20 @@ namespace PlutoVetVisit
                 if (PlayerPast(GameManager.Instance.PrimaryPlayer, cellY)) yield break;
                 if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER && PlayerPast(GameManager.Instance.SecondaryPlayer, cellY)) yield break;
                 yield return null;
+            }
+        }
+
+        /// <summary>0.14.2 co-op: a zone door seals as soon as one player is through; any player still behind it (alive or a ghost)
+        /// is warped in beside the door first, the way vanilla rooms reunite a lagging partner.</summary>
+        private void BringPartnersThrough(float cellY, string zone)
+        {
+            foreach (PlayerController p in GameManager.Instance.AllPlayers)
+            {
+                if (p == null || p.CenterPosition.y - origin.y >= cellY) continue;
+                Vector2 cell = new Vector2(ClinicLayout.WIDTH / 2f + (p == GameManager.Instance.PrimaryPlayer ? -1f : 1f), cellY + 1f);
+                try { p.WarpToPoint(World(cell), true, false); }
+                catch (Exception e) { PastPlugin.Log("co-op warp failed (" + e.Message + "), placing instead"); Place(p, cell); }
+                PastPlugin.Log("co-op: " + (p == GameManager.Instance.PrimaryPlayer ? "player 1" : "player 2") + " brought into the " + zone);
             }
         }
 
@@ -1064,6 +1080,77 @@ namespace PlutoVetVisit
             StartCoroutine(EndPast());
         }
 
+        /// <summary>0.14.2: before the owners arrive, Pluto opens every kennel in the ward. The theatre door opens, he walks to the
+        /// middle of each kennel bank, its cages pop open one after another and the animals run into the theatre.</summary>
+        private IEnumerator RescueAnimals(PlayerController p)
+        {
+            List<KennelCritter> cages = new List<KennelCritter>();
+            foreach (KennelCritter k in KennelCritter.All) if (k != null && !k.freed) cages.Add(k);
+            if (p == null || cages.Count == 0) { PastPlugin.Log("rescue: no kennels, skipped"); yield break; }
+            cutscene = true;
+            SetDoor(theatreDoor, true, "the theatre door opens for the rescue");
+            float midX = World(new Vector2(ClinicLayout.WIDTH / 2f, 0f)).x;
+            List<KennelCritter> left = cages.FindAll(k => k.transform.position.x < midX);
+            List<KennelCritter> right = cages.FindAll(k => k.transform.position.x >= midX);
+            int freed = 0;
+            yield return StartCoroutine(OpenBank(p, left, true, n => freed += n));
+            yield return StartCoroutine(OpenBank(p, right, false, n => freed += n));
+            Vector2 back = World(new Vector2(ClinicLayout.WIDTH / 2f, ClinicLayout.THEATRE_MIN_Y + 4f));
+            GameManager.Instance.MainCameraController.OverridePosition = back;
+            yield return StartCoroutine(MovePlayer(p, back, 5f));
+            yield return StartCoroutine(PastTalk.Say(this, p.transform, PastConfig.RescueThink, 1.8f, true, true));
+            PastPlugin.Log("rescue: " + freed + " animals freed");
+        }
+
+        private IEnumerator OpenBank(PlayerController p, List<KennelCritter> bank, bool westWall, Action<int> counted)
+        {
+            if (bank.Count == 0) yield break;
+            bank.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
+            float y = 0f;
+            foreach (KennelCritter k in bank) y += k.transform.position.y;
+            y /= bank.Count;
+            float x = westWall ? World(new Vector2(4.5f, 0f)).x : World(new Vector2(ClinicLayout.WIDTH - 4.5f, 0f)).x;
+            Vector2 stand = new Vector2(x, y + 1.5f);
+            GameManager.Instance.MainCameraController.OverridePosition = stand;
+            yield return StartCoroutine(MovePlayer(p, stand, 6f));
+            Vector2 door = World(new Vector2(ClinicLayout.WIDTH / 2f, ClinicLayout.THEATRE_MIN_Y - 3f));
+            Vector2 gather = World(new Vector2(ClinicLayout.WIDTH / 2f, ClinicLayout.THEATRE_MIN_Y + 5f));
+            int n = 0;
+            foreach (KennelCritter k in bank)
+            {
+                FreedAnimal a = k.Free();
+                if (a != null)
+                {
+                    n++;
+                    Vector2 spot = gather + new Vector2(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-1.5f, 2.5f));
+                    StartCoroutine(a.RunPath(new[] { door + new Vector2(UnityEngine.Random.Range(-0.6f, 0.6f), 0f), spot }, 5.5f));
+                }
+                yield return new WaitForSeconds(0.35f);
+            }
+            counted(n);
+            yield return new WaitForSeconds(0.6f);
+        }
+
+        /// <summary>Walks a player to a point with the game's forced movement (it animates like normal walking); if that does not
+        /// arrive in time (an input override can block it), the player is warped there so the scene never stalls.</summary>
+        private IEnumerator MovePlayer(PlayerController p, Vector2 target, float maxSeconds)
+        {
+            try { p.ForceMoveToPoint(target, 0f, maxSeconds); }
+            catch (Exception e) { PastPlugin.Log("rescue: forced move failed: " + e.Message); }
+            float t = 0f;
+            while (t < maxSeconds && Vector2.Distance(p.CenterPosition, target) > 0.75f)
+            {
+                t += BraveTime.DeltaTime;
+                yield return null;
+            }
+            if (Vector2.Distance(p.CenterPosition, target) > 0.75f)
+            {
+                try { p.WarpToPoint(target - (p.CenterPosition - (Vector2)p.transform.position), false, false); }
+                catch (Exception e) { PastPlugin.Log("rescue: warp failed: " + e.Message); }
+                PastPlugin.Log("rescue: Pluto warped to the kennels (forced move did not arrive)");
+            }
+        }
+
         /// <summary>Spec A1: Bogdan and Bianca come in through the theatre's side door; Bianca lifts Pluto into her arms.</summary>
         private IEnumerator PickUpEnding(PlayerController p)
         {
@@ -1121,6 +1208,7 @@ namespace PlutoVetVisit
                 yield return new WaitForSeconds(4.8f);
                 TextBoxManager.ClearTextBox(p.transform);
             }
+            yield return StartCoroutine(RescueAnimals(p));
             yield return StartCoroutine(PickUpEnding(p));
             Pixelator.Instance.FreezeFrame();
             BraveTime.RegisterTimeScaleMultiplier(0f, gameObject);

@@ -384,3 +384,8 @@ Install with Pluto_The_Cat 2.16.0. Delete `BepInEx/config/bogdan.etg.plutovetvis
 ## 0.14.1 — reset the past
 - [ ] In the Breach as samurai Pluto, open the console and type `vet_reset_past`: Pluto is back in his normal look with the Royal Kibble Sack, the kimono stand and the trophy disappear; the log shows `vet_reset_past: KILLED_PAST cleared ..., saved True`.
 - [ ] Restart the game: still no kimono stand and no trophy. Beat the Vet again: the stand and the trophy come back.
+
+## 0.14.2 — co-op doors, the rescue
+- [ ] Co-op: let only player 1 walk through the ward door; the door closes and player 2 appears beside it inside the ward (`co-op: player 2 brought into the ward`). Same at the theatre door.
+- [ ] Beat the Vet: the theatre door opens, Pluto walks to the west kennel bank, its five cages open one after another and the animals hop into the theatre; then the east bank; Pluto walks back and thinks "Everyone out. Nobody gets the snip today."; then the owners' ending. Log: `rescue: 10 animals freed` (or `Pluto warped to the kennels` if the forced walk was blocked). Screenshot mid-rescue.
+- [ ] Log at arrival: `kennels: 10 critters, 20 clips`.

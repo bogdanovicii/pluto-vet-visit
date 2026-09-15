@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.2
+- Co-op: a zone door no longer shuts the second player out. When the first player walks through and the door seals, a partner still behind it (or a ghost) is brought through beside the door.
+- Pluto frees the animals: after the Vet falls, the theatre door opens, Pluto walks to each kennel bank in the ward, every cage door pops open and the cats, dogs and the cone patient run out into the theatre. "Everyone out. Nobody gets the snip today." Then Bogdan and Bianca take him home with the animals around them.
+
 ## 0.14.1
 - New console command `vet_reset_past`: the game forgets that Pluto beat his past. Pluto leaves the samurai costume, the past-kill flags are cleared and saved, the progress file is deleted, the Breach trophy is removed and the kimono stand disappears, so the costume and the trophy unlock again only by beating the Vet. Type it in the Breach. If `UnlockSamuraiCostume` is still `true` in Pluto's config, the log warns that it would unlock the costume again on the next launch.
 

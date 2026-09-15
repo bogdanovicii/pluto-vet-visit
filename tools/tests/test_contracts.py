@@ -73,3 +73,16 @@ class ContractTests(unittest.TestCase):
         self.has('BreachTrophy.Remove();', r, 'PastReset.cs')
         self.assertLess(r.index('SwapToAlternateCostume()'), r.index('KILLED_PAST, false'))   # leave the costume first
         self.has('"vet_reset_past"', src('PastPlugin.cs'), 'PastPlugin.cs')
+
+    def test_coop_partner_is_brought_through_before_doors_seal(self):
+        c = src('VetVisitController.cs')
+        self.assertLess(c.index('BringPartnersThrough(ClinicLayout.WARD_MIN_Y + 1.5f, "ward");'), c.index('SetDoor(wardDoor, false'))
+        self.assertLess(c.index('BringPartnersThrough(ClinicLayout.THEATRE_MIN_Y + 1.5f, "theatre");'), c.index('SetDoor(theatreDoor, false'))
+        self.has('p.WarpToPoint(World(cell), true, false);', c, 'VetVisitController.cs')
+
+    def test_rescue_scene_runs_before_the_owners(self):
+        c = src('VetVisitController.cs')
+        e = c.index('private IEnumerator EndPast()')
+        self.assertLess(c.index('StartCoroutine(RescueAnimals(p));', e), c.index('StartCoroutine(PickUpEnding(p));', e))
+        self.has('FreedAnimal a = k.Free();', c, 'VetVisitController.cs')
+        self.has('return FreedAnimal.Spawn(kind,', src('KennelCritter.cs'), 'KennelCritter.cs')

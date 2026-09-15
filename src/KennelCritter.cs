@@ -11,6 +11,9 @@ namespace PlutoVetVisit
         public static readonly List<KennelCritter> All = new List<KennelCritter>();
         public string stem;
         public bool dog;
+        public string kind = "cat";          // which animal runs out when freed (cat, dog, cone)
+        public Vector2 animalLocal;          // where it sits in the kennel, from the sprite's lower-left (tiles)
+        public bool freed;
         private float nextPoll, quietUntil;
 
         private void Start() { All.Add(this); }
@@ -23,7 +26,7 @@ namespace PlutoVetVisit
 
         private void Update()
         {
-            if (Time.time < nextPoll) return;
+            if (freed || Time.time < nextPoll) return;
             nextPoll = Time.time + 0.25f;
             if (Time.time < quietUntil || sprite == null || GameManager.Instance == null) return;
             PlayerController p = GameManager.Instance.PrimaryPlayer;
@@ -59,9 +62,25 @@ namespace PlutoVetVisit
             transform.position = home;
         }
 
+        /// <summary>0.14.2 rescue: the door flies open (freed clip), and the animal is spawned running free.</summary>
+        public FreedAnimal Free()
+        {
+            if (freed) return null;
+            freed = true;
+            string name = stem + "_freed";
+            if (spriteAnimator != null && spriteAnimator.GetClipByName(name) != null)
+            {
+                spriteAnimator.AnimationCompleted = null;
+                spriteAnimator.Play(name);
+            }
+            ClinicSound.Play("Play_OBJ_door_open_01", gameObject);
+            if (dog) ClinicSound.Play("Play_PET_dog_bark_02", gameObject);
+            return FreedAnimal.Spawn(kind, (Vector2)transform.position + animalLocal);
+        }
+
         public static void RattleAll()
         {
-            foreach (KennelCritter k in All.ToArray()) if (k != null) k.PlayOnce("rattle");
+            foreach (KennelCritter k in All.ToArray()) if (k != null && !k.freed) k.PlayOnce("rattle");
         }
     }
 }
