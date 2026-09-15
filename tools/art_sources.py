@@ -78,10 +78,10 @@ def check(piece, root=PROJECT):
         if im.size != tuple(spec['canvas']):
             problems.append('%s: canvas %s, expected %s (%s)' % (piece, im.size, tuple(spec['canvas']), rel))
             continue
-        alphas = set(a for (_, _, _, a) in im.getdata())
+        alphas = set(a for (_, _, _, a) in im.get_flattened_data())
         if not alphas <= {0, 255}:
             problems.append('%s: semi-transparent alpha %s (%s)' % (piece, sorted(alphas - {0, 255})[:4], rel))
-        colours = set(px[:3] for px in im.getdata() if px[3] == 255)
+        colours = set(px[:3] for px in im.get_flattened_data() if px[3] == 255)
         if len(colours) > MAX_COLOURS[spec['kind']]:
             problems.append('%s: %d colours > %d (%s)' % (piece, len(colours), MAX_COLOURS[spec['kind']], rel))
         if spec['kind'] == 'picture' and alphas != {255}:
@@ -90,7 +90,7 @@ def check(piece, root=PROJECT):
             w, h = im.size
             if any(im.getpixel((x, y))[3] for x in range(190) for y in range(h)):
                 problems.append('%s: card pixels at x < 190 must be transparent (%s)' % (piece, rel))
-            clear = sum(1 for px in im.getdata() if px[3] == 0)
+            clear = sum(1 for px in im.get_flattened_data() if px[3] == 0)
             if clear < 0.5 * w * h:
                 problems.append('%s: card must be at least 50%% transparent (%s)' % (piece, rel))
     return problems
