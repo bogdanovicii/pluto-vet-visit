@@ -118,6 +118,24 @@ namespace PlutoVetVisit
             catch (Exception e) { PastPlugin.Log("loadout check failed (" + when + "): " + e); }
         }
 
+        private readonly StuckControlPolicy stuckControls = new StuckControlPolicy();
+
+        /// <summary>Routine repair every tick; the broad emergency repair only after the policy sees a persistent, unexplained lock.</summary>
+        private void WatchdogCheck(PlayerController p, int slot)
+        {
+            EnsureLoadout(p, "watchdog", false);
+            if (ending || p == null || p.inventory == null || p.healthHaver == null || p.healthHaver.IsDead) { stuckControls.Observe(slot, false, true); return; }
+            Gun g = p.CurrentGun;
+            bool cannotFire = p.IsInputOverridden || p.inventory.ForceNoGun || p.inventory.GunLocked.Value || p.IsGunLocked
+                || g == null || !g.gameObject.activeSelf || (g.sprite != null && g.sprite.renderer != null && !g.sprite.renderer.enabled);
+            bool excused = cutscene || GameManager.IsBossIntro || p.IsDodgeRolling || p.IsStealthed || p.IsFalling;
+            if (stuckControls.Observe(slot, cannotFire, excused))
+            {
+                PastPlugin.Log("watchdog: player " + (slot + 1) + " unable to fire for " + (StuckControlPolicy.TicksBeforeRepair * 3) + " s with no reason in sight; emergency repair");
+                EnsureLoadout(p, "watchdog escalation", true, true);
+            }
+        }
+
         /// <summary>Re-checks every 3 s for the whole past; logs only when something changed.</summary>
         private IEnumerator LoadoutWatchdog()
         {
@@ -131,8 +149,8 @@ namespace PlutoVetVisit
                     t = 0f;
                     ticks++;
                     PlayerController p = GameManager.Instance.PrimaryPlayer;
-                    EnsureLoadout(p, "watchdog", false);
-                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) EnsureLoadout(GameManager.Instance.SecondaryPlayer, "watchdog", false);
+                    WatchdogCheck(p, 0);
+                    if (GameManager.Instance.CurrentGameType == GameManager.GameType.COOP_2_PLAYER) WatchdogCheck(GameManager.Instance.SecondaryPlayer, 1);
                     // It logs a full snapshot only when it had to change something; this line proves it is running.
                     if (ticks % 5 == 0 && p != null)
                         PastPlugin.Log("watchdog " + (ticks * 3) + " s: gun " + (p.CurrentGun != null ? p.CurrentGun.name + " active " + p.CurrentGun.gameObject.activeSelf : "none")
