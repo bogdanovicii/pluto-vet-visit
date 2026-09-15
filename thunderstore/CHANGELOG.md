@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.3 (test build, not released)
+- **The Vet telegraphs**: each attack family tints him in its own rhythm on top of the tell (booster white glint, spray teal, pills red/white, rings blue, stitches red blinks, anesthesia plum). Hops and the leap crouch first and land with dust and a short pause; Tech lunges crouch too. The masked phase always uses the masked tell.
+- **Fairer pressure**: no attack family twice within 2 s, only light attacks for a moment after a heavy one, a shared Vet + Nurse threat budget so heavy walls do not stack, and ring/wall openings placed away from walls and clouds.
+- **Shoot the pill** to pop it. Blanks and the Vet's death never make a pill burst; a blank ends every later wave of a pattern. Pills pulse before bursting, stitches before re-aiming, clouds blink before fading.
+- **Encounter reliability**: the greeting Tech counts as part of wave 1, reinforcements never spawn after the Vet falls, and his remaining staff and bullets are cleared at victory. The loadout watchdog respects other locks but still repairs "Pluto cannot fire" by itself after about 9 s.
+- Softer grid on the ward and theatre floors so bullets and props read better.
+
 ## 0.14.2
 - Co-op: a zone door no longer shuts the second player out. When the first player walks through and the door seals, a partner still behind it (or a ghost) is brought through beside the door.
 - Pluto frees the animals: after the Vet falls, the theatre door opens, Pluto walks to each kennel bank in the ward, every cage door pops open and the cats, dogs and the cone patient run out into the theatre. "Everyone out. Nobody gets the snip today." Then Bogdan and Bianca take him home with the animals around them.
