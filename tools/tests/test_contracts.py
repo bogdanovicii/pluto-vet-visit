@@ -7,7 +7,11 @@ SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src'
 
 
 def src(name):
-    return open(os.path.join(SRC, name), encoding='utf-8').read()
+    import pathlib
+    root = pathlib.Path(SRC)
+    if name == 'VetVisitController.cs':
+        return '\n'.join(p.read_text(encoding='utf-8') for p in sorted(root.glob('VetVisitController*.cs')))
+    return (root / name).read_text(encoding='utf-8')
 
 
 class ContractTests(unittest.TestCase):
