@@ -17,6 +17,9 @@ msbuild PlutoVetVisit.csproj -p:Configuration=Release -v:m -nologo
 echo "==> validating"
 python3 tools/validate.py
 
+echo "==> testing"
+python3 -W error::ResourceWarning -m unittest discover -s tools/tests -q
+
 echo "==> packaging"
 rm -rf dist && mkdir -p dist/pkg/plugins
 cp bin/Release/PlutoVetVisit.dll dist/pkg/plugins/
